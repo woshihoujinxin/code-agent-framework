@@ -2,3 +2,8 @@
 settings.json
 settings.local.json
 TRUSTED
+reasonix.toml
+
+# Python 缓存
+__pycache__/
+*.pyc
