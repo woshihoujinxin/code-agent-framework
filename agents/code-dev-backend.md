@@ -57,10 +57,11 @@ skills:
 
 ### 1. 必读输入（按顺序）
 1. **feature-spec.md** 本任务规格 — 特别关注「测试契约」段（F/B/S/E/Q 用例，每条标注归属 FE/BE/both）
-2. **docs/prd.md** 相关用户故事 — 理解产品意图，不只看规格
-3. **lessons-learned.md**（代码级 + 架构级经验）
-4. **smoke-checks.md**（本任务冒烟 + 单测命令）
-5. **coding-standards skill**（含 code-sage 自进化规则）
+2. **docs/design.md**（或 architecture.md，若存在）— 技术决策记录 + 实体级设计 + 时序图 + 共享知识（**接口签名/实体字段的权威来源，翻译式实现**；`方法论：DDD` 模式必读「领域建模」段）
+3. **docs/prd.md** 相关用户故事 + 「2.1 领域词汇表」（DDD 模式）— 理解产品意图与业务术语，不只看规格
+4. **lessons-learned.md**（代码级 + 架构级经验）
+5. **smoke-checks.md**（本任务冒烟 + 单测命令）
+6. **coding-standards skill**（含 code-sage 自进化规则；DDD 模式含 §3b 战术模式约束）
 
 ### 2. 架构设计
 - 设计 API 接口规范、数据库表结构、业务逻辑流程

@@ -74,6 +74,8 @@
 
 模式标记拼进各子Agent prompt。**测试契约照常产**（feature-spec F/B/S/E/Q 是共享上下文），只是批/轮更少。
 
+**方法论注入（DDD，标准SOP 专属）**：标准SOP 模式下，若业务规则复杂（领域概念密集 / 多状态流转 / 多模块交互 / 明确业务规则），追加 `方法论：DDD`——Planner 做领域建模（design.md「领域建模」段 + 设计文档按复杂度分级），Dev 按 DDD 战术分层写码（coding-standards §3b），Reviewer 审查架构合理性时以领域分层为依据；快速模式 / BugFix 不注入。
+
 ---
 
 ## Agent ID 收集
@@ -155,7 +157,7 @@ Agent(
 Agent(
   subagent_type: "code-reviewer",
   run_in_background: true,
-  prompt: "代码审查：{TASK_IDs}\n待测仓库：{REPO_DIR}\nfeature-spec: {REPO_DIR}/docs/feature-spec.md\n输出目录: {REPO_DIR}/tests/reports/"
+  prompt: "代码审查：{TASK_IDs}\n待测仓库：{REPO_DIR}\nfeature-spec: {REPO_DIR}/docs/feature-spec.md\ndesign: {REPO_DIR}/docs/design.md（含架构风格与技术决策记录——架构合理性审查依据）\n输出目录: {REPO_DIR}/tests/reports/"
 )
 ```
 
@@ -191,7 +193,7 @@ Agent(
 Agent(
   subagent_type: "code-tester-e2e",
   run_in_background: true,
-  prompt: "端到端测试：{TASK_IDs}\n待测仓库：{REPO_DIR}\nfeature-spec: {REPO_DIR}/docs/feature-spec.md\nprd: {REPO_DIR}/docs/prd.md\nDev自检报告: {REPO_DIR}/tests/reports/{TASK_ID}-selfcheck-*.md\n输出目录: {REPO_DIR}/tests/reports/"
+  prompt: "端到端测试：{TASK_IDs}\n待测仓库：{REPO_DIR}\nfeature-spec: {REPO_DIR}/docs/feature-spec.md\nprd: {REPO_DIR}/docs/prd.md\ndesign: {REPO_DIR}/docs/design.md（含时序图——E 场景链路依据；若只有 architecture.md 则传该路径）\nDev自检报告: {REPO_DIR}/tests/reports/{TASK_ID}-selfcheck-*.md\n输出目录: {REPO_DIR}/tests/reports/"
 )
 ```
 

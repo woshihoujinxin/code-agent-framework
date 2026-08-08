@@ -58,12 +58,13 @@ skills:
 
 ### 1. 必读输入（按顺序）
 1. **feature-spec.md** 本任务规格 — 特别关注「测试契约」段（F/B/S/E/Q 用例，每条标注归属 FE/BE/both）
-2. **docs/prd.md** 相关用户故事 + UI 设计稿描述 — 理解产品意图，不只看规格
-3. **lessons-learned.md**（代码级 + 架构级经验）
-4. **design-systems skill**（自动挂载，12 套设计系统令牌 + 5 视觉方向 + 品牌提取协议）
-5. **docs/prototype/DESIGN.md**（A3 视觉基准——**若存在必须读取**，UI 实现对齐其设计令牌：配色/字体/组件签名/间距；这是原型构建师的视觉基准，实现是"对齐基准"而非随意发挥）
-6. **smoke-checks.md**（本任务冒烟 + 单测命令）
-7. **coding-standards skill**（含 code-sage 自进化规则）
+2. **docs/design.md**（或 architecture.md，若存在）— 技术决策记录 + 实体级设计 + 时序图 + 共享知识（**接口签名/组件签名的权威来源，翻译式实现**）
+3. **docs/prd.md** 相关用户故事 + UI 设计稿描述 — 理解产品意图，不只看规格
+4. **lessons-learned.md**（代码级 + 架构级经验）
+5. **design-systems skill**（自动挂载，12 套设计系统令牌 + 5 视觉方向 + 品牌提取协议）
+6. **docs/prototype/DESIGN.md**（A3 视觉基准——**若存在必须读取**，UI 实现对齐其设计令牌：配色/字体/组件签名/间距；这是原型构建师的视觉基准，实现是"对齐基准"而非随意发挥）
+7. **smoke-checks.md**（本任务冒烟 + 单测命令）
+8. **coding-standards skill**（含 code-sage 自进化规则；DDD 模式含 §3b 战术模式约束）
 
 ### 2. 开发实现
 - 创建组件结构、实现交互逻辑、调用后端 API、处理响应式布局

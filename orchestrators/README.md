@@ -108,7 +108,7 @@ git clone https://github.com/woshihoujinxin/code-agent-framework.git .claude
 > 不想 `.claude/` 带嵌套 `.git`：clone 后 `rm -rf .claude/.git`
 > **更新框架**：`cd my-project/.claude && git pull`（再重启 Claude Code）
 
-clone 后 `.claude/` 自动包含 15 个 subagent、`/dev` `/ship` 命令、两个编排器、3 个 skills（coding-standards / design-systems / prototype-templates）——**无需手动复制任何文件**。
+clone 后 `.claude/` 自动包含 15 个 subagent、`/goal-d` `/goal-o` `/goal-init` 命令、两个编排器、3 个 skills（coding-standards / design-systems / prototype-templates）——**无需手动复制任何文件**。
 
 **按项目调整编码规范**（可选）：编辑 `.claude/skills/coding-standards/SKILL.md` 的 §1–§4（命名/结构/模式/测试）。末段「自进化规则」由 code-sage 自动追加，不要手改。
 
@@ -121,13 +121,13 @@ clone 后 `.claude/` 自动包含 15 个 subagent、`/dev` `/ship` 命令、两�
 在项目里开 Claude Code，用 slash 命令，斜杠后跟需求：
 
 ```
-/dev 用 Python 做个 Todo CLI，支持创建/查询/删除/标记完成    # 研发质量编排 → 高质量代码
-/ship 做个 FastAPI 服务并打包成 Docker 镜像                  # 交付编排 → 可部署制品
+/goal-d 用 Python 做个 Todo CLI，支持创建/查询/删除/标记完成    # 研发质量编排 → 高质量代码
+/goal-o 做个 FastAPI 服务并打包成 Docker 镜像                  # 交付编排 → 可部署制品
 ```
 
 也可以不写命令，直接描述需求，PM 会自动生成 PRD 再进入开发。
 
-> `/dev` 走五维质量门（功能/质量/健壮/安全/E2E）产出代码；`/ship` 走审查→构建→校验链产出制品。两者区别见 `dev-quality-orchestrator.md` / `delivery-orchestrator.md` 开头。
+> `/goal-d` 走五维质量门（功能/质量/健壮/安全/E2E）产出代码；`/goal-o` 走审查→构建→校验链产出制品。两者区别见 `dev-quality-orchestrator.md` / `delivery-orchestrator.md` 开头。
 
 ### 执行流程
 
@@ -222,7 +222,8 @@ clone 后 `.claude/` 自动包含 15 个 subagent、`/dev` `/ship` 命令、两�
 |------|------|------|
 | `docs/prd.md` | 产品需求文档（需求池，含「视觉意图」段） | 产品经理 |
 | `docs/dev-plan.md` | 任务状态追踪 | 架构师 创建，主Agent 更新 |
-| `docs/design.md` | 架构设计（选型+类图+时序图+共享知识，B3） | 架构师 |
+| `docs/design.md` | 架构设计（技术决策记录+模块架构图+实体/ER+时序图+状态机+共享知识+领域建模） | 架构师 |
+| `docs/architecture.md` | 全局架构设计（复杂项目拆分：上下文划分+模块图） | 架构师 |
 | `docs/feature-spec.md` | 每个任务的功能规格+测试契约 | 架构师 |
 | `docs/lessons-learned.md` | 跨任务经验积累 | Dev（修正后更新） |
 | `docs/prototype/` | 高保真原型 + DESIGN.md（视觉基准，A3） | 原型构建师（Web项目） |

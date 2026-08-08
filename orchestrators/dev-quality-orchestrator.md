@@ -75,6 +75,8 @@
 
 **模式传递**：确定模式后，把 `模式：{标准SOP / 快速模式 / BugFix}` 拼进 PM / Planner / Dev / Tester 的 prompt，让各自按模式行事。
 
+**方法论注入（DDD，标准SOP 专属）**：标准SOP 模式下，若业务规则复杂（领域概念密集 / 多状态流转 / 多模块交互 / 明确业务规则），在模式后追加 `方法论：DDD`——Planner 做领域建模（design.md「领域建模」段 + 设计文档按复杂度分级），Dev 按 DDD 战术分层写码（coding-standards §3b），quality tester 增加领域建模审查维度（design.md「领域建模」段为基准）；同时 PM 的 PRD 应含「2.1 领域词汇表」。快速模式 / BugFix 不注入 DDD。拿不准时按简单处理不注入。
+
 ---
 
 ## Agent ID 收集
@@ -266,7 +268,7 @@ Agent C:
 Agent D:
   subagent_type: "code-tester-e2e",
   run_in_background: true,
-  prompt: "端到端测试：{本批所有TASK_ID}\n待测仓库：{REPO_DIR}\nfeature-spec: {REPO_DIR}/docs/feature-spec.md\nprd: {REPO_DIR}/docs/prd.md\nDev自检报告: {REPO_DIR}/tests/reports/{TASK_ID}-selfcheck-*.md\n输出目录: {REPO_DIR}/tests/reports/"
+  prompt: "端到端测试：{本批所有TASK_ID}\n待测仓库：{REPO_DIR}\nfeature-spec: {REPO_DIR}/docs/feature-spec.md\nprd: {REPO_DIR}/docs/prd.md\ndesign: {REPO_DIR}/docs/design.md（含时序图——E 场景链路依据；若只有 architecture.md 则传该路径）\nDev自检报告: {REPO_DIR}/tests/reports/{TASK_ID}-selfcheck-*.md\n输出目录: {REPO_DIR}/tests/reports/"
 
 Agent E:
   subagent_type: "code-tester-security",
