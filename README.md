@@ -11,7 +11,7 @@ PM → 架构师（生成测试契约）→ 前后端开发（写单测+自检�
 在你的项目里 clone 到 `.claude/`：
 ```bash
 cd my-project
-git clone https://github.com/woshihoujinxin/<repo>.git .claude
+git clone https://github.com/woshihoujinxin/code-agent-framework.git .claude
 ```
 重启 Claude Code（加载新 agents/commands），然后：
 ```
@@ -42,7 +42,7 @@ clone 后，在任意一个工具里输入 `/goal-init` 即可完成部署（等
 
 ```bash
 cd my-project
-git clone https://github.com/woshihoujinxin/<repo>.git .claude
+git clone https://github.com/woshihoujinxin/code-agent-framework.git .claude
 ```
 
 然后在 opencode / Reasonix 里运行：
