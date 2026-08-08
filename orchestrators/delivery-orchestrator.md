@@ -397,6 +397,15 @@ while round < 3:
 - {yymmdd hhmm} 📊 迭代统计：{1次/X, 2次/Y, 3次/Z, 强制/W}
 ```
 
+**产出运行指南**（让用户拿到就能跑——收尾必做，否则交付不完整）：
+- 读项目配置提取**真实**运行命令（master 读，不派 agent、不编造）：Node→`package.json` 的 `scripts`；Python→`pyproject.toml`/`requirements.txt`；通用→`docs/smoke-checks.md`（最可靠）。
+- 写/更新 `{REPO_DIR}/README.md`「快速开始」段（环境要求/安装/运行/测试/构建）。
+- **最终用户报告附「怎么运行」**（可复制粘贴命令 + 制品部署方式/访问地址）。
+
+```
+- {yymmdd hhmm} 📖 运行指南 → README.md（快速开始）
+```
+
 ---
 
 ## 上下文保护规则

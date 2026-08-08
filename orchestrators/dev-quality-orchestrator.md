@@ -692,6 +692,18 @@ Step 4: 向用户报告恢复点（按状态分类列出），然后继续 Phase
   - 强制通过：{W} 个
 ```
 
+4. **产出运行指南**（让用户拿到就能跑——收尾必做，否则交付不完整）：
+   - 读项目配置提取**真实**运行命令（master 读，不派 agent、不编造）：
+     - Node：Read `package.json` 的 `scripts`（dev/start/build/test）
+     - Python：Read `pyproject.toml` / `requirements.txt`（安装 + 运行命令）
+     - 通用：Read `docs/smoke-checks.md`（已有冒烟/单测命令，最可靠）
+   - 写/更新 `{REPO_DIR}/README.md` 的「快速开始」段：环境要求 + 安装 + 运行 + 测试 + 构建（命令从配置提取）
+   - **最终用户报告附「怎么运行」一段**（可复制粘贴的命令序列 + 访问地址/端口）
+
+```
+- {yymmdd hhmm} 📖 运行指南 → README.md（快速开始）
+```
+
 ### Phase 3.5：指标落盘 + 经验提炼（自进化闭环）
 
 **Step A — 主Agent 写 metrics.md 结构部分**（从自己的 main-log.md 统计，不读报告内容，不违反上下文规则）：
