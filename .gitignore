@@ -1,0 +1,4 @@
+# 项目级特定配置，不纳入框架仓库
+settings.json
+settings.local.json
+TRUSTED
