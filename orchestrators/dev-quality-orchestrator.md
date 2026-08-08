@@ -56,6 +56,27 @@
 
 ---
 
+## 入口工作流路由（B1）— 需求进门先分级
+
+收到需求后先判断规模/类型，决定走哪条流水线。**判断靠证据，拿不准走标准**：
+
+| 判定依据（看需求描述/PRD 规模） | 模式 | 处理 |
+|---------|------|------|
+| 已有明确 bug 描述（"XX 坏了 / 报错 XX"） | **BugFix** | 轻量分支：resume 相关 Dev + 只跑受影响维度重测；不重走 PM/Planner |
+| 小需求：≤10 源文件 / 单模块 / 无多端 / 无复杂状态 | **快速模式** | 压缩版循环（见下） |
+| 其余（多模块/多端/复杂状态/拿不准） | **标准SOP** | 现有全流程 |
+
+**快速模式 = 压缩版循环**（保留五维质量门，压缩批次与轮数）：
+- PM：注入 `PRD 模式：简洁`
+- Planner：注入"拆 ≤3 大任务"
+- Dev：任务只涉一端时只启一个 Dev（涉及全栈仍 FE/BE 并行，但只 1 批、任务 ≤3）
+- 测试：五维并行 1 轮；修正 ≤2 轮（非 3）
+- **测试契约照常产**：feature-spec.md 的 F/B/S/E/Q 是 Dev/Planner/Tester 共享上下文，快速模式也必须产契约、Dev 仍照契约写单测、Tester 仍照契约验证——只是批/轮更少
+
+**模式传递**：确定模式后，把 `模式：{标准SOP / 快速模式 / BugFix}` 拼进 PM / Planner / Dev / Tester 的 prompt，让各自按模式行事。
+
+---
+
 ## Agent ID 收集
 
 **Agent 工具调用的返回值中直接包含 agentId，禁止使用 `find ~/.claude` 或任何 meta.json 文件查找的方式获取 ID**（并发后台 agent 时按文件 mtime 取最新必然拿错角色对应的 ID）。
@@ -110,6 +131,25 @@ Agent(
 
 ---
 
+## Phase 0.5：原型子流水线（A3，自动判断）
+
+PRD 写完后、计划开始前，**自动判断是否需要原型**——由 code-prototype-builder 读 PRD「视觉意图」段自行判断（编排器不读需求内容）：
+
+```
+Agent(
+  subagent_type: "code-prototype-builder",
+  prompt: "需求/PRD：{REPO_DIR}/docs/prd.md\n代码仓库：{REPO_DIR}\n\n请读 PRD「视觉意图」段：若场景含前端/Web（网页/SaaS/仪表盘/移动端/文档页/多端）→ 生成 docs/prototype/index.html + DESIGN.md + README.md；若为 CLI/API/无界面 → 返回「原型：SKIP」不写文件。完成后只返回路径或 SKIP。"
+)
+```
+
+等待完成 → **确认是否产出**（用 Glob 检查 `{REPO_DIR}/docs/prototype/index.html` 是否存在）：
+- 存在 → 记录 `PROTO_PATH={REPO_DIR}/docs/prototype/DESIGN.md`，后续注入 Step1 FE Dev + Step2 quality tester 的 prompt（"视觉基准：{PROTO_PATH}，UI 对齐其设计令牌；quality 以它核查视觉一致性"）
+- 不存在 / SKIP → 无原型，正常走计划
+
+日志：`- {yymmdd hhmm} 原型子流水线：{产出 / SKIP}`
+
+---
+
 ## Phase 1：计划
 
 **日志写入**：`- {yymmdd hhmm} 启动计划子Agent`
@@ -159,7 +199,7 @@ Agent(
 Agent(
   subagent_type: "code-dev-frontend",
   run_in_background: true,
-  prompt: "前端开发任务：{TASK_ID1} ({标题1}), {TASK_ID2} ({标题2}), ...\ndev-plan: {REPO_DIR}/docs/dev-plan.md\nfeature-spec: {REPO_DIR}/docs/feature-spec.md（含测试契约）\nprd: {REPO_DIR}/docs/prd.md\nlessons-learned: {REPO_DIR}/docs/lessons-learned.md\nsmoke-checks: {REPO_DIR}/docs/smoke-checks.md\n\n请按顺序逐任务开发前端部分。按测试契约的 F/B/S 用例写单测到 tests/unit/，覆盖归属 FE 的用例，产出 tests/reports/{TASK_ID}-selfcheck-fe.md 自检报告。"
+  prompt: "前端开发任务：{TASK_ID1} ({标题1}), {TASK_ID2} ({标题2}), ...\ndev-plan: {REPO_DIR}/docs/dev-plan.md\nfeature-spec: {REPO_DIR}/docs/feature-spec.md（含测试契约）\nprd: {REPO_DIR}/docs/prd.md\nlessons-learned: {REPO_DIR}/docs/lessons-learned.md\nsmoke-checks: {REPO_DIR}/docs/smoke-checks.md\n视觉基准（如存在）：{PROTO_PATH}\n\n请按顺序逐任务开发前端部分。按测试契约的 F/B/S 用例写单测到 tests/unit/，覆盖归属 FE 的用例，产出 tests/reports/{TASK_ID}-selfcheck-fe.md 自检报告。"
 )
 
 Agent(
@@ -216,7 +256,7 @@ Agent A:
 Agent B:
   subagent_type: "code-tester-quality",
   run_in_background: true,
-  prompt: "代码质量测试：{本批所有TASK_ID}\n待测仓库：{REPO_DIR}\nfeature-spec: {REPO_DIR}/docs/feature-spec.md\nprd: {REPO_DIR}/docs/prd.md\nDev自检报告: {REPO_DIR}/tests/reports/{TASK_ID}-selfcheck-*.md\n输出目录: {REPO_DIR}/tests/reports/"
+  prompt: "代码质量测试：{本批所有TASK_ID}\n待测仓库：{REPO_DIR}\nfeature-spec: {REPO_DIR}/docs/feature-spec.md\nprd: {REPO_DIR}/docs/prd.md\nDev自检报告: {REPO_DIR}/tests/reports/{TASK_ID}-selfcheck-*.md\n视觉基准（如存在）：{PROTO_PATH}\n输出目录: {REPO_DIR}/tests/reports/"
 
 Agent C:
   subagent_type: "code-tester-robustness",
@@ -252,6 +292,18 @@ Grep(pattern="^### 判定", path="{REPO_DIR}/tests/reports/{TASK_ID}-{dimension}
 ```
 
 ### Step 3：修正循环（≤3轮，前后端并行修正）
+
+**Step 3 前置：失败分类路由（B5）**——本批有 FAIL 时，先对每个 FAIL 报告 Grep `### 失败分类：` 行，按分类分流（轮数上限不变）：
+
+| 失败分类 | 路由 |
+|---------|------|
+| `实现Bug` | resume 对应 Dev 修（现有路径） |
+| `测试Bug` | tester 误判：resume 对应 Tester 复核重测，不折腾 Dev |
+| `契约Bug` | 契约预期与 PRD 不符：resume code-planner 修 feature-spec 测试契约段（改预期/补用例），再 resume Dev 按新契约修 |
+| `混合` | Dev 全量修 + 契约相关项联动 Planner 核对 |
+| 无分类行 | 保守兜底：resume Dev 全量修 |
+
+原型存在（`docs/prototype/`）时，视觉类 FAIL（`Q-VISUAL-SLOP`）路由到 FE Dev，提示其对齐 `docs/prototype/DESIGN.md`。
 
 ```
 round = 0

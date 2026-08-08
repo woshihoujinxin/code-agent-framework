@@ -64,6 +64,18 @@
 
 ---
 
+## 入口工作流路由（B1）— 需求进门先分级
+
+| 判定依据 | 模式 | 处理 |
+|---------|------|------|
+| 已有明确 bug 描述 | **BugFix** | resume 相关 Dev + 受影响环节重跑 |
+| 小需求（≤10 源文件 / 单模块 / 无多端） | **快速模式** | 压缩链：单 Dev + 单 Reviewer + 构建/校验 + E2E 各 1 轮，修正 ≤2 轮 |
+| 其余 | **标准SOP** | 现有全流程 |
+
+模式标记拼进各子Agent prompt。**测试契约照常产**（feature-spec F/B/S/E/Q 是共享上下文），只是批/轮更少。
+
+---
+
 ## Agent ID 收集
 
 **Agent 工具调用的返回值中直接包含 agentId，禁止使用 `find ~/.claude` 或任何 meta.json 文件查找的方式获取 ID**（并发后台 agent 时按文件 mtime 取最新必然拿错角色对应的 ID）。
@@ -93,6 +105,21 @@ Agent(
 
 ---
 
+## Phase 0.5：原型子流水线（A3，Web 项目自动判断）
+
+PRD 写完后、计划开始前，启动 code-prototype-builder 读 PRD「视觉意图」段自行判断（编排器不读需求内容）：
+
+```
+Agent(
+  subagent_type: "code-prototype-builder",
+  prompt: "需求/PRD：{REPO_DIR}/docs/prd.md\n代码仓库：{REPO_DIR}\n\n请读 PRD「视觉意图」段：若场景含前端/Web → 生成 docs/prototype/index.html + DESIGN.md + README.md；若为 CLI/API/无界面 → 返回「原型：SKIP」不写文件。完成后只返回路径或 SKIP。"
+)
+```
+
+确认产出（Glob 查 `docs/prototype/index.html` 存在）后记录 `PROTO_PATH`，注入 Step1 FE Dev prompt（"视觉基准：{PROTO_PATH}"）。SKIP 则正常走链。
+
+---
+
 ## Phase 1：计划
 
 启动 code-planner，产出 `docs/dev-plan.md`、`docs/feature-spec.md`、`docs/lessons-learned.md`、`tests/reports/`，搭建项目骨架。
@@ -109,7 +136,7 @@ Agent(
 Agent(
   subagent_type: "code-dev-frontend",
   run_in_background: true,
-  prompt: "前端开发任务：{TASK_IDs}\ndev-plan: {REPO_DIR}/docs/dev-plan.md\nfeature-spec: {REPO_DIR}/docs/feature-spec.md（含测试契约）\nprd: {REPO_DIR}/docs/prd.md\nlessons-learned: {REPO_DIR}/docs/lessons-learned.md\nsmoke-checks: {REPO_DIR}/docs/smoke-checks.md\n\n按测试契约 F/B/S 用例写单测覆盖归属 FE 的用例，产出 tests/reports/{TASK_ID}-selfcheck-fe.md。"
+  prompt: "前端开发任务：{TASK_IDs}\ndev-plan: {REPO_DIR}/docs/dev-plan.md\nfeature-spec: {REPO_DIR}/docs/feature-spec.md（含测试契约）\nprd: {REPO_DIR}/docs/prd.md\nlessons-learned: {REPO_DIR}/docs/lessons-learned.md\nsmoke-checks: {REPO_DIR}/docs/smoke-checks.md\n视觉基准（如存在）：{PROTO_PATH}\n\n按测试契约 F/B/S 用例写单测覆盖归属 FE 的用例，产出 tests/reports/{TASK_ID}-selfcheck-fe.md。"
 )
 
 Agent(
@@ -169,6 +196,19 @@ Agent(
 ```
 
 等待 → 提取 E2E_ID。
+
+### Step 5b：导出交付（A5，有前端/原型时）
+
+本批含前端 UI（有 `docs/prototype/` 或前端产物）且 E2E PASS 后，启动 code-export-specialist 导出交付物到 `{REPO_DIR}/exports/`：
+
+```
+Agent(
+  subagent_type: "code-export-specialist",
+  prompt: "导出交付：{TASK_IDs}\n待导出仓库：{REPO_DIR}\n原型（如存在）：{REPO_DIR}/docs/prototype/index.html\n前端产物：{前端入口路径}\n\n将已通过质量审查的产物导出为 HTML（单文件内联）/PDF/PPTX/ZIP 到 {REPO_DIR}/exports/。完成后只返回导出文件路径列表。"
+)
+```
+
+等待 → 记录导出路径到 main-log.md。无前端 UI / 无导出需求时跳过本步。
 
 ### Step 6：修正循环（≤3轮）
 

@@ -142,6 +142,9 @@ Grep(pattern="(eval\\(|exec\\(|os\\.system|subprocess.*shell=True|innerHTML)", o
 
 ### 判定：FAIL
 
+### 失败分类：{实现Bug / 测试Bug / 契约Bug / 混合}
+{从 S 用例失败 + 契约外新发现漏洞归类}
+
 ### 问题标签
 - {从 4b 标签表选取，逗号分隔，不得自造}
 

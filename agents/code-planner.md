@@ -27,6 +27,7 @@ skills:
 ## 目录规范（强制）
 
 - 开发计划 → `{REPO_DIR}/docs/dev-plan.md`
+- 架构设计 → `{REPO_DIR}/docs/design.md`（B3，含 Mermaid 类图/时序图/共享知识）
 - 功能规格 → `{REPO_DIR}/docs/feature-spec.md`
 - 经验库 → `{REPO_DIR}/docs/lessons-learned.md`
 - 项目骨架 → `{REPO_DIR}/src/`、`{REPO_DIR}/tests/`、`{REPO_DIR}/tests/reports/`
@@ -55,7 +56,11 @@ skills:
 
 1. **REQ_FILE** — 完整阅读需求文档
 2. **coding-standards skill** — 掌握编码规范、设计模式、项目结构约定
-3. **REPO_DIR 已有代码** — 如果是增量开发，了解已有代码结构
+3. **REPO_DIR 已有代码** — 如果是增量开发（B7），了解已有代码结构后执行**增量设计**：
+   - 读取旧 dev-plan.md / feature-spec.md 任务清单，新任务**续号**（TASK 编号延续）
+   - 只对变更/新增模块写设计文档与测试契约，不重写已验收的契约
+   - 任务拆分遵循**最小变更原则**：能改的模块只改，不新建平行模块
+   - 输出时注明"增量开发：新增 {N} 任务，沿用既有契约"
 
 ### 3. 产出文件（严格按顺序）
 
@@ -135,13 +140,57 @@ grep -c '⚠️'  # 强制通过
 - 无依赖关系的任务可并行（但由主Agent统一调度）
 - **拆分理由**列必须写：为什么这样分而不是合并？为什么这个顺序？为什么依赖？
 
+**B2 任务拆分硬约束（违反即废）**：
+- **任务总数 ≤ 5**：超过则按功能模块合并成大任务（优先并到关联任务，而非平铺）
+- **每任务 ≥ 3 个相关文件**：按功能模块分组（模块=入口 + 核心逻辑 + 配套测试/配置），不按单文件拆任务
+- **TASK01 必为基础设施**：配置 + 入口 + 依赖声明 + 项目骨架（让后续任务只写业务）
+- **禁止过度线性依赖**：任务尽量只依赖 TASK01（基础设施），避免 A→B→C→D 长链；确有顺序要求的保留，但尽量收敛
+
 **DAG 图生成规则**：
 - 必须使用 Mermaid 语法的 `graph TD` 格式
 - 根据任务清单中的"依赖"列自动生成箭头
 - 无依赖的任务作为起始节点
 - 使用 `subgraph` 对相关任务进行分组
 
-#### ② feature-spec.md
+#### ② docs/design.md（B3，架构设计文档）
+
+在 dev-plan.md 之后、feature-spec.md 之前，追加产出**架构设计文档**，作为 Dev 实现的共享知识基准（解决"跨文件约定谁定的"问题）：
+
+```markdown
+# 架构设计文档
+
+## 1. 实现方案与框架选型
+- {技术栈 + 为什么选它（适配需求/团队能力/生态）}
+- {模块划分与依赖关系简述}
+
+## 2. 核心类设计（classDiagram）
+```mermaid
+classDiagram
+    class {类名} {
+        +{属性}
+        +{方法}()
+    }
+    {类A} --> {类B} : 依赖
+```
+
+## 3. 关键流程（sequenceDiagram）
+```mermaid
+sequenceDiagram
+    participant {角色}
+    {A}->>{B}: {消息}
+```
+
+## 4. 共享知识（跨文件约定——Dev 实现前必读）
+- {接口签名约定、命名约定、数据流、错误处理约定、目录职责}
+- {哪些约定会跨多个 TASK 生效，避免各 Dev 各自为政}
+```
+
+**编写原则**：
+- classDiagram 画出核心数据模型/服务类及其关系；sequenceDiagram 画出 1-2 个关键业务流（如创建、查询）
+- 「共享知识」只写**跨任务生效**的约定；单任务细节留在 feature-spec
+- 纯 CLI / 单文件小任务可简化为"无需单独设计文档"并跳过（在 dev-plan 拆分理由注明）
+
+#### ③ feature-spec.md
 
 每个任务的功能规格，包含验收标准和设计约束：
 
@@ -205,11 +254,11 @@ grep -c '⚠️'  # 强制通过
 - 只写"做成什么样"，不写"怎么做"——实现方式留给开发（前后端）决定
 - 涉及外部依赖（Redis、数据库、API等）必须在"测试策略"中注明
 
-#### ②-a feature-spec.md 分批写入策略
+#### ③-a feature-spec.md 分批写入策略
 
 每3-4个任务一批，写完保存。**禁止一次性写入全部任务**。
 
-#### ③ 项目骨架
+#### ④ 项目骨架
 
 在 `REPO_DIR` 中创建标准的项目结构：
 - 创建必要的目录（如 `src/`、`tests/`、`docs/`）
@@ -223,7 +272,7 @@ mkdir -p {REPO_DIR}/tests
 mkdir -p {REPO_DIR}/tests/reports
 ```
 
-#### ④ smoke-checks.md（技术栈解耦的冒烟命令表）
+#### ⑤ smoke-checks.md（技术栈解耦的冒烟命令表）
 
 根据 feature-spec 中每个任务的实际技术栈，声明其冒烟检查命令（供主Agent 在五维测试前执行，避免硬编码 Python）：
 
@@ -242,7 +291,7 @@ mkdir -p {REPO_DIR}/tests/reports
 - 纯前端写前端冒烟命令；纯后端写后端；全栈可写多条以 `;` 分隔
 - 若任务无明确冒烟点（如纯文档），填 `# none`，主Agent 将退化为"文件存在即通过"
 
-#### ⑤ lessons-learned.md
+#### ⑥ lessons-learned.md
 
 ```markdown
 # 经验库
@@ -264,6 +313,7 @@ mkdir -p {REPO_DIR}/tests/reports
 Step 1: Read REQ_FILE
 Step 2: Read coding-standards SKILL.md
 Step 3: Write dev-plan.md
+Step 3.5: Write docs/design.md（B3 架构设计：选型 + classDiagram + sequenceDiagram + 共享知识）
 Step 4: Bash 创建项目骨架
 Step 5: Write lessons-learned.md（代码级+架构级两段）
 Step 6: Write smoke-checks.md（按任务实际技术栈声明冒烟命令）
@@ -280,6 +330,7 @@ Step 8: Edit feature-spec.md（追加第4-7个任务）
 ```
 计划完成，产出文件：
 - {REPO_DIR}/docs/dev-plan.md
+- {REPO_DIR}/docs/design.md（B3 架构设计）
 - {REPO_DIR}/docs/feature-spec.md
 - {REPO_DIR}/docs/lessons-learned.md
 - {REPO_DIR}/docs/smoke-checks.md

@@ -4,6 +4,8 @@
 
 PM → 架构师（生成测试契约）→ 前后端开发（写单测+自检）→ 五维测试（功能/质量/健壮/安全/E2E）→ 修正循环 → code-sage 提炼规则。三层闭环：批次循环 / 修正循环 / 自进化循环。
 
+> 融合设计引擎 + 软件开发团队能力：Web 需求自动出高保真原型（`docs/prototype/` 视觉基准）、工作流路由（标准 / 快速 / BugFix）、失败分类智能路由（B5）、多格式导出（HTML/PDF/PPTX/ZIP）。**测试契约始终是 Dev/Planner/Tester 共享上下文，任何模式都不削弱。**
+
 ## 一句话用
 
 在你的项目里 clone 到 `.claude/`：
@@ -23,10 +25,12 @@ git clone https://github.com/woshihoujinxin/<repo>.git .claude
 
 | 目录 | 内容 |
 |------|------|
-| `agents/` | 13 个 subagent（PM / 架构师 / 前后端 Dev / 五维 Tester / code-sage） |
+| `agents/` | 15 个 subagent（PM / 架构师 / 前后端 Dev / 五维 Tester / 原型构建师 / 导出专家 / code-sage） |
 | `commands/` | `/dev`（研发质量编排）、`/ship`（交付编排）入口 |
 | `orchestrators/` | 两个编排器定义 + 完整文档 + demo |
 | `skills/coding-standards/` | 编码规范 + 自进化规则库（code-sage 自动追加） |
+| `skills/design-systems/` | 设计系统知识库（精选 12 套 + 5 视觉方向 + 品牌提取协议） |
+| `skills/prototype-templates/` | 9 种原型模板结构（原型构建的页面骨架） |
 
 ## 文档
 

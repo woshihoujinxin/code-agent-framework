@@ -81,6 +81,18 @@
 你提需求 → 架构师 拆任务 → 前后端开发 → Reviewer 审查 → Builder 构建 → Validator 校验 → 制品就绪
 ```
 
+### 工作流路由（B1）— 需求进门先分级
+
+| 模式 | 判定 | 处理 |
+|------|------|------|
+| **标准SOP** | 多模块 / 多端 / 复杂状态 / 拿不准 | 现有全流程 |
+| **快速模式** | 小需求（≤10 源文件 / 单模块 / 无多端 / 无复杂状态） | 压缩版循环：PM 简洁PRD + 架构师 ≤3 大任务 + 单 Dev + 五维 1 轮 + 修正 ≤2 轮；**测试契约照常产**（feature-spec F/B/S/E/Q 共享上下文保证不变） |
+| **BugFix** | 明确 bug 描述 | resume 相关 Dev + 受影响维度重测，不重走 PM/Planner |
+
+### 原型子流水线（A3）— Web 需求自动出高保真原型
+
+PRD 写完后自动判断：场景含前端/Web → `code-prototype-builder` 产出 `docs/prototype/index.html` + `DESIGN.md`（视觉基准：前端 Dev 对齐令牌、quality tester 核查视觉一致性）；纯 CLI/API → SKIP 不浪费。交付版尾端再加 `code-export-specialist` 导出 HTML/PDF/PPTX/ZIP 到 `exports/`（A5）。
+
 ---
 
 ## 安装（一键）
@@ -96,7 +108,7 @@ git clone https://github.com/woshihoujinxin/code-agent-framework.git .claude
 > 不想 `.claude/` 带嵌套 `.git`：clone 后 `rm -rf .claude/.git`
 > **更新框架**：`cd my-project/.claude && git pull`（再重启 Claude Code）
 
-clone 后 `.claude/` 自动包含 13 个 subagent、`/dev` `/ship` 命令、两个编排器、coding-standards skill——**无需手动复制任何文件**。
+clone 后 `.claude/` 自动包含 15 个 subagent、`/dev` `/ship` 命令、两个编排器、3 个 skills（coding-standards / design-systems / prototype-templates）——**无需手动复制任何文件**。
 
 **按项目调整编码规范**（可选）：编辑 `.claude/skills/coding-standards/SKILL.md` 的 §1–§4（命名/结构/模式/测试）。末段「自进化规则」由 code-sage 自动追加，不要手改。
 
@@ -167,6 +179,8 @@ clone 后 `.claude/` 自动包含 13 个 subagent、`/dev` `/ship` 命令、两�
 | Builder | `build-builder.md` | `build-builder` | 全流程版 |
 | Validator | `artifact-validator.md` | `artifact-validator` | 全流程版 |
 | 经验提炼 | `code-sage.md` | `code-sage` | 共用（自进化） |
+| 原型构建师 | `code-prototype-builder.md` | `code-prototype-builder` | Web项目（A3） |
+| 导出交付 | `code-export-specialist.md` | `code-export-specialist` | 全流程版（A5） |
 
 > 注：两个版本都用 `code-dev-frontend.md` + `code-dev-backend.md`（前后端分离开发）；区别在全流程版多了 Reviewer/Builder/Validator 制品环节。
 
@@ -206,10 +220,13 @@ clone 后 `.claude/` 自动包含 13 个 subagent、`/dev` `/ship` 命令、两�
 
 | 文件 | 作用 | 谁写 |
 |------|------|------|
-| `docs/prd.md` | 产品需求文档（需求池） | 产品经理 |
+| `docs/prd.md` | 产品需求文档（需求池，含「视觉意图」段） | 产品经理 |
 | `docs/dev-plan.md` | 任务状态追踪 | 架构师 创建，主Agent 更新 |
+| `docs/design.md` | 架构设计（选型+类图+时序图+共享知识，B3） | 架构师 |
 | `docs/feature-spec.md` | 每个任务的功能规格+测试契约 | 架构师 |
 | `docs/lessons-learned.md` | 跨任务经验积累 | Dev（修正后更新） |
+| `docs/prototype/` | 高保真原型 + DESIGN.md（视觉基准，A3） | 原型构建师（Web项目） |
+| `exports/` | 导出交付物（HTML/PDF/PPTX/ZIP，A5） | 导出专家（交付版） |
 | `docs/main-log.md` | 全流程日志 + checkpoint | 主Agent |
 | `docs/upgrade-issue-*.md` | 问题升级需求文档 | 主Agent（3轮修复失败时） |
 | `tests/reports/` | 测试报告目录 | Tester×5 |
@@ -236,6 +253,10 @@ clone 后 `.claude/` 自动包含 13 个 subagent、`/dev` `/ship` 命令、两�
 ### 问题升级
 - 3 轮自动修复仍未通过时，自动触发升级流程
 - PM 评估需求是否需要调整 → 架构师 拆解升级任务 → 加入开发队列
+
+### 失败分类路由（B5）
+- Tester FAIL 报告加「失败分类：实现Bug / 测试Bug / 契约Bug / 混合」
+- 编排器按分类分流：契约Bug→架构师改 feature-spec 契约；测试Bug→Tester 复核；实现Bug→Dev 修复
 
 ### 上下文压缩
 - 每 N 批后自动 checkpoint 到 `main-log.md`
