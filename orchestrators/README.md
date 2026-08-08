@@ -83,80 +83,39 @@
 
 ---
 
-## 安装
+## 安装（一键）
 
-### 1. 复制 Agent 定义到项目
-
-```bash
-# 在你的编码项目根目录下
-mkdir -p .claude/agents
-
-# 复制所有子 Agent 定义
-cp code-agents/code-product-manager.md .claude/agents/
-cp code-agents/code-planner.md .claude/agents/
-cp code-agents/code-dev-frontend.md .claude/agents/
-cp code-agents/code-dev-backend.md .claude/agents/
-cp code-agents/code-tester-correctness.md .claude/agents/
-cp code-agents/code-tester-quality.md .claude/agents/
-cp code-agents/code-tester-robustness.md .claude/agents/
-cp code-agents/code-tester-e2e.md .claude/agents/
-cp code-agents/code-tester-security.md .claude/agents/  # 安全性测试
-cp code-agents/code-sage.md .claude/agents/       # 自进化经验提炼
-```
-
-如需全流程版，额外复制：
+框架就是 `.claude/` 目录的内容。在你的项目里 git clone 即装好：
 
 ```bash
-cp code-agents/code-reviewer.md .claude/agents/
-cp code-agents/build-builder.md .claude/agents/
-cp code-agents/artifact-validator.md .claude/agents/
+cd my-project
+git clone https://github.com/woshihoujinxin/code-agent-framework.git .claude
+# 重启 Claude Code（加载新的 agents / commands / skills）
 ```
 
-### 2. 准备编码规范（可选但推荐）
+> 不想 `.claude/` 带嵌套 `.git`：clone 后 `rm -rf .claude/.git`
+> **更新框架**：`cd my-project/.claude && git pull`（再重启 Claude Code）
 
-在 `.claude/skills/` 下创建 `coding-standards/SKILL.md`，定义项目的编码规范：
+clone 后 `.claude/` 自动包含 13 个 subagent、`/dev` `/ship` 命令、两个编排器、coding-standards skill——**无需手动复制任何文件**。
 
-```bash
-mkdir -p .claude/skills/coding-standards
-```
-
-`SKILL.md` 中应包含：
-- 命名约定（变量、函数、文件）
-- 项目结构约定
-- 设计模式偏好
-- 测试框架
-
-如果不创建此 skill，Agent 会使用通用最佳实践。
-
-### 3. 准备需求文档
-
-创建一个需求文档（如 `requirements.md`），描述你要实现的功能。这是 架构师 的输入。
-
-或者直接向主Agent 描述需求，产品经理（`code-product-manager`）会自动生成 `docs/prd.md`。
+**按项目调整编码规范**（可选）：编辑 `.claude/skills/coding-standards/SKILL.md` 的 §1–§4（命名/结构/模式/测试）。末段「自进化规则」由 code-sage 自动追加，不要手改。
 
 ---
 
 ## 使用
 
-### 启动
+### 启动（一句话）
 
-在 Claude Code 中，将 `dev-quality-orchestrator.md` 的内容作为系统提示词，然后对话：
-
-```
-我需要你作为编码项目的主Agent，按照 dev-quality-orchestrator.md 的流程来开发项目。
-
-需求文档：./requirements.md
-代码仓库：./
-批量大小：1
-```
-
-或者直接描述需求：
+在项目里开 Claude Code，用 slash 命令，斜杠后跟需求：
 
 ```
-帮我做一个 Todo CLI 工具，支持创建/查询/删除/标记完成任务
+/dev 用 Python 做个 Todo CLI，支持创建/查询/删除/标记完成    # 研发质量编排 → 高质量代码
+/ship 做个 FastAPI 服务并打包成 Docker 镜像                  # 交付编排 → 可部署制品
 ```
 
-主Agent 会自动启动产品经理分析需求、生成 PRD，然后进入开发流程。
+也可以不写命令，直接描述需求，PM 会自动生成 PRD 再进入开发。
+
+> `/dev` 走五维质量门（功能/质量/健壮/安全/E2E）产出代码；`/ship` 走审查→构建→校验链产出制品。两者区别见 `dev-quality-orchestrator.md` / `delivery-orchestrator.md` 开头。
 
 ### 执行流程
 
