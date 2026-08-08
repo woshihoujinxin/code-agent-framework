@@ -56,11 +56,11 @@
 ```markdown
 # 研发主日志 · {项目名}
 
-> 🧭 速览：{当前阶段} ｜ 模式：{模式} ｜ 进度：{X}/{N} ｜ 本批：{P}通过/{F}失败 ｜ 修正：{R}轮
+> 🧭 速览：{当前阶段} ｜ 模式：{模式} ｜ 进度：{X}/{N} ｜ 本波：{P}通过/{F}失败 ｜ 修正：{R}轮
 
 ## ① 项目启动
 - {yymmdd hhmm} 🚀 需求进入：{REQ_FILE / 需求摘要}
-- {yymmdd hhmm} 🔢 批量 {BATCH_SIZE} ｜ 模式：{模式}
+- {yymmdd hhmm} 🔢 波宽 {BATCH_SIZE} ｜ 模式：{模式}
 
 ## ② 需求分析 [PM + 原型]
 ## ③ 计划 [Planner]
@@ -86,16 +86,16 @@
 2. 确认输出目录 = 代码仓库根目录，记为 `REPO_DIR`
 3. 确认需求文件路径，记为 `REQ_FILE`（**不要读取内容，只记录路径**）
 4. 创建日志文件 `{REPO_DIR}/docs/main-log.md`，写入项目信息
-5. 确认批量大小，记为 `BATCH_SIZE`（默认值：1）
+5. 确认任务波宽，记为 `BATCH_SIZE`（开发阶段同层并发任务数，**默认 2**；=1 则按依赖顺序逐个推进）
 
 **日志写入**：按「日志写入规范」骨架创建（{项目名} = REPO_DIR 目录名），写 ① 项目启动 段：
 ```
 # 研发主日志 · {项目名}
-> 🧭 速览：① 项目启动 ｜ 模式：{模式} ｜ 进度：0/{N} ｜ 本批：— ｜ 修正：0轮
+> 🧭 速览：① 项目启动 ｜ 模式：{模式} ｜ 进度：0/{N} ｜ 本波：— ｜ 修正：0轮
 
 ## ① 项目启动
 - {yymmdd hhmm} 🚀 需求进入：{REQ_FILE}
-- {yymmdd hhmm} 🔢 批量 {BATCH_SIZE} ｜ 模式：{模式}
+- {yymmdd hhmm} 🔢 波宽 {BATCH_SIZE} ｜ 模式：{模式}
 ```
 
 ---
@@ -146,26 +146,27 @@
 
 ---
 
-## 并发度控制（MAX_PARALLEL）
+## 并发度控制（两层旋钮，分阶段启用，不相乘）
 
-**目的**：控制任意时刻并存的后台子 Agent 数，防 API 限流 / 单机资源争抢 / 完成通知乱序。这是调度约束——**不影响质量门**（所有维度照跑，只是分波），不影响判定提取与修正轮数。
+**核心**：并发分两层，**各管各的、不相乘**——开发阶段任务级并发，测试阶段维度级并发。峰值 = **max(2×BATCH_SIZE, MAX_PARALLEL)**，**绝不出现"任务数×维度数"的乘积爆炸**（如 15 tester）。
 
-**配置**：`MAX_PARALLEL`，范围 **3–5**，默认 **5**（对齐五维维度数）。
+| 层 | 旋钮 | 管什么 | 默认 | 峰值 agent |
+|----|------|--------|------|-----------|
+| ① 任务级（开发） | `BATCH_SIZE`（任务波宽） | 一次并发几个**就绪任务**开发 | **2** | 2 × BATCH_SIZE（每任务 FE+BE） |
+| ② 维度级（测试） | `MAX_PARALLEL` | 单任务五维 tester 并发数 | **5** | MAX_PARALLEL（一次只测一个任务） |
 
-| 取值 | 五维测试 | 取舍 |
-|------|---------|------|
-| **5（默认）** | 1 波全并行，最快 | 五维本就是并行钻透的设计，上限对齐维度数最自然；机器/API 余量正常就用它 |
-| 4 | 分 2 波（4+1） | 限流/资源略紧时降一档 |
-| 3 | 分 2 波（3+2） | 最保守；API 限流严重或单机资源吃紧时用 |
+**为什么不相乘**：测试阶段**一次只测一个任务**（任务串行测），所以测试 agent 峰值恒为 MAX_PARALLEL、与 BATCH_SIZE 无关；只有开发阶段才是 BATCH_SIZE 个任务并发（各 FE+BE）。两阶段不重叠 → 峰值取 max 而非乘积。
 
-> 取值不确定就用默认 **5**；观察到后台 agent 频繁超时/限流再往下压（4 或 3）。仅 master 调度遵守，无需写进子 Agent prompt。
+**`BATCH_SIZE`（任务波宽，开发阶段）**：DAG 同层就绪任务取 `min(BATCH_SIZE, |ready|)` 个并发开发。
+- 默认 **2**：开发 2 任务并发 = 4 dev agent，温和提速。
+- `=1`：退化为按依赖顺序逐个推进（兼容旧行为 + 修依赖顺序 bug）。
+- 可调至 5：开发 5 任务并发 = 10 dev agent，最快但 API/资源压力大（agent 多但**不爆炸**，因测试仍单任务）。
 
-**各阶段规则**：
-- **开发阶段**（FE/BE Dev 并行）：最多 2 ≤ MAX_PARALLEL，**无需分波**。
-- **测试阶段**（5 维 tester）：按 `MAX_PARALLEL` **分波**——波内后台并行、波间串行（前波**全完成**才启下一波）；波内建议顺序 `功能 → 质量 → 健壮 → 安全 → E2E`。所有维度测完（5 份报告都有最新判定）后才判全 PASS/FAIL。
-- **修正阶段**：Dev 修完再重测，天然串行；重测若多维度，同样按 MAX_PARALLEL 分波。
+**`MAX_PARALLEL`（维度级，测试阶段）**：单任务五维 tester 并发。默认 **5**（五维全并行一波）；限流/资源吃紧降到 4/3 则按上限**分波**（波内顺序 `功能→质量→健壮→安全→E2E`，=3 时 波1={功能,质量,健壮} 波2={安全,E2E}）。
 
-**分波不改变**：判定提取（仍 Grep 各维度报告最后一次 `### 判定`，行号最大者=最新轮次）、修正循环轮数（≤3）、日志格式（首次测试仍是 5 维 P/F 一行）。
+> 取值：BATCH_SIZE 想提速往上调（2→3→5）；MAX_PARALLEL 默认 5、限流才降。两者独立，总峰值 = max(2×BATCH_SIZE, MAX_PARALLEL)。仅 master 调度遵守，无需写进子 Agent prompt。
+
+**不影响**：判定提取（Grep 各维度报告最后一次 `### 判定`，行号最大者=最新轮次）、修正循环轮数（≤3）、日志格式、质量门。
 
 ---
 
@@ -259,40 +260,56 @@ Agent(
 
 ---
 
-## Phase 2：批量开发循环
+## Phase 2：DAG 拓扑开发循环（就绪集取波，非平铺切块）
 
-读取 `{REPO_DIR}/docs/dev-plan.md`，获取所有 ⏳ 任务。
-
-将 ⏳ 任务按 `BATCH_SIZE` 分组，每组执行：
-
-### Step 1：前后端并行开发
+不再把 ⏳ 任务按编号顺序平铺切块，而是按 dev-plan 的 **DAG 依赖**算就绪集、取波并发——同层（依赖已满足）任务并发开发，跨层由就绪集自动串行。**每波循环执行**：
 
 ```
-先追加 ④ 段头（每批一次）：
-## ④ 批次循环 Batch {当前批次}/{总批数} [Dev×2 + Tester×5]
+1. Grep dev-plan.md 任务行并解析 {ID | 状态 | 依赖}：
+   Grep(pattern: '^\| [0-9]+ \| TASK', path: '{REPO_DIR}/docs/dev-plan.md', output_mode: 'content', '-n': true)
+   表格列序固定：| # | 任务ID | 标题 | 状态 | 依赖 | 拆分理由 |
+2. ✅集 = 状态 ✅ 的所有 ID
+3. 就绪集 ready = 状态 ⏳ 且「依赖列每项都在 ✅集」的任务（无依赖任务首波即就绪）
+4. ready 为空时：仍有 ⏳/🔄 → 上游未完成/波进行中，等待不启新波；全部 ✅/⚠️ → 进 Phase 3
+5. 开发波 = ready 前 min(BATCH_SIZE, |ready|) 个  （BATCH_SIZE = 任务波宽，见「并发度控制」）
+```
 
-日志：- {yymmdd hhmm} ▶ 本批开发启动：{TASK_ID1} ({标题1}), {TASK_ID2} ({标题2}), ...
+> 依赖列解析约定：逗号分隔多依赖（`TASK01,TASK02`）；`-` 表无依赖；升级任务 ID `TASK01-01` 照常比较。
 
+### Step 1：开发波并发开发（波内每任务 FE+BE）
+
+先追加 ④ 段头（每波一次）：
+```
+## ④ 波 {波序号} [Dev×{2×本波任务数} + Tester×5] ｜ 本波：{TASK_ID1}, {TASK_ID2}, ...
+```
+日志：`- {yymmdd hhmm} ▶ 开发波启动：{TASK_ID1} ({标题1}), {TASK_ID2} ({标题2}), ...`
+
+**波内每个就绪任务各派一组 FE+BE，全部后台并行**（任务级并发 × 前后端并发，峰值 2×BATCH_SIZE 个 dev agent）：
+
+```
+对开发波内每个任务 TASK_IDx（x = 1..本波任务数），各启动：
 Agent(
   subagent_type: "code-dev-frontend",
   run_in_background: true,
-  prompt: "前端开发任务：{TASK_ID1} ({标题1}), {TASK_ID2} ({标题2}), ...\ndev-plan: {REPO_DIR}/docs/dev-plan.md\nfeature-spec: {REPO_DIR}/docs/feature-spec.md（含测试契约）\nprd: {REPO_DIR}/docs/prd.md\nlessons-learned: {REPO_DIR}/docs/lessons-learned.md\nsmoke-checks: {REPO_DIR}/docs/smoke-checks.md\n视觉基准（如存在）：{PROTO_PATH}\n\n请按顺序逐任务开发前端部分。按测试契约的 F/B/S 用例写单测到 tests/unit/，覆盖归属 FE 的用例，产出 tests/reports/{TASK_ID}-selfcheck-fe.md 自检报告。"
+  prompt: "前端开发任务：{TASK_IDx} ({标题x})\ndev-plan: {REPO_DIR}/docs/dev-plan.md\nfeature-spec: {REPO_DIR}/docs/feature-spec.md（含测试契约）\nprd: {REPO_DIR}/docs/prd.md\nlessons-learned: {REPO_DIR}/docs/lessons-learned.md\nsmoke-checks: {REPO_DIR}/docs/smoke-checks.md\n视觉基准（如存在）：{PROTO_PATH}\n\n按测试契约 F/B/S 用例写单测到 tests/unit/，覆盖归属 FE 的用例，产出 tests/reports/{TASK_IDx}-selfcheck-fe.md 自检报告。"
 )
-
 Agent(
   subagent_type: "code-dev-backend",
   run_in_background: true,
-  prompt: "后端开发任务：{TASK_ID1} ({标题1}), {TASK_ID2} ({标题2}), ...\ndev-plan: {REPO_DIR}/docs/dev-plan.md\nfeature-spec: {REPO_DIR}/docs/feature-spec.md（含测试契约）\nprd: {REPO_DIR}/docs/prd.md\nlessons-learned: {REPO_DIR}/docs/lessons-learned.md\nsmoke-checks: {REPO_DIR}/docs/smoke-checks.md\n\n请按顺序逐任务开发后端部分。按测试契约的 F/B/S 用例写单测到 tests/unit/，覆盖归属 BE 的用例，产出 tests/reports/{TASK_ID}-selfcheck-be.md 自检报告。"
+  prompt: "后端开发任务：{TASK_IDx} ({标题x})\ndev-plan: {REPO_DIR}/docs/dev-plan.md\nfeature-spec: {REPO_DIR}/docs/feature-spec.md（含测试契约）\nprd: {REPO_DIR}/docs/prd.md\nlessons-learned: {REPO_DIR}/docs/lessons-learned.md\nsmoke-checks: {REPO_DIR}/docs/smoke-checks.md\n\n按测试契约 F/B/S 用例写单测到 tests/unit/，覆盖归属 BE 的用例，产出 tests/reports/{TASK_IDx}-selfcheck-be.md 自检报告。"
 )
+# 本波所有任务的 FE/BE 全部并行启动（一条消息发多个 Agent 调用）
 ```
 
-等待完成 → **立即提取 FE_DEV_ID 和 BE_DEV_ID，写入日志**。
+等待开发波全部完成 → **逐任务提取 FE_DEV_ID / BE_DEV_ID，写日志 + dev-plan 该任务标 🔄**：
 
 ```
-日志：- {yymmdd hhmm} ✅ 本批开发完成：{TASK_ID1}, {TASK_ID2} 已提交 (FE_DEV_ID: {FE_DEV_ID}, BE_DEV_ID: {BE_DEV_ID})
+日志（每个任务一行）：
+- {yymmdd hhmm} ✅ 开发完成：{TASK_ID1} (FE_DEV_ID: {id}, BE_DEV_ID: {id})
+- {yymmdd hhmm} ✅ 开发完成：{TASK_ID2} (FE_DEV_ID: {id}, BE_DEV_ID: {id})
 ```
 
-> 如果某个任务只涉及前端或只涉及后端，仅启动对应的开发Agent即可。
+> 任务只涉前端或后端时，该任务仅启动对应一个开发 Agent。FE/BE 每任务独立成对，便于 Step 3 按「失败分类」精确 resume 对应任务的 Dev（不牵连同波其他任务）。
 
 ### Step 1b：冒烟检查（声明式，必经关卡）
 
@@ -301,7 +318,7 @@ Agent(
 冒烟命令**从 `docs/smoke-checks.md` 读取，禁止硬编码任何语言特定的 import 命令**（避免耦合 Python）：
 
 ```
-对每个本批 TASK_ID：
+对开发波内每个 TASK_IDx（逐个冒烟）：
   Grep(pattern="^| {TASK_ID} |", path="{REPO_DIR}/docs/smoke-checks.md")
   执行该行的 smoke_command（按 pass_criteria 判定，通常 exit 0）
   执行该行的单元测试命令（单测命令，由 Dev 填写）— 全绿才算过
@@ -312,48 +329,50 @@ Agent(
 ```
 
 **退化策略**：如果 `docs/smoke-checks.md` 不存在，或该 TASK_ID 的 smoke_command 为 `# none`：
-- 用 Glob 列出本批 Dev 新增/修改的文件，**只要文件存在即视为通过**（不假设任何语言）
+- 用 Glob 列出本波 Dev 新增/修改的文件，**只要文件存在即视为通过**（不假设任何语言）
 
 **判定**：
 - 冒烟命令满足 pass_criteria（或退化策略通过）→ ✅ 进入 Step 2
 - 不满足 → ❌ 回到 Step 1 resume 开发Agent 修复，最多重试 2 次，不进入测试阶段
 
 ```
-日志：- {yymmdd hhmm} 🔬 冒烟检查：{TASK_ID1}{PASS/FAIL}, {TASK_ID2}{PASS/FAIL}
+日志（逐任务）：- {yymmdd hhmm} 🔬 冒烟检查：{TASK_IDx}{PASS/FAIL}
 ```
 
-### Step 2：五维测试（按 MAX_PARALLEL 分波）
+### Step 2：逐任务五维测试（任务串行，避免并发爆炸）
 
-5 个维度 tester 按下图定义；默认 `MAX_PARALLEL=5` 时五维**全并行一波**（无需分波，最快）；若降到 4/3 则按上限**分波**——波内后台并行、波间串行（前波全完成才启下一波），波内顺序 `功能→质量→健壮→安全→E2E`（=3 时 波1={功能,质量,健壮} 波2={安全,E2E}）。等所有维度测完再汇总 5 维判定。
+**关键：一次只测一个任务**——对开发波内任务**逐个**跑五维（一个测完再测下一个），**绝不**对整波任务同时并发五维（否则 agent 数 = 本波任务数 × 5 会爆炸）。每个任务的五维 tester 按 `MAX_PARALLEL` 并行（默认 5 = 五维全并行；<5 则按上限分波，波内顺序 `功能→质量→健壮→安全→E2E`）。逐任务使测试 agent 峰值恒为 MAX_PARALLEL(5)，与波宽无关——**绝不出现 15 tester**。
 
 ```
+对开发波内每个任务 TASK_IDx（一个一个测，前一个五维完成且 PASS 后再测下一个；FAIL 则进 Step 3 仅修该任务）。下面是该任务的五维 tester 定义：
+
 Agent A:
   subagent_type: "code-tester-correctness",
   run_in_background: true,
-  prompt: "功能正确性测试：{本批所有TASK_ID}\n待测仓库：{REPO_DIR}\nfeature-spec: {REPO_DIR}/docs/feature-spec.md\nprd: {REPO_DIR}/docs/prd.md\nDev自检报告: {REPO_DIR}/tests/reports/{TASK_ID}-selfcheck-*.md\n输出目录: {REPO_DIR}/tests/reports/"
+  prompt: "功能正确性测试：{TASK_IDx}\n待测仓库：{REPO_DIR}\nfeature-spec: {REPO_DIR}/docs/feature-spec.md\nprd: {REPO_DIR}/docs/prd.md\nDev自检报告: {REPO_DIR}/tests/reports/{TASK_ID}-selfcheck-*.md\n输出目录: {REPO_DIR}/tests/reports/"
 
 Agent B:
   subagent_type: "code-tester-quality",
   run_in_background: true,
-  prompt: "代码质量测试：{本批所有TASK_ID}\n待测仓库：{REPO_DIR}\nfeature-spec: {REPO_DIR}/docs/feature-spec.md\nprd: {REPO_DIR}/docs/prd.md\nDev自检报告: {REPO_DIR}/tests/reports/{TASK_ID}-selfcheck-*.md\n视觉基准（如存在）：{PROTO_PATH}\n输出目录: {REPO_DIR}/tests/reports/"
+  prompt: "代码质量测试：{TASK_IDx}\n待测仓库：{REPO_DIR}\nfeature-spec: {REPO_DIR}/docs/feature-spec.md\nprd: {REPO_DIR}/docs/prd.md\nDev自检报告: {REPO_DIR}/tests/reports/{TASK_ID}-selfcheck-*.md\n视觉基准（如存在）：{PROTO_PATH}\n输出目录: {REPO_DIR}/tests/reports/"
 
 Agent C:
   subagent_type: "code-tester-robustness",
   run_in_background: true,
-  prompt: "健壮性测试：{本批所有TASK_ID}\n待测仓库：{REPO_DIR}\nfeature-spec: {REPO_DIR}/docs/feature-spec.md\nprd: {REPO_DIR}/docs/prd.md\nDev自检报告: {REPO_DIR}/tests/reports/{TASK_ID}-selfcheck-*.md\n输出目录: {REPO_DIR}/tests/reports/"
+  prompt: "健壮性测试：{TASK_IDx}\n待测仓库：{REPO_DIR}\nfeature-spec: {REPO_DIR}/docs/feature-spec.md\nprd: {REPO_DIR}/docs/prd.md\nDev自检报告: {REPO_DIR}/tests/reports/{TASK_ID}-selfcheck-*.md\n输出目录: {REPO_DIR}/tests/reports/"
 
 Agent D:
   subagent_type: "code-tester-e2e",
   run_in_background: true,
-  prompt: "端到端测试：{本批所有TASK_ID}\n待测仓库：{REPO_DIR}\nfeature-spec: {REPO_DIR}/docs/feature-spec.md\nprd: {REPO_DIR}/docs/prd.md\ndesign: {REPO_DIR}/docs/design.md（含时序图——E 场景链路依据；若只有 architecture.md 则传该路径）\nDev自检报告: {REPO_DIR}/tests/reports/{TASK_ID}-selfcheck-*.md\n输出目录: {REPO_DIR}/tests/reports/"
+  prompt: "端到端测试：{TASK_IDx}\n待测仓库：{REPO_DIR}\nfeature-spec: {REPO_DIR}/docs/feature-spec.md\nprd: {REPO_DIR}/docs/prd.md\ndesign: {REPO_DIR}/docs/design.md（含时序图——E 场景链路依据；若只有 architecture.md 则传该路径）\nDev自检报告: {REPO_DIR}/tests/reports/{TASK_ID}-selfcheck-*.md\n输出目录: {REPO_DIR}/tests/reports/"
 
 Agent E:
   subagent_type: "code-tester-security",
   run_in_background: true,
-  prompt: "安全性测试：{本批所有TASK_ID}\n待测仓库：{REPO_DIR}\nfeature-spec: {REPO_DIR}/docs/feature-spec.md\nprd: {REPO_DIR}/docs/prd.md\nDev自检报告: {REPO_DIR}/tests/reports/{TASK_ID}-selfcheck-*.md\n输出目录: {REPO_DIR}/tests/reports/"
+  prompt: "安全性测试：{TASK_IDx}\n待测仓库：{REPO_DIR}\nfeature-spec: {REPO_DIR}/docs/feature-spec.md\nprd: {REPO_DIR}/docs/prd.md\nDev自检报告: {REPO_DIR}/tests/reports/{TASK_ID}-selfcheck-*.md\n输出目录: {REPO_DIR}/tests/reports/"
 ```
 
-等待所有波完成 → 收集 5 维 PASS/FAIL 判定 + 报告路径。
+等待该任务（TASK_IDx）五维全部完成 → 收集 5 维 PASS/FAIL 判定 + 报告路径。全 PASS → dev-plan 该任务标 ✅，继续测波内下一个任务；有 FAIL → 进 Step 3（仅修该任务）。本波所有任务都 ✅ → 回 Phase 2 入口算下一波就绪集。
 
 存储：TEST_CORRECTNESS_ID、TEST_QUALITY_ID、TEST_ROBUSTNESS_ID、TEST_SECURITY_ID、TEST_E2E_ID。
 
@@ -365,14 +384,14 @@ Grep(pattern="^### 判定", path="{REPO_DIR}/tests/reports/{TASK_ID}-{dimension}
 
 **日志写入**：
 ```
-- {yymmdd hhmm} 📋 首次测试 {TASK_ID1}：功能{P/F} / 质量{P/F} / 健壮{P/F} / 安全{P/F} / E2E{P/F}
-- {yymmdd hhmm} 📋 首次测试 {TASK_ID2}：功能{P/F} / 质量{P/F} / 健壮{P/F} / 安全{P/F} / E2E{P/F}
-- {yymmdd hhmm} 🆔 AgentID：功能={TEST_CORRECTNESS_ID} / 质量={TEST_QUALITY_ID} / 健壮={TEST_ROBUSTNESS_ID} / 安全={TEST_SECURITY_ID} / E2E={TEST_E2E_ID}
+（逐任务，每测完一个任务写两行）
+- {yymmdd hhmm} 📋 测试 {TASK_IDx}：功能{P/F} / 质量{P/F} / 健壮{P/F} / 安全{P/F} / E2E{P/F}
+- {yymmdd hhmm} 🆔 {TASK_IDx} 测试 AgentID：功能={TEST_CORRECTNESS_ID} / 质量={TEST_QUALITY_ID} / 健壮={TEST_ROBUSTNESS_ID} / 安全={TEST_SECURITY_ID} / E2E={TEST_E2E_ID}
 ```
 
 ### Step 3：修正循环（≤3轮，前后端并行修正）
 
-**Step 3 前置：失败分类路由（B5）**——本批有 FAIL 时，先对每个 FAIL 报告 Grep `### 失败分类：` 行，按分类分流（轮数上限不变）：
+**Step 3 前置：失败分类路由（B5）**——波内有任务 FAIL 时，先对每个 FAIL 报告 Grep `### 失败分类：` 行，按分类分流（轮数上限不变）：
 
 | 失败分类 | 路由 |
 |---------|------|
@@ -389,7 +408,8 @@ round = 0
 max_auto_rounds = 3
 
 while round < max_auto_rounds:
-  if 本批所有任务五个维度全PASS:
+  FAIL任务集 = 本波中任一维度未 PASS 的任务
+  if FAIL任务集 为空:
     break
 
   round += 1
@@ -404,38 +424,33 @@ while round < max_auto_rounds:
     - feature-spec.md（当前任务规格）
     - lessons-learned.md（经验库）
     - 相关代码文件
-    
+
     请分析问题的根本原因，尝试不同的实现方式。"""
 
-  # 前后端并行修正
-  if 前端有FAIL:
-    Agent(
-      resume: "{FE_DEV_ID}",
-      subagent_type: "code-dev-frontend",
-      prompt: repair_prompt + "\n\n测试报告：\n{frontend_reports}\n\n修正后补单测覆盖失败用例，更新 tests/reports/{TASK_ID}-selfcheck-fe.md，再更新 lessons-learned.md。简短确认即可。"
-    )
-
-  if 后端有FAIL:
-    Agent(
-      resume: "{BE_DEV_ID}",
-      subagent_type: "code-dev-backend",
-      prompt: repair_prompt + "\n\n测试报告：\n{backend_reports}\n\n修正后补单测覆盖失败用例，更新 tests/reports/{TASK_ID}-selfcheck-be.md，再更新 lessons-learned.md。简短确认即可。"
-    )
+  # 对每个 FAIL 任务，按失败分类路由 resume 其 FE/BE Dev（每任务独立 Dev，互不牵连同波其他任务）
+  for TASK_IDx in FAIL任务集:
+    if 该任务前端有FAIL（或失败分类指向 Dev）:
+      Agent(
+        resume: "{TASK_IDx 的 FE_DEV_ID}",
+        subagent_type: "code-dev-frontend",
+        prompt: repair_prompt + "\n\n测试报告：\n{TASK_IDx 的 frontend_reports}\n\n修正后补单测覆盖失败用例，更新 tests/reports/{TASK_IDx}-selfcheck-fe.md，再更新 lessons-learned.md。简短确认即可。"
+      )
+    if 该任务后端有FAIL:
+      Agent(
+        resume: "{TASK_IDx 的 BE_DEV_ID}",
+        subagent_type: "code-dev-backend",
+        prompt: repair_prompt + "\n\n测试报告：\n{TASK_IDx 的 backend_reports}\n\n修正后补单测覆盖失败用例，更新 tests/reports/{TASK_IDx}-selfcheck-be.md，再更新 lessons-learned.md。简短确认即可。"
+      )
 
   日志：- {yymmdd hhmm} 🔄 第{round}轮修正完成：{FAIL任务列表}
 
-  # 只resume FAIL维度的测试Agent
-  if 功能有任何FAIL:
-    Agent(resume: "{TEST_CORRECTNESS_ID}", subagent_type: "code-tester-correctness", run_in_background: true, prompt: "重测本批所有任务。")
-  if 质量有任何FAIL:
-    Agent(resume: "{TEST_QUALITY_ID}", subagent_type: "code-tester-quality", run_in_background: true, prompt: "重测本批所有任务。")
-  if 健壮有任何FAIL:
-    Agent(resume: "{TEST_ROBUSTNESS_ID}", subagent_type: "code-tester-robustness", run_in_background: true, prompt: "重测本批所有任务。")
-  if 安全有任何FAIL:
-    Agent(resume: "{TEST_SECURITY_ID}", subagent_type: "code-tester-security", run_in_background: true, prompt: "重测本批所有任务。")
-
-  if E2E有任何FAIL:
-    Agent(resume: "{TEST_E2E_ID}", subagent_type: "code-tester-e2e", run_in_background: true, prompt: "重测本批所有任务。")
+  # 只重测 FAIL 任务的 FAIL 维度（每任务独立 tester；逐任务重测，不并发多任务，避免爆炸）
+  for TASK_IDx in FAIL任务集:
+    if 该任务功能FAIL:  Agent(resume: "{TASK_IDx 的 TEST_CORRECTNESS_ID}", subagent_type: "code-tester-correctness", run_in_background: true, prompt: "重测 {TASK_IDx}。")
+    if 该任务质量FAIL:  Agent(resume: "{TASK_IDx 的 TEST_QUALITY_ID}",     subagent_type: "code-tester-quality",    run_in_background: true, prompt: "重测 {TASK_IDx}。")
+    if 该任务健壮FAIL:  Agent(resume: "{TASK_IDx 的 TEST_ROBUSTNESS_ID}",  subagent_type: "code-tester-robustness", run_in_background: true, prompt: "重测 {TASK_IDx}。")
+    if 该任务安全FAIL:  Agent(resume: "{TASK_IDx 的 TEST_SECURITY_ID}",    subagent_type: "code-tester-security",   run_in_background: true, prompt: "重测 {TASK_IDx}。")
+    if 该任务E2E_FAIL:  Agent(resume: "{TASK_IDx 的 TEST_E2E_ID}",         subagent_type: "code-tester-e2e",        run_in_background: true, prompt: "重测 {TASK_IDx}。")
 
   等待完成 → 更新结果
 ```
@@ -447,7 +462,7 @@ while round < max_auto_rounds:
 ### Step 3b：问题升级流程（仅当3轮修复失败时触发）
 
 ```
-if 本批有任务第3轮仍FAIL:
+if 本波有任务第3轮仍FAIL:
   # Step 1: 收集失败信息
   收集所有FAIL任务的测试报告路径和判定结果
   
@@ -517,7 +532,7 @@ if 本批有任务第3轮仍FAIL:
 
 ### Step 4：批量状态更新 + 反馈
 
-- 更新 `{REPO_DIR}/docs/dev-plan.md` 中本批所有任务状态
+- 更新 `{REPO_DIR}/docs/dev-plan.md` 中本波所有任务状态
 - 写入完成日志
 - 向用户报告进度
 - **检查 `docs/prd.md` 是否有待规划的新需求**，如果有，启动增量规划
@@ -673,5 +688,5 @@ Agent(
 3. 所有代码修改委托给 code-dev-frontend / code-dev-backend
 4. 后台通知简短确认
 5. 开发批量 = 测试批量
-6. 并发上限 `MAX_PARALLEL`（默认 **5**，范围 3–5）：任意时刻并存子 Agent ≤ MAX_PARALLEL。开发 FE/BE 并行(2)；默认 5 时五维全并行一波，降到 4/3 时按上限分波（详见「并发度控制」）
+6. 并发两层（详见「并发度控制」）：`BATCH_SIZE`（任务波宽，默认 2）管开发**任务级**并发；`MAX_PARALLEL`（默认 5）管测试**维度级**并发。**不相乘**——测试一次只测一个任务，峰值 = max(2×BATCH_SIZE, MAX_PARALLEL)，绝不出现 15 tester
 7. 问题升级先 PM 评估需求，再 Planner 拆解

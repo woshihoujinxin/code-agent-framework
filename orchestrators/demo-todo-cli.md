@@ -12,7 +12,7 @@
 我需要你作为编码项目的主Agent，按照 dev-quality-orchestrator.md 定义的流程完成开发。
 需求文档：./requirements.md
 代码仓库：./
-批量大小：1
+任务波宽：1（逐个推进；=2 启用同层并发，见 dev-quality-orchestrator「并发度控制」）
 ```
 
 ---
@@ -54,7 +54,7 @@ Planner 产出的 `dev-plan.md`：
 
 ---
 
-## Phase 2：逐批开发（BATCH_SIZE=1）
+## Phase 2：DAG 就绪集取波（BATCH_SIZE=1，逐个推进；调度逻辑以 dev-quality-orchestrator.md 真源为准）
 
 ### Batch 1: TASK01
 
@@ -185,7 +185,7 @@ Dev 返回：`修正完成，已更新 lessons-learned.md`
 Agent(
   resume: "test_robust_xyz",
   subagent_type: "code-tester-robustness",
-  prompt: "重测本批所有任务。"
+  prompt: "重测 FAIL 任务（逐任务）。"
 )
 ```
 

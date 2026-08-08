@@ -73,11 +73,11 @@
 ```markdown
 # 研发主日志 · {项目名}
 
-> 🧭 速览：{当前阶段} ｜ 模式：{模式} ｜ 进度：{X}/{N} ｜ 本批：{P}通过/{F}失败 ｜ 修正：{R}轮
+> 🧭 速览：{当前阶段} ｜ 模式：{模式} ｜ 进度：{X}/{N} ｜ 本波：{P}通过/{F}失败 ｜ 修正：{R}轮
 
 ## ① 项目启动
 - {yymmdd hhmm} 🚀 需求进入：{REQ_FILE / 需求摘要}
-- {yymmdd hhmm} 🔢 批量 {BATCH_SIZE} ｜ 模式：{模式}
+- {yymmdd hhmm} 🔢 波宽 {BATCH_SIZE} ｜ 模式：{模式}
 
 ## ② 需求分析 [PM + 原型]
 ## ③ 计划 [Planner]
@@ -102,16 +102,16 @@
 1. 用户提供需求文档路径和代码仓库路径
 2. 确认 `REPO_DIR`（代码仓库根目录）和 `REQ_FILE`（需求文档路径）
 3. 创建 `{REPO_DIR}/docs/main-log.md`（按「日志写入规范」骨架：速览行 + ① 项目启动 段）
-4. 确认 `BATCH_SIZE`（默认 1）
+4. 确认任务波宽 `BATCH_SIZE`（开发同层并发任务数，**默认 2**）
 
 **日志写入**：按「日志写入规范」骨架创建（{项目名} = REPO_DIR 目录名），写 ① 项目启动 段：
 ```
 # 研发主日志 · {项目名}
-> 🧭 速览：① 项目启动 ｜ 模式：{模式} ｜ 进度：0/{N} ｜ 本批：— ｜ 修正：0轮
+> 🧭 速览：① 项目启动 ｜ 模式：{模式} ｜ 进度：0/{N} ｜ 本波：— ｜ 修正：0轮
 
 ## ① 项目启动
 - {yymmdd hhmm} 🚀 需求进入：{REQ_FILE}
-- {yymmdd hhmm} 🔢 批量 {BATCH_SIZE} ｜ 模式：{模式}
+- {yymmdd hhmm} 🔢 波宽 {BATCH_SIZE} ｜ 模式：{模式}
 ```
 
 ---
@@ -194,36 +194,48 @@ Agent(
 
 ---
 
-## Phase 2：全流程批量执行
+## Phase 2：DAG 拓扑执行（就绪集取波，非平铺切块）
 
-读取 `{REPO_DIR}/docs/dev-plan.md`，按 `BATCH_SIZE` 分组执行：
-
-### Step 1：前后端并行开发
-
-进入 ④ 段（每批一次），先追加段头：
-```
-## ④ 批次循环 Batch {当前批次}/{总批数} [Dev×2 + 交付链]
-```
+按 dev-plan 的 **DAG 依赖**算就绪集、取波并发开发，整波任务再一起走交付链（审查→构建→校验→E2E）。**每波循环**：
 
 ```
+1. Grep dev-plan.md 任务行：Grep(pattern: '^\| [0-9]+ \| TASK', path: '{REPO_DIR}/docs/dev-plan.md', output_mode: 'content', '-n': true)
+   解析每行 {ID | 状态 | 依赖}（列序：| # | 任务ID | 标题 | 状态 | 依赖 | 拆分理由 |）
+2. ✅集 = 状态 ✅ 的 ID；ready = 状态 ⏳ 且依赖列每项都在 ✅集
+3. ready 空：仍有 ⏳/🔄 → 等待；全部 ✅/⚠️ → 进 Phase 3
+4. 开发波 = ready 前 min(BATCH_SIZE, |ready|) 个  （BATCH_SIZE = 任务波宽，默认 2）
+```
+
+> 依赖列：逗号分隔多依赖；`-` 表无依赖；升级 ID `TASK01-01` 照常比较。本波 `{TASK_IDs}` = 开发波内所有任务 ID，后续交付链对**整波**走。
+
+### Step 1：开发波并发开发（波内每任务 FE+BE）
+
+进入 ④ 段（每波一次），先追加段头：
+```
+## ④ 波 {波序号} [Dev×{2×本波任务数} + 交付链] ｜ 本波：{TASK_IDs}
+```
+
+**波内每个就绪任务各派 FE+BE，全部后台并行**（任务级 × 前后端级，峰值 2×BATCH_SIZE dev agent）：
+
+```
+对开发波内每个任务 TASK_IDx，各启动：
 Agent(
   subagent_type: "code-dev-frontend",
   run_in_background: true,
-  prompt: "前端开发任务：{TASK_IDs}\ndev-plan: {REPO_DIR}/docs/dev-plan.md\nfeature-spec: {REPO_DIR}/docs/feature-spec.md（含测试契约）\nprd: {REPO_DIR}/docs/prd.md\nlessons-learned: {REPO_DIR}/docs/lessons-learned.md\nsmoke-checks: {REPO_DIR}/docs/smoke-checks.md\n视觉基准（如存在）：{PROTO_PATH}\n\n按测试契约 F/B/S 用例写单测覆盖归属 FE 的用例，产出 tests/reports/{TASK_ID}-selfcheck-fe.md。"
+  prompt: "前端开发任务：{TASK_IDx}\ndev-plan: {REPO_DIR}/docs/dev-plan.md\nfeature-spec: {REPO_DIR}/docs/feature-spec.md（含测试契约）\nprd: {REPO_DIR}/docs/prd.md\nlessons-learned: {REPO_DIR}/docs/lessons-learned.md\nsmoke-checks: {REPO_DIR}/docs/smoke-checks.md\n视觉基准（如存在）：{PROTO_PATH}\n\n按测试契约 F/B/S 用例写单测覆盖归属 FE 的用例，产出 tests/reports/{TASK_IDx}-selfcheck-fe.md。"
 )
-
 Agent(
   subagent_type: "code-dev-backend",
   run_in_background: true,
-  prompt: "后端开发任务：{TASK_IDs}\ndev-plan: {REPO_DIR}/docs/dev-plan.md\nfeature-spec: {REPO_DIR}/docs/feature-spec.md（含测试契约）\nprd: {REPO_DIR}/docs/prd.md\nlessons-learned: {REPO_DIR}/docs/lessons-learned.md\nsmoke-checks: {REPO_DIR}/docs/smoke-checks.md\n\n按测试契约 F/B/S 用例写单测覆盖归属 BE 的用例，产出 tests/reports/{TASK_ID}-selfcheck-be.md。"
+  prompt: "后端开发任务：{TASK_IDx}\ndev-plan: {REPO_DIR}/docs/dev-plan.md\nfeature-spec: {REPO_DIR}/docs/feature-spec.md（含测试契约）\nprd: {REPO_DIR}/docs/prd.md\nlessons-learned: {REPO_DIR}/docs/lessons-learned.md\nsmoke-checks: {REPO_DIR}/docs/smoke-checks.md\n\n按测试契约 F/B/S 用例写单测覆盖归属 BE 的用例，产出 tests/reports/{TASK_IDx}-selfcheck-be.md。"
 )
 ```
 
-等待 → 提取 FE_DEV_ID 和 BE_DEV_ID → 写日志：
-- `- {yymmdd hhmm} ▶ 本批开发启动：{TASK_IDs}`
-- `- {yymmdd hhmm} ✅ 开发完成：{TASK_IDs} 已提交 (FE_DEV_ID: {FE_DEV_ID}, BE_DEV_ID: {BE_DEV_ID})`
+等待开发波全部完成 → 逐任务提取 FE_DEV_ID/BE_DEV_ID，写日志 + dev-plan 标 🔄：
+- `- {yymmdd hhmm} ▶ 开发波启动：{TASK_IDs}`
+- `- {yymmdd hhmm} ✅ 开发完成：{TASK_IDx} (FE_DEV_ID: {id}, BE_DEV_ID: {id})`（逐任务一行）
 
-> 如果任务只涉及前端或后端，仅启动对应的开发 Agent。
+> 任务只涉前端或后端时，该任务仅启动对应开发 Agent。交付链（Step 2-5）对本波 `{TASK_IDs}` 整体走。
 
 ### Step 2：代码审查
 
@@ -283,7 +295,7 @@ Agent(
 
 ### Step 5b：导出交付（A5，有前端/原型时）
 
-本批含前端 UI（有 `docs/prototype/` 或前端产物）且 E2E PASS 后，启动 code-export-specialist 导出交付物到 `{REPO_DIR}/exports/`：
+本波含前端 UI（有 `docs/prototype/` 或前端产物）且 E2E PASS 后，启动 code-export-specialist 导出交付物到 `{REPO_DIR}/exports/`：
 
 ```
 Agent(
@@ -388,6 +400,6 @@ while round < 3:
 2. 审查/构建/校验/E2E报告只用 Grep 提取判定
 3. 所有代码修改委托给 code-dev
 4. 后台通知简短确认
-5. 开发批量 = 审查批量 = 构建批量 = 校验批量 = E2E批量
+5. 开发波 = 审查波 = 构建波 = 校验波 = E2E 波（交付链对整波走）
 6. 下游顺序：审查 → 构建 → 校验 → E2E（每步依赖前步通过）
-7. 并发上限 `MAX_PARALLEL`（默认 **5**，范围 3–5）：任意时刻并存子 Agent ≤ MAX_PARALLEL。开发阶段 FE/BE 并行(2)；交付链 审查→构建→校验→E2E 本就串行，天然满足上限（分波规则见 `dev-quality-orchestrator.md`「并发度控制」）
+7. 并发两层（见 `dev-quality-orchestrator.md`「并发度控制」）：`BATCH_SIZE`（任务波宽，默认 2）管开发**任务级**并发；交付链 审查→构建→校验→E2E 本就串行。**不相乘**，峰值 = max(2×BATCH_SIZE, MAX_PARALLEL)
