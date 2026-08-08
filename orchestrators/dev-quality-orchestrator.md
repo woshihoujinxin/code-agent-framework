@@ -30,13 +30,53 @@
 
 1. **主Agent只调度不干活** — 不做开发、不做测试、不直接编辑任何代码文件
 2. **保持上下文整洁** — 不读子Agent的产出内容，只接收文件路径和 PASS/FAIL 判定
-3. **及时记录日志** — 每个关键步骤写入 main-log.md，时间格式 `yymmdd hhmm`
+3. **及时记录日志** — 每个关键步骤写入 main-log.md，时间格式 `yymmdd hhmm`；编码与格式遵守「日志写入规范」（UTF-8 硬约束 + 状态符号 + 阶段标签）
 4. **主动反馈进展** — 每完成一个子任务向用户报告进度
 5. **绝对禁止清单**（违反任何一条都会膨胀上下文）：
    - ❌ 不读需求文档，只把路径传给子Agent
    - ❌ 不读测试报告文件的内容，只用 Grep 提取**最后一次出现**的 `### 判定：PASS/FAIL`（行号最大者 = 最新轮次，因为重测是追加写，第一行永远是最早的旧判定）
    - ❌ 不直接编辑任何代码文件，全部委托给前后端开发Agent
    - ❌ 不对延迟到达的后台通知做详细回应，只回复"已确认"
+
+---
+
+## 日志写入规范（主日志 docs/main-log.md）
+
+**定位**：主日志 = 整个项目的**全过程档案**——有开端、有结尾，每个阶段一节，每步留痕（时间/角色/动作/产出/判定）可追溯，且不影响主流程。以下规则是**硬性要求**：
+
+**1. 编码硬约束（防乱码，Windows 重点）**
+- 所有日志/文档统一 **UTF-8**。**禁止依赖系统默认编码**写文件——Windows 中文系统默认 GBK(cp936) + CRLF，会把中文写成 `��` 乱码。
+- 追加日志一律用**文件写入/编辑工具**（Write / Edit / edit_file），**禁止用 shell `echo/printf >>` 追加含中文的行**（会经系统代码页转码写坏）。
+- 若运行环境只能用脚本追加（如 Python），必须显式 `open(path, 'a', encoding='utf-8', newline='')`，绝不省略 `encoding` 参数。
+
+**1b. 谁写**：只有 master 写 main-log。subagent 不写，它们的详细过程在 docs/ 与 tests/reports/ 里；main-log 是 master 视角的调度留痕（时间+角色+动作+产出+判定）。master 不读子Agent内容，只记自己知道的。
+
+**2. 骨架（初始化时创建，固定五段）**
+
+```markdown
+# 研发主日志 · {项目名}
+
+> 🧭 速览：{当前阶段} ｜ 模式：{模式} ｜ 进度：{X}/{N} ｜ 本批：{P}通过/{F}失败 ｜ 修正：{R}轮
+
+## ① 项目启动
+- {yymmdd hhmm} 🚀 需求进入：{REQ_FILE / 需求摘要}
+- {yymmdd hhmm} 🔢 批量 {BATCH_SIZE} ｜ 模式：{模式}
+
+## ② 需求分析 [PM + 原型]
+## ③ 计划 [Planner]
+## ④ 批次循环 Batch {X}/{N} [Dev×2 + Tester×5]
+## ⑤ 项目收尾
+```
+
+**3. 阶段头也是追加写**：进入某阶段时**追加**对应 `## 段` 行，后续事件追加到文件末尾即落在当前段下（阶段顺序推进，文件末尾 = 当前阶段）。②③⑤ 首次进入即写段头；④ 每批写一个 `## ④ 批次循环 Batch {当前批}/{总批数}`。**不需要重写历史、不需要记住已写过的行**。
+
+**4. 事件行格式**（追加到当前段下）：`- {yymmdd hhmm} {状态符号} {动作} → {产出/结果}`。符号：🚀 启动 · 🔢 配置 · ▶ 开始 · ✅ 完成 · 🔄 重试 · ⚠️ 告警 · ❌ 阻断 · 🎨 原型 · 📄 产出 · 🔬 测试 · 📋 判定 · 🆔 AgentID · 📦 制品 · 🚧 升级 · ⏸️ 压缩 · 🏁 收尾 · 🧠 进化。阶段由所在章节体现，事件本身不再带阶段标签。
+
+**5. 速览行维护**：每次阶段切换/批次结束，用 Edit 整行替换以 `> 🧭 速览：` 开头的行。
+
+**6. 机器可解析片段（禁止改动）**：
+- 测试判定行必须原样保留 `功能{P/F} / 质量{P/F} / 健壮{P/F} / 安全{P/F} / E2E{P/F}`（metrics.md 靠它统计）。
+- CHECKPOINT 块必须包含 `═══ CHECKPOINT ═══` 行（压缩恢复靠它定位）。
 
 ---
 
@@ -48,10 +88,14 @@
 4. 创建日志文件 `{REPO_DIR}/docs/main-log.md`，写入项目信息
 5. 确认批量大小，记为 `BATCH_SIZE`（默认值：1）
 
-**日志写入**：
+**日志写入**：按「日志写入规范」骨架创建（{项目名} = REPO_DIR 目录名），写 ① 项目启动 段：
 ```
-- {yymmdd hhmm} 项目启动，需求：{REQ_FILE}
-- {yymmdd hhmm} 批量大小：{BATCH_SIZE}
+# 研发主日志 · {项目名}
+> 🧭 速览：① 项目启动 ｜ 模式：{模式} ｜ 进度：0/{N} ｜ 本批：— ｜ 修正：0轮
+
+## ① 项目启动
+- {yymmdd hhmm} 🚀 需求进入：{REQ_FILE}
+- {yymmdd hhmm} 🔢 批量 {BATCH_SIZE} ｜ 模式：{模式}
 ```
 
 ---
@@ -90,7 +134,7 @@
 收到即写日志，使用返回的 agentId 原值，不做任何前缀/后缀裁剪：
 
 ```
-写日志：- {yymmdd hhmm} 开发完成：{TASK_ID} 已提交 (FE_DEV_ID: {agentId}, BE_DEV_ID: {agentId})
+写日志：- {yymmdd hhmm} ✅ 开发完成：{TASK_ID} 已提交 (FE_DEV_ID: {agentId}, BE_DEV_ID: {agentId})
 ```
 
 ### ID 使用规则
@@ -99,6 +143,29 @@
 2. 每个任务开发轮次结束后，DEV_ID 失效，新任务重新启动开发Agent
 3. 同一任务修正循环中复用同一个 DEV_ID，禁止启动新Agent
 4. 同一任务修正循环中复用测试Agent ID，新任务开发时重新启动
+
+---
+
+## 并发度控制（MAX_PARALLEL）
+
+**目的**：控制任意时刻并存的后台子 Agent 数，防 API 限流 / 单机资源争抢 / 完成通知乱序。这是调度约束——**不影响质量门**（所有维度照跑，只是分波），不影响判定提取与修正轮数。
+
+**配置**：`MAX_PARALLEL`，范围 **3–5**，默认 **5**（对齐五维维度数）。
+
+| 取值 | 五维测试 | 取舍 |
+|------|---------|------|
+| **5（默认）** | 1 波全并行，最快 | 五维本就是并行钻透的设计，上限对齐维度数最自然；机器/API 余量正常就用它 |
+| 4 | 分 2 波（4+1） | 限流/资源略紧时降一档 |
+| 3 | 分 2 波（3+2） | 最保守；API 限流严重或单机资源吃紧时用 |
+
+> 取值不确定就用默认 **5**；观察到后台 agent 频繁超时/限流再往下压（4 或 3）。仅 master 调度遵守，无需写进子 Agent prompt。
+
+**各阶段规则**：
+- **开发阶段**（FE/BE Dev 并行）：最多 2 ≤ MAX_PARALLEL，**无需分波**。
+- **测试阶段**（5 维 tester）：按 `MAX_PARALLEL` **分波**——波内后台并行、波间串行（前波**全完成**才启下一波）；波内建议顺序 `功能 → 质量 → 健壮 → 安全 → E2E`。所有维度测完（5 份报告都有最新判定）后才判全 PASS/FAIL。
+- **修正阶段**：Dev 修完再重测，天然串行；重测若多维度，同样按 MAX_PARALLEL 分波。
+
+**分波不改变**：判定提取（仍 Grep 各维度报告最后一次 `### 判定`，行号最大者=最新轮次）、修正循环轮数（≤3）、日志格式（首次测试仍是 5 维 P/F 一行）。
 
 ---
 
@@ -115,9 +182,10 @@ Agent(
 
 等待完成 → 记录 PRD 路径，后续将 `{REPO_DIR}/docs/prd.md` 作为需求文档传给 code-planner。
 
-**日志写入**：
+**日志写入**（先追加 ② 段头，再写事件）：
 ```
-- {yymmdd hhmm} PRD 编写完成：{PRD_PATH}
+## ② 需求分析 [PM + 原型]
+- {yymmdd hhmm} ✅ PRD 编写完成 → {PRD_PATH}
 ```
 
 ### 需求迭代（持续进行）
@@ -148,13 +216,17 @@ Agent(
 - 存在 → 记录 `PROTO_PATH={REPO_DIR}/docs/prototype/DESIGN.md`，后续注入 Step1 FE Dev + Step2 quality tester 的 prompt（"视觉基准：{PROTO_PATH}，UI 对齐其设计令牌；quality 以它核查视觉一致性"）
 - 不存在 / SKIP → 无原型，正常走计划
 
-日志：`- {yymmdd hhmm} 原型子流水线：{产出 / SKIP}`
+日志：`- {yymmdd hhmm} 🎨 原型子流水线：{产出 / SKIP}`
 
 ---
 
 ## Phase 1：计划
 
-**日志写入**：`- {yymmdd hhmm} 启动计划子Agent`
+**日志写入**（先追加 ③ 段头，再写事件）：
+```
+## ③ 计划 [Planner]
+- {yymmdd hhmm} ▶ 启动计划子Agent
+```
 
 启动 code-planner 子Agent：
 
@@ -169,9 +241,9 @@ Agent(
 
 **日志写入**：
 ```
-- {yymmdd hhmm} 计划完成：{N}个子任务，项目骨架已就绪
-- {yymmdd hhmm} dev-plan: {路径}
-- {yymmdd hhmm} feature-spec: {路径}
+- {yymmdd hhmm} ✅ 计划完成：{N}个子任务，项目骨架已就绪
+- {yymmdd hhmm} 📄 dev-plan → {路径}
+- {yymmdd hhmm} 📄 feature-spec → {路径}
 ```
 
 ### 增量规划
@@ -196,7 +268,10 @@ Agent(
 ### Step 1：前后端并行开发
 
 ```
-日志：- {yymmdd hhmm} 本批开发启动：{TASK_ID1} ({标题1}), {TASK_ID2} ({标题2}), ...
+先追加 ④ 段头（每批一次）：
+## ④ 批次循环 Batch {当前批次}/{总批数} [Dev×2 + Tester×5]
+
+日志：- {yymmdd hhmm} ▶ 本批开发启动：{TASK_ID1} ({标题1}), {TASK_ID2} ({标题2}), ...
 
 Agent(
   subagent_type: "code-dev-frontend",
@@ -214,7 +289,7 @@ Agent(
 等待完成 → **立即提取 FE_DEV_ID 和 BE_DEV_ID，写入日志**。
 
 ```
-日志：- {yymmdd hhmm} 本批开发完成：{TASK_ID1}, {TASK_ID2} 已提交 (FE_DEV_ID: {FE_DEV_ID}, BE_DEV_ID: {BE_DEV_ID})
+日志：- {yymmdd hhmm} ✅ 本批开发完成：{TASK_ID1}, {TASK_ID2} 已提交 (FE_DEV_ID: {FE_DEV_ID}, BE_DEV_ID: {BE_DEV_ID})
 ```
 
 > 如果某个任务只涉及前端或只涉及后端，仅启动对应的开发Agent即可。
@@ -244,10 +319,12 @@ Agent(
 - 不满足 → ❌ 回到 Step 1 resume 开发Agent 修复，最多重试 2 次，不进入测试阶段
 
 ```
-日志：- {yymmdd hhmm} 冒烟检查：{TASK_ID1}{PASS/FAIL}, {TASK_ID2}{PASS/FAIL}
+日志：- {yymmdd hhmm} 🔬 冒烟检查：{TASK_ID1}{PASS/FAIL}, {TASK_ID2}{PASS/FAIL}
 ```
 
-### Step 2：五维测试（并行）
+### Step 2：五维测试（按 MAX_PARALLEL 分波）
+
+5 个维度 tester 按下图定义；默认 `MAX_PARALLEL=5` 时五维**全并行一波**（无需分波，最快）；若降到 4/3 则按上限**分波**——波内后台并行、波间串行（前波全完成才启下一波），波内顺序 `功能→质量→健壮→安全→E2E`（=3 时 波1={功能,质量,健壮} 波2={安全,E2E}）。等所有维度测完再汇总 5 维判定。
 
 ```
 Agent A:
@@ -276,7 +353,7 @@ Agent E:
   prompt: "安全性测试：{本批所有TASK_ID}\n待测仓库：{REPO_DIR}\nfeature-spec: {REPO_DIR}/docs/feature-spec.md\nprd: {REPO_DIR}/docs/prd.md\nDev自检报告: {REPO_DIR}/tests/reports/{TASK_ID}-selfcheck-*.md\n输出目录: {REPO_DIR}/tests/reports/"
 ```
 
-等待完成 → 收集各页 PASS/FAIL 判定 + 报告路径。
+等待所有波完成 → 收集 5 维 PASS/FAIL 判定 + 报告路径。
 
 存储：TEST_CORRECTNESS_ID、TEST_QUALITY_ID、TEST_ROBUSTNESS_ID、TEST_SECURITY_ID、TEST_E2E_ID。
 
@@ -288,9 +365,9 @@ Grep(pattern="^### 判定", path="{REPO_DIR}/tests/reports/{TASK_ID}-{dimension}
 
 **日志写入**：
 ```
-- {yymmdd hhmm} 首次测试 {TASK_ID1}：功能{P/F} / 质量{P/F} / 健壮{P/F} / 安全{P/F} / E2E{P/F}
-- {yymmdd hhmm} 首次测试 {TASK_ID2}：功能{P/F} / 质量{P/F} / 健壮{P/F} / 安全{P/F} / E2E{P/F}
-- {yymmdd hhmm} 测试AgentID：功能={TEST_CORRECTNESS_ID} / 质量={TEST_QUALITY_ID} / 健壮={TEST_ROBUSTNESS_ID} / 安全={TEST_SECURITY_ID} / E2E={TEST_E2E_ID}
+- {yymmdd hhmm} 📋 首次测试 {TASK_ID1}：功能{P/F} / 质量{P/F} / 健壮{P/F} / 安全{P/F} / E2E{P/F}
+- {yymmdd hhmm} 📋 首次测试 {TASK_ID2}：功能{P/F} / 质量{P/F} / 健壮{P/F} / 安全{P/F} / E2E{P/F}
+- {yymmdd hhmm} 🆔 AgentID：功能={TEST_CORRECTNESS_ID} / 质量={TEST_QUALITY_ID} / 健壮={TEST_ROBUSTNESS_ID} / 安全={TEST_SECURITY_ID} / E2E={TEST_E2E_ID}
 ```
 
 ### Step 3：修正循环（≤3轮，前后端并行修正）
@@ -345,7 +422,7 @@ while round < max_auto_rounds:
       prompt: repair_prompt + "\n\n测试报告：\n{backend_reports}\n\n修正后补单测覆盖失败用例，更新 tests/reports/{TASK_ID}-selfcheck-be.md，再更新 lessons-learned.md。简短确认即可。"
     )
 
-  日志：- {yymmdd hhmm} 第{round}轮修正完成：{FAIL任务列表}
+  日志：- {yymmdd hhmm} 🔄 第{round}轮修正完成：{FAIL任务列表}
 
   # 只resume FAIL维度的测试Agent
   if 功能有任何FAIL:
@@ -400,7 +477,7 @@ if 本批有任务第3轮仍FAIL:
 """
   )
   
-  日志：- {yymmdd hhmm} 生成升级需求文档：docs/upgrade-issue-{TASK_ID}.md
+  日志：- {yymmdd hhmm} 🚧 生成升级需求文档 → docs/upgrade-issue-{TASK_ID}.md
 
   # Step 3: 先发 PM 评估需求是否需要调整
   Agent(
@@ -408,7 +485,7 @@ if 本批有任务第3轮仍FAIL:
     prompt: "以下任务3轮自动修复仍未通过，请评估是否需要调整需求。\n升级需求：{REPO_DIR}/docs/upgrade-issue-{TASK_ID}.md\n当前PRD：{REPO_DIR}/docs/prd.md\n\n如果需求需要调整，更新 docs/prd.md 并说明变更。如果需求无需调整，说明原因。"
   )
 
-  日志：- {yymmdd hhmm} PM 已评估升级需求
+  日志：- {yymmdd hhmm} ✅ PM 已评估升级需求
 
   # Step 4: 再发 Planner 拆解升级任务
   Agent(
@@ -416,13 +493,13 @@ if 本批有任务第3轮仍FAIL:
     prompt: "这是一个问题升级需求，请作为架构师重新分析问题。\n需求文档：{REPO_DIR}/docs/upgrade-issue-{TASK_ID}.md\n代码仓库：{REPO_DIR}\n\n请分析问题本质，拆解为可管理的子任务，并将新任务追加到 dev-plan.md。完成后返回新任务列表。"
   )
 
-  日志：- {yymmdd hhmm} code-planner 已处理升级需求
+  日志：- {yymmdd hhmm} ✅ code-planner 已处理升级需求
 
   # Step 5: 更新状态
   将原任务标记为 ⚠️（待升级）
   将新任务添加到 dev-plan.md，状态设为 ⏳
 
-  日志：- {yymmdd hhmm} 问题升级完成：{TASK_ID} → {新任务数}个子任务
+  日志：- {yymmdd hhmm} ✅ 问题升级完成：{TASK_ID} → {新任务数}个子任务
 
   # Step 6: 向用户报告
   """
@@ -476,7 +553,7 @@ Agent(
 ```
 1. 向 main-log.md 写入 checkpoint：
 
-- {yymmdd hhmm} ═══ CHECKPOINT ═══
+- {yymmdd hhmm} ⏸️ ═══ CHECKPOINT ═══
 - {yymmdd hhmm} 仓库：{REPO_DIR}
 - {yymmdd hhmm} 需求：{REQ_FILE}
 - {yymmdd hhmm} BATCH_SIZE：{BATCH_SIZE}
@@ -530,13 +607,17 @@ Step 4: 向用户确认恢复点，然后继续 Phase 2 循环
 
 全部任务完成后：
 
-1. 统计各任务迭代情况
-2. 写入最终统计到 main-log.md
+1. 先追加 ⑤ 段头（仅一次）：
+```
+## ⑤ 项目收尾
+```
+2. 统计各任务迭代情况
+3. 写入最终统计到 main-log.md
 
 ```
-- {yymmdd hhmm} ──── 项目完成 ────
-- {yymmdd hhmm} 全部 {N} 个任务完成
-- {yymmdd hhmm} 迭代统计：
+- {yymmdd hhmm} 🏁 ════ 项目完成 ════
+- {yymmdd hhmm} 🏁 全部 {N} 个任务完成
+- {yymmdd hhmm} 📊 迭代统计：
   - 1次通过：{X} 个
   - 2次通过：{Y} 个
   - 3次通过：{Z} 个
@@ -547,7 +628,7 @@ Step 4: 向用户确认恢复点，然后继续 Phase 2 循环
 
 **Step A — 主Agent 写 metrics.md 结构部分**（从自己的 main-log.md 统计，不读报告内容，不违反上下文规则）：
 
-Grep main-log.md 中 `功能{P/F} / 质量{P/F} / 健壮{P/F} / E2E{P/F}` 形式的行，按维度累计 P/F 计数，写入 `{REPO_DIR}/docs/metrics.md`（覆盖写）：
+Grep main-log.md 中 `功能{P/F} / 质量{P/F} / 健壮{P/F} / 安全{P/F} / E2E{P/F}` 形式的行，按维度累计 P/F 计数，写入 `{REPO_DIR}/docs/metrics.md`（覆盖写）：
 
 ```markdown
 # 质量指标
@@ -579,7 +660,7 @@ Agent(
 )
 ```
 
-日志：`- {yymmdd hhmm} 经验提炼完成：新增{N}条规则，调优建议{M}条`
+日志：`- {yymmdd hhmm} 🧠 经验提炼完成：新增{N}条规则，调优建议{M}条`
 
 3. **不退出循环**，进入等待状态，检查是否有新需求追加到 `docs/prd.md`
 
@@ -592,5 +673,5 @@ Agent(
 3. 所有代码修改委托给 code-dev-frontend / code-dev-backend
 4. 后台通知简短确认
 5. 开发批量 = 测试批量
-6. 开发Agent前后端各1个并行，测试Agent按维度并发
+6. 并发上限 `MAX_PARALLEL`（默认 **5**，范围 3–5）：任意时刻并存子 Agent ≤ MAX_PARALLEL。开发 FE/BE 并行(2)；默认 5 时五维全并行一波，降到 4/3 时按上限分波（详见「并发度控制」）
 7. 问题升级先 PM 评估需求，再 Planner 拆解

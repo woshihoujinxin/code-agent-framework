@@ -46,7 +46,7 @@
 
 1. **主Agent只调度不干活** — 不做开发、不做审查、不直接编辑任何文件
 2. **保持上下文整洁** — 只接收文件路径和 PASS/FAIL 判定
-3. **及时记录日志** — 每个关键步骤写入 `docs/main-log.md`，时间格式 `yymmdd hhmm`
+3. **及时记录日志** — 每个关键步骤写入 `docs/main-log.md`，时间格式 `yymmdd hhmm`，格式与编码遵守下方「日志写入规范」（UTF-8 + 五段骨架）
 4. **绝对禁止清单**：
    - ❌ 不读需求文档，只把路径传给子Agent
    - ❌ 不读审查/构建/校验报告内容，只用 Grep 提取**最后一次出现**的 `### 判定：PASS/FAIL`（行号最大者 = 最新轮次，重测是追加写，第一行永远是最早的旧判定）
@@ -55,12 +55,64 @@
 
 ---
 
+## 日志写入规范（主日志 docs/main-log.md）
+
+与 `dev-quality-orchestrator.md` 同款规范，以下为**硬性要求**：
+
+**定位**：主日志 = 整个项目的**全过程档案**——有开端、有结尾，每个阶段一节，每步留痕（时间/角色/动作/产出/判定）可追溯，且不影响主流程。
+
+**1. 编码硬约束（防乱码，Windows 重点）**
+- 所有日志/文档统一 **UTF-8**。**禁止依赖系统默认编码**写文件——Windows 中文系统默认 GBK(cp936) + CRLF，会把中文写成 `��` 乱码。
+- 追加日志一律用**文件写入/编辑工具**（Write / Edit / edit_file），**禁止用 shell `echo/printf >>` 追加含中文的行**。
+- 脚本追加必须显式 `encoding='utf-8'`（Python：`open(path, 'a', encoding='utf-8', newline='')`）。
+
+**1b. 谁写**：只有 master 写 main-log。subagent 不写，它们的详细过程在 docs/ 与 tests/reports/ 里；main-log 是 master 视角的调度留痕。master 不读子Agent内容，只记自己知道的。
+
+**2. 骨架（初始化时创建，固定五段）**
+
+```markdown
+# 研发主日志 · {项目名}
+
+> 🧭 速览：{当前阶段} ｜ 模式：{模式} ｜ 进度：{X}/{N} ｜ 本批：{P}通过/{F}失败 ｜ 修正：{R}轮
+
+## ① 项目启动
+- {yymmdd hhmm} 🚀 需求进入：{REQ_FILE / 需求摘要}
+- {yymmdd hhmm} 🔢 批量 {BATCH_SIZE} ｜ 模式：{模式}
+
+## ② 需求分析 [PM + 原型]
+## ③ 计划 [Planner]
+## ④ 批次循环 Batch {X}/{N} [Dev×2 + 交付链]
+## ⑤ 项目收尾
+```
+
+**3. 阶段头也是追加写**：进入某阶段时**追加**对应 `## 段` 行，后续事件追加到文件末尾即落在当前段下（阶段顺序推进，文件末尾 = 当前阶段）。②③⑤ 首次进入即写段头；④ 每批写一个 `## ④ 批次循环 Batch {当前批}/{总批数}`。**不需要重写历史、不需要记住已写过的行**。
+
+**4. 事件行格式**（追加到当前段下）：`- {yymmdd hhmm} {状态符号} {动作} → {产出/结果}`。符号：🚀 启动 · 🔢 配置 · ▶ 开始 · ✅ 完成 · 🔄 重试 · ⚠️ 告警 · ❌ 阻断 · 🎨 原型 · 📄 产出 · 🔬 测试 · 📋 判定 · 🆔 AgentID · 📦 制品 · 🚧 升级 · ⏸️ 压缩 · 🏁 收尾 · 🧠 进化。阶段由所在章节体现，事件本身不再带阶段标签。
+
+**5. 速览行维护**：每次阶段切换/批次结束，用 Edit 整行替换以 `> 🧭 速览：` 开头的行。
+
+**6. 机器可解析片段（禁止改动）**：
+- 各环节判定行保留 `PASS/FAIL` 字样（dev-plan 状态机与指标靠它判定，Grep 取最后一次出现）。
+- CHECKPOINT 块必须包含 `═══ CHECKPOINT ═══` 行（压缩恢复靠它定位）。
+
+---
+
 ## 初始化
 
 1. 用户提供需求文档路径和代码仓库路径
 2. 确认 `REPO_DIR`（代码仓库根目录）和 `REQ_FILE`（需求文档路径）
-3. 创建 `{REPO_DIR}/docs/main-log.md`
+3. 创建 `{REPO_DIR}/docs/main-log.md`（按「日志写入规范」骨架：速览行 + ① 项目启动 段）
 4. 确认 `BATCH_SIZE`（默认 1）
+
+**日志写入**：按「日志写入规范」骨架创建（{项目名} = REPO_DIR 目录名），写 ① 项目启动 段：
+```
+# 研发主日志 · {项目名}
+> 🧭 速览：① 项目启动 ｜ 模式：{模式} ｜ 进度：0/{N} ｜ 本批：— ｜ 修正：0轮
+
+## ① 项目启动
+- {yymmdd hhmm} 🚀 需求进入：{REQ_FILE}
+- {yymmdd hhmm} 🔢 批量 {BATCH_SIZE} ｜ 模式：{模式}
+```
 
 ---
 
@@ -103,7 +155,11 @@ Agent(
 )
 ```
 
-等待完成 → 记录 PRD 路径，后续将 `{REPO_DIR}/docs/prd.md` 作为需求文档传给 code-planner。
+等待完成 → 记录 PRD 路径，后续将 `{REPO_DIR}/docs/prd.md` 作为需求文档传给 code-planner。进入 ② 段：先追加段头
+```
+## ② 需求分析 [PM + 原型]
+```
+日志：`- {yymmdd hhmm} ✅ PRD 编写完成 → {PRD_PATH}`
 
 ---
 
@@ -120,11 +176,21 @@ Agent(
 
 确认产出（Glob 查 `docs/prototype/index.html` 存在）后记录 `PROTO_PATH`，注入 Step1 FE Dev prompt（"视觉基准：{PROTO_PATH}"）。SKIP 则正常走链。
 
+日志：`- {yymmdd hhmm} 🎨 原型子流水线：{产出 / SKIP}`
+
 ---
 
 ## Phase 1：计划
 
-启动 code-planner，产出 `docs/dev-plan.md`、`docs/feature-spec.md`、`docs/lessons-learned.md`、`tests/reports/`，搭建项目骨架。
+启动 code-planner，产出 `docs/dev-plan.md`、`docs/feature-spec.md`、`docs/lessons-learned.md`、`tests/reports/`，搭建项目骨架。进入 ③ 段：先追加段头
+```
+## ③ 计划 [Planner]
+```
+日志：
+- `- {yymmdd hhmm} ▶ 启动计划子Agent`
+- `- {yymmdd hhmm} ✅ 计划完成：{N} 个子任务，项目骨架已就绪`
+- `- {yymmdd hhmm} 📄 dev-plan → docs/dev-plan.md`
+- `- {yymmdd hhmm} 📄 feature-spec → docs/feature-spec.md`
 
 ---
 
@@ -133,6 +199,11 @@ Agent(
 读取 `{REPO_DIR}/docs/dev-plan.md`，按 `BATCH_SIZE` 分组执行：
 
 ### Step 1：前后端并行开发
+
+进入 ④ 段（每批一次），先追加段头：
+```
+## ④ 批次循环 Batch {当前批次}/{总批数} [Dev×2 + 交付链]
+```
 
 ```
 Agent(
@@ -148,7 +219,10 @@ Agent(
 )
 ```
 
-等待 → 提取 FE_DEV_ID 和 BE_DEV_ID → 写日志。
+等待 → 提取 FE_DEV_ID 和 BE_DEV_ID → 写日志：
+- `- {yymmdd hhmm} ▶ 本批开发启动：{TASK_IDs}`
+- `- {yymmdd hhmm} ✅ 开发完成：{TASK_IDs} 已提交 (FE_DEV_ID: {FE_DEV_ID}, BE_DEV_ID: {BE_DEV_ID})`
+
 > 如果任务只涉及前端或后端，仅启动对应的开发 Agent。
 
 ### Step 2：代码审查
@@ -163,6 +237,8 @@ Agent(
 
 等待 → 提取 REVIEWER_ID。
 
+日志：`- {yymmdd hhmm} 🔬 代码审查完成：{TASK_IDs} {PASS/FAIL}`
+
 ### Step 3：构建
 
 ```
@@ -174,6 +250,8 @@ Agent(
 ```
 
 等待 → 提取 BUILDER_ID → 记录制品路径。
+
+日志：`- {yymmdd hhmm} 📦 制品构建完成：{制品路径}`
 
 ### Step 4：制品校验
 
@@ -187,6 +265,8 @@ Agent(
 
 等待 → 提取 VALIDATOR_ID。
 
+日志：`- {yymmdd hhmm} 🔬 制品校验：{PASS/FAIL}`
+
 ### Step 5：端到端测试
 
 ```
@@ -199,6 +279,8 @@ Agent(
 
 等待 → 提取 E2E_ID。
 
+日志：`- {yymmdd hhmm} 📋 端到端测试：{PASS/FAIL}`
+
 ### Step 5b：导出交付（A5，有前端/原型时）
 
 本批含前端 UI（有 `docs/prototype/` 或前端产物）且 E2E PASS 后，启动 code-export-specialist 导出交付物到 `{REPO_DIR}/exports/`：
@@ -210,7 +292,11 @@ Agent(
 )
 ```
 
-等待 → 记录导出路径到 main-log.md。无前端 UI / 无导出需求时跳过本步。
+等待 → 记录导出路径到 main-log.md：
+
+日志：`- {yymmdd hhmm} 📦 导出完成 → {导出路径列表}`
+
+无前端 UI / 无导出需求时跳过本步。
 
 ### Step 6：修正循环（≤3轮）
 
@@ -248,6 +334,8 @@ while round < 3:
 
   Agent(resume: "{E2E_ID}", subagent_type: "code-tester-e2e", run_in_background: true)
   等待 → 更新结果
+
+  日志：- {yymmdd hhmm} 🔄 第{round}轮修正完成：{FAIL任务列表}
 ```
 
 > 下游顺序不能并行：Validator 依赖 Builder 的制品路径，Builder 依赖 Reviewer 的通过。
@@ -263,19 +351,33 @@ while round < 3:
 
 ### Step 7：上下文压缩（每 5 批触发）
 
-同 `dev-quality-orchestrator.md` 的 checkpoint 机制。在批次之间写 checkpoint 到 `main-log.md`，压缩后从 checkpoint 恢复。
+同 `dev-quality-orchestrator.md` 的 checkpoint 机制。在批次之间写 checkpoint 到 `main-log.md`：
+
+```
+- {yymmdd hhmm} ⏸️ ═══ CHECKPOINT ═══
+- {yymmdd hhmm} 仓库：{REPO_DIR}
+- {yymmdd hhmm} 需求：{REQ_FILE}
+- {yymmdd hhmm} BATCH_SIZE：{BATCH_SIZE}
+- {yymmdd hhmm} 已完成批次：Batch 1 ~ {当前批次号}
+- {yymmdd hhmm} 剩余任务：{M} 个
+```
+
+压缩后从 checkpoint 恢复。
 
 ---
 
 ## Phase 3：收尾
 
-全部任务完成后统计迭代情况，写入 main-log.md：
+全部任务完成后统计迭代情况，写入 main-log.md。进入 ⑤ 段（仅一次），先追加段头：
+```
+## ⑤ 项目收尾
+```
 
 ```
-- {yymmdd hhmm} ──── 项目完成 ────
-- {yymmdd hhmm} 全部 {N} 个任务完成
-- {yymmdd hhmm} 制品清单：{制品路径列表}
-- {yymmdd hhmm} 迭代统计：{1次/X, 2次/Y, 3次/Z, 强制/W}
+- {yymmdd hhmm} 🏁 ════ 项目完成 ════
+- {yymmdd hhmm} 🏁 全部 {N} 个任务完成
+- {yymmdd hhmm} 📦 制品清单 → {制品路径列表}
+- {yymmdd hhmm} 📊 迭代统计：{1次/X, 2次/Y, 3次/Z, 强制/W}
 ```
 
 ---
@@ -288,4 +390,4 @@ while round < 3:
 4. 后台通知简短确认
 5. 开发批量 = 审查批量 = 构建批量 = 校验批量 = E2E批量
 6. 下游顺序：审查 → 构建 → 校验 → E2E（每步依赖前步通过）
-7. 开发Agent每批仅1个，下游Agent按流程顺序执行
+7. 并发上限 `MAX_PARALLEL`（默认 **5**，范围 3–5）：任意时刻并存子 Agent ≤ MAX_PARALLEL。开发阶段 FE/BE 并行(2)；交付链 审查→构建→校验→E2E 本就串行，天然满足上限（分波规则见 `dev-quality-orchestrator.md`「并发度控制」）
