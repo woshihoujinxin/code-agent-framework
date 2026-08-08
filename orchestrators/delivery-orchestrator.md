@@ -236,7 +236,7 @@ Agent(
 )
 ```
 
-等待开发波全部完成 → 逐任务提取 FE_DEV_ID/BE_DEV_ID，写日志 + dev-plan 标 🔄：
+等待开发波全部完成 → 逐任务提取 FE_DEV_ID/BE_DEV_ID，写日志 + dev-plan 标 🔳（待测，非 🔄）：
 - `- {yymmdd hhmm} ▶ 开发波启动：{TASK_IDs}`
 - `- {yymmdd hhmm} ✅ 开发完成：{TASK_IDx} (FE_DEV_ID: {id}, BE_DEV_ID: {id})`（逐任务一行）
 
@@ -379,7 +379,7 @@ while round < 3:
 - {yymmdd hhmm} 剩余任务：{M} 个
 ```
 
-压缩后从 checkpoint 恢复。
+压缩后从 checkpoint 恢复——**按任务状态精确续跑**（同 `dev-quality-orchestrator.md`「压缩后恢复机制」）：✅/⚠️ 跳过、**🔳 待测直接续交付链（不重开发）**、🔄 重做该任务、⏳ 进开发波。不再粗暴重做整批。
 
 ---
 
@@ -407,4 +407,4 @@ while round < 3:
 4. 后台通知简短确认
 5. 开发波 = 审查波 = 构建波 = 校验波 = E2E 波（交付链对整波走）
 6. 下游顺序：审查 → 构建 → 校验 → E2E（每步依赖前步通过）
-7. 并发两层（见 `dev-quality-orchestrator.md`「并发度控制」）：`BATCH_SIZE`（任务波宽，默认 2）管开发**任务级**并发；交付链 审查→构建→校验→E2E 本就串行。**不相乘**，峰值 = max(2×BATCH_SIZE, MAX_PARALLEL)
+7. 并发两层 + 韧性（见 `dev-quality-orchestrator.md`「并发度控制」/「并发自适应」）：`BATCH_SIZE`（默认 2）管开发任务级并发；`MAX_PARALLEL`（**默认 3**，实测 5 限流）管测试维度级；交付链 审查→构建→校验→E2E 本就串行。**不相乘**，峰值 = max(2×BATCH_SIZE, MAX_PARALLEL)。**遇 429 自动降并发慢跑**（eff_* 降档）+ **agent 失败退避重试**（见 DQO「agent 调用容错」），业务 FAIL 走修正循环
