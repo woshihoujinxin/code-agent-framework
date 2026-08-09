@@ -438,11 +438,11 @@ Agent(
 1. 版本级 worktree：master 建一次（整个版本复用，不每任务建）
    git -C {REPO_DIR} worktree add tests/ws-{version} feature/{version}
    → tests/ws-{version} 独立工作树，checkout 到版本分支 feature/{version}，主目录不动
-2. **测试前 worktree 同步（每次派 Tester 前必做——硬门槛，漏同步=白测）**：
-   git -C tests/ws-{version} fetch
-   git -C tests/ws-{version} reset --hard feature/{version}
-   → worktree = feature/{version} **最新**（含 Dev 刚 commit 的代码）
-   → 若 Dev 有未同步 commit 而 worktree 落后，必须同步后**再**派 Tester；不测旧代码
+2. **测试间 worktree 同步（只在"无测试在跑"时——测试中冻结，防破坏在读测试）**：
+   - **同步时机**：上一个测试完成后、下一个测试前（worktree 无在读测试才 reset）
+   - **测试中冻结**：Tester 在跑时**绝不 reset** worktree（否则读到一半的代码被换，测试结果错）
+   - 同步命令：git -C tests/ws-{version} fetch && git -C tests/ws-{version} reset --hard feature/{version}
+   - → worktree = feature/{version} 最新，再派下一个 Tester（不测旧代码，也不破坏在读测试）
 3. master 派运维(code-ops) 准备环境（首次建，后续复用）：
    Agent(code-ops, prompt: "准备测试环境 tests/ws-{version}：装依赖（增量，依赖声明变了才装）+ 建测试库 {repo}_test + 对比开发库同步 schema + 配 .env(测试库/测试端口)。读 design.md「端口与库规划」段。完成后返回就绪报告。")
    → code-ops 执行（短路判断：依赖/.env/schema 变了才做，没变跳过）
