@@ -169,7 +169,7 @@ Agent(
 
 ---
 
-## Phase 0.5：原型子流水线（A3，Web 项目自动判断）
+## 原型子流水线段：原型子流水线（A3，Web 项目自动判断）
 
 PRD 写完后、计划开始前，启动 code-prototype-builder 读 PRD「视觉意图」段自行判断（编排器不读需求内容）：
 
@@ -248,9 +248,9 @@ Agent(
 
 > 任务只涉前端或后端时，该任务仅启动对应开发 Agent。交付链（Step 2-5）对本波 `{TASK_IDs}` 整体走。
 
-### Step 1c：建测试环境（worktree + 派运维）
+### 测试环境准备：建测试环境（worktree + 派运维）
 
-冒烟通过、标 🔳 后，建测试环境（同 `dev-quality-orchestrator.md` Step 1c 详解）：master 建 worktree `tests/ws-{TASK_IDx}` + 派运维(code-ops) 准备（装依赖/建测试库 `{repo}_test`/对比开发库同步 schema/.env 测试端口）。**交付链各环节（审查→构建→校验→E2E）在测试目录 `tests/ws-{TASK_IDx}` 跑**（基于 Dev commit、独立库/端口、不影响主目录开发）。测完 master 报告回写主目录 + `git worktree remove` 销毁。
+冒烟通过、标 🔳 后，建测试环境（同 `dev-quality-orchestrator.md` 测试环境准备 详解）：master 建 worktree `tests/ws-{TASK_IDx}` + 派运维(code-ops) 准备（装依赖/建测试库 `{repo}_test`/对比开发库同步 schema/.env 测试端口）。**交付链各环节（审查→构建→校验→E2E）在测试目录 `tests/ws-{TASK_IDx}` 跑**（基于 Dev commit、独立库/端口、不影响主目录开发）。测完 master 报告回写主目录 + `git worktree remove` 销毁。
 
 ### Step 2：代码审查
 
@@ -308,7 +308,7 @@ Agent(
 
 日志：`- {yymmdd hhmm} 📋 端到端测试：{PASS/FAIL}`
 
-### Step 5b：导出交付（A5，有前端/原型时）
+### 导出交付：导出交付（A5，有前端/原型时）
 
 本波含前端 UI（有 `docs/prototype/` 或前端产物）且 E2E PASS 后，启动 code-export-specialist 导出交付物到 `{REPO_DIR}/exports/`：
 

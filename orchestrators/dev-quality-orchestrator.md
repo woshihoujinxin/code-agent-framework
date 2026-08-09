@@ -50,7 +50,7 @@
 |------|------|--------|
 | 测试契约 F/B/S/E/Q | Planner 必写、Dev 单测必覆盖 F/B/S、Tester 必逐条验证 | feature-spec 格式 + 冒烟覆盖率 + Tester 报告覆盖矩阵 |
 | Dev 产出 | 代码 + 单测 + selfcheck(IS_PASS) + **git commit** | 冒烟关卡核对（selfcheck 存在 + IS_PASS + commit） |
-| 冒烟回归 | master 跑**全部单测**（不只当前任务） | 冒烟关卡（Step 1b） |
+| 冒烟回归 | master 跑**全部单测**（不只当前任务） | 冒烟关卡（冒烟关卡） |
 | 判定 | Tester 报告含 `### 判定` + `### 失败分类` + **commit hash** | Grep 取 |
 
 ### 灵活条款（契约外，AI 自主——避免死板）
@@ -278,7 +278,7 @@ Agent(
 
 ---
 
-## Phase 0.5：原型子流水线（A3，自动判断）
+## 原型子流水线段：原型子流水线（A3，自动判断）
 
 > **ROLES 判断**：原型属增强角色。**精简模式跳过本步**（直接进 Phase 1）；**全能模式执行**。
 
@@ -396,7 +396,7 @@ Agent(
 
 > 任务只涉前端或后端时，该任务仅启动对应一个开发 Agent。FE/BE 每任务独立成对，便于 Step 3 按「失败分类」精确 resume 对应任务的 Dev（不牵连同波其他任务）。
 
-### Step 1b：冒烟检查（声明式，必经关卡）
+### 冒烟关卡：冒烟检查（声明式，必经关卡）
 
 **开发完成后，必须先验证代码至少能加载/编译，再启动测试。跳过此步会导致测试全 FAIL 浪费资源。**
 
@@ -426,7 +426,7 @@ Agent(
 日志（逐任务）：- {yymmdd hhmm} 🔬 冒烟检查：{TASK_IDx}{PASS/FAIL}
 ```
 
-### Step 1c：建测试环境（worktree + 派运维准备——master 只编排不执行）
+### 测试环境准备：建测试环境（worktree + 派运维准备——master 只编排不执行）
 
 冒烟通过、标 🔳 后，master **建测试工作树** + **派运维(code-ops) 准备环境**（master 不亲手建库/装依赖，只编排），就绪后 Tester 介入：
 
@@ -453,7 +453,7 @@ Agent(
 ```
 对开发波内每个任务 TASK_IDx（一个一个测，前一个五维完成且 PASS 后再测下一个；FAIL 则进 Step 3 仅修该任务）。
 
-**测试目录 = `{TEST_WS}` = `{REPO_DIR}/tests/ws-{TASK_IDx}`**（Step 1c 建的 worktree，运维 code-ops 已备好测试库/依赖/.env）。以下 tester 在 `{TEST_WS}` 测（**不是主目录 {REPO_DIR}**）。master 派测时传 Dev 的 **commit hash**；tester 测前 `git -C {TEST_WS} rev-parse HEAD` 核对 == 传入 hash（不符 → 报告"版本不符"不测，绝不测错版本）。
+**测试目录 = `{TEST_WS}` = `{REPO_DIR}/tests/ws-{TASK_IDx}`**（测试环境准备 建的 worktree，运维 code-ops 已备好测试库/依赖/.env）。以下 tester 在 `{TEST_WS}` 测（**不是主目录 {REPO_DIR}**）。master 派测时传 Dev 的 **commit hash**；tester 测前 `git -C {TEST_WS} rev-parse HEAD` 核对 == 传入 hash（不符 → 报告"版本不符"不测，绝不测错版本）。
 
 **按 `ROLES` 配置只派启用的 tester**（精简省 token，全能全量）：
 - **精简模式**：只派 **Agent A（correctness）+ Agent D（e2e）**——功能验收 + 端到端。跳 B(quality)/C(robustness)/E(security)。
@@ -572,7 +572,7 @@ while round < max_auto_rounds:
 - 任务全PASS → dev-plan.md 标记 ✅
 - 任务第3轮仍FAIL → **触发问题升级流程**
 
-### Step 3b：问题升级流程（仅当3轮修复失败时触发）
+### 问题升级：问题升级流程（仅当3轮修复失败时触发）
 
 ```
 if 本波有任务第3轮仍FAIL:
@@ -739,7 +739,7 @@ Step 4: 向用户报告恢复点（按状态分类列出），然后继续 Phase
 
 ## Phase 3：收尾
 
-> **ROLES 判断**：导出(export) + code-sage 属增强角色。**精简模式跳过 Phase 3.5（code-sage 自进化）**，只做基本统计 + 运行指南；**全能模式全执行**。
+> **ROLES 判断**：导出(export) + code-sage 属增强角色。**精简模式跳过 指标与经验提炼段（code-sage 自进化）**，只做基本统计 + 运行指南；**全能模式全执行**。
 
 全部任务完成后：
 
@@ -772,7 +772,7 @@ Step 4: 向用户报告恢复点（按状态分类列出），然后继续 Phase
 - {yymmdd hhmm} 📖 运行指南 → README.md（快速开始）
 ```
 
-### Phase 3.5：指标落盘 + 经验提炼（自进化闭环）
+### 指标与经验提炼段：指标落盘 + 经验提炼（自进化闭环）
 
 **Step A — 主Agent 写 metrics.md 结构部分**（从自己的 main-log.md 统计，不读报告内容，不违反上下文规则）：
 

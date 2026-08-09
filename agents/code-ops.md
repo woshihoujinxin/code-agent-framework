@@ -59,4 +59,4 @@ skills:
 ## 触发场景
 
 - "准备测试环境 {TASK_ID}"
-- master 在 Step 1c（建 worktree 后）派本角色
+- master 在 测试环境准备（建 worktree 后）派本角色
