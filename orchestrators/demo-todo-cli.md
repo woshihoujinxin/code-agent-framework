@@ -1,6 +1,8 @@
 # Claude Code 多Agent 协作演练：Todo CLI 工具
 
 > 以下内容可直接复制到 Claude Code 中逐段执行。每步注释（`<!-- -->`）是说明，不影响执行。
+>
+> ⚠️ **流程已改为"先全量开发、后整版本提测"**：Phase 2 先把 TASK01~03 全部开发 + 冒烟完成（标 🔳），开发段连续跑完才进 Phase 3 五维测试 + 修正，**不穿插**。下文为便于讲解，按任务展开开发与测试的**机制细节**；实际执行时测试段在所有开发完成后统一进行。
 
 ---
 
@@ -54,7 +56,7 @@ Planner 产出的 `dev-plan.md`：
 
 ---
 
-## Phase 2：DAG 就绪集取波（BATCH_SIZE=1，逐个推进；调度逻辑以 dev-quality-orchestrator.md 真源为准）
+## Phase 2：开发循环（DAG 就绪集取波，BATCH_SIZE=1 逐个推进，**只开发+冒烟、不测试**；调度逻辑以 dev-quality-orchestrator.md 真源为准）
 
 ### Batch 1: TASK01
 
@@ -106,7 +108,7 @@ TASK01 代码已提交到 ./src/
 
 主Agent 立即提取 DEV_ID：`dev_abc123`
 
-#### Step 2：五维并行测试
+#### Step 2：五维并行测试（新流程下：所有任务开发完后，在 Phase 3 统一铺开）
 
 主Agent 并行启动五个 Tester：
 
@@ -209,7 +211,7 @@ Dev 新增 done + remove + 边界处理 → 三维全 PASS → ✅
 
 ---
 
-## Phase 3：收尾
+## Phase 4：收尾
 
 主Agent 输出：
 

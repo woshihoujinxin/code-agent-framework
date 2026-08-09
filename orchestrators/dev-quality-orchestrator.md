@@ -72,12 +72,12 @@
 
 **1b. 谁写**：只有 master 写 main-log。subagent 不写，它们的详细过程在 docs/ 与 tests/reports/ 里；main-log 是 master 视角的调度留痕（时间+角色+动作+产出+判定）。master 不读子Agent内容，只记自己知道的。
 
-**2. 骨架（初始化时创建，固定五段）**
+**2. 骨架（初始化时创建，固定六段）**
 
 ```markdown
 # 研发主日志 · {项目名}
 
-> 🧭 速览：{当前阶段} ｜ 模式：{模式} ｜ 进度：{X}/{N} ｜ 本波：{P}通过/{F}失败 ｜ 修正：{R}轮
+> 🧭 速览：{当前阶段} ｜ 模式：{模式} ｜ 进度：{X}/{N} ｜ 本波：{开发：波内TASK_IDs ／ 测试：P通过F失败} ｜ 修正：{R}轮
 
 ## ① 项目启动
 - {yymmdd hhmm} 🚀 需求进入：{REQ_FILE / 需求摘要}
@@ -85,11 +85,12 @@
 
 ## ② 需求分析 [PM + 原型]
 ## ③ 计划 [Planner]
-## ④ 批次循环 Batch {X}/{N} [Dev×2 + Tester×5]
-## ⑤ 项目收尾
+## ④ 开发循环 [Dev×2]（全量开发，不穿插测试）
+## ⑤ 测试循环 [Tester×5]（开发完自动进入，整版本提测）
+## ⑥ 项目收尾
 ```
 
-**3. 阶段头也是追加写**：进入某阶段时**追加**对应 `## 段` 行，后续事件追加到文件末尾即落在当前段下（阶段顺序推进，文件末尾 = 当前阶段）。②③⑤ 首次进入即写段头；④ 每批写一个 `## ④ 批次循环 Batch {当前批}/{总批数}`。**不需要重写历史、不需要记住已写过的行**。
+**3. 阶段头也是追加写**：进入某阶段时**追加**对应 `## 段` 行，后续事件追加到文件末尾即落在当前段下（阶段顺序推进，文件末尾 = 当前阶段）。②③⑥ 首次进入即写段头；④ 每开发波写一个 `## ④ 开发循环 波{序号}`；⑤ 整版本开发完、进入提测时写一个 `## ⑤ 测试循环`。**不需要重写历史、不需要记住已写过的行**。
 
 **4. 事件行格式**（追加到当前段下）：`- {yymmdd hhmm} {状态符号} {动作} → {产出/结果}`。符号：🚀 启动 · 🔢 配置 · ▶ 开始 · ✅ 完成 · 🔄 重试 · ⚠️ 告警 · ❌ 阻断 · 🎨 原型 · 📄 产出 · 🔬 测试 · 📋 判定 · 🆔 AgentID · 📦 制品 · 🚧 升级 · ⏸️ 压缩 · 🏁 收尾 · 🧠 进化。阶段由所在章节体现，事件本身不再带阶段标签。
 
@@ -143,7 +144,7 @@
 - PM：注入 `PRD 模式：简洁`
 - Planner：注入"拆 ≤3 大任务"
 - Dev：任务只涉一端时只启一个 Dev（涉及全栈仍 FE/BE 并行，但只 1 批、任务 ≤3）
-- 测试：五维并行 1 轮；修正 ≤2 轮（非 3）
+- 测试：全量开发后统一提测（五维 1 轮）；修正 ≤2 轮（非 3）
 - **测试契约照常产**：feature-spec.md 的 F/B/S/E/Q 是 Dev/Planner/Tester 共享上下文，快速模式也必须产契约、Dev 仍照契约写单测、Tester 仍照契约验证——只是批/轮更少
 
 **模式传递**：确定模式后，把 `模式：{标准SOP / 快速模式 / BugFix}` 拼进 PM / Planner / Dev / Tester 的 prompt，让各自按模式行事。
@@ -177,21 +178,21 @@
 
 ## 并发度控制（两层旋钮，分阶段启用，不相乘）
 
-**核心**：并发分两层，**各管各的、不相乘**——开发阶段任务级并发，测试阶段维度级并发。峰值 = **max(2×BATCH_SIZE, MAX_PARALLEL)**，**绝不出现"任务数×维度数"的乘积爆炸**（如 15 tester）。
+**核心**：并发分两层，**各管各的、不相乘**——开发阶段任务级并发，测试阶段把所有任务的 `(任务×5维)` 入一个池、按 `MAX_PARALLEL` 跨任务流水线消费。峰值 = **max(2×BATCH_SIZE, MAX_PARALLEL)**，**绝不出现"任务数×维度数"的乘积爆炸**（如 15 tester）。
 
 | 层 | 旋钮 | 管什么 | 默认 | 峰值 agent |
 |----|------|--------|------|-----------|
 | ① 任务级（开发） | `BATCH_SIZE`（任务波宽） | 一次并发几个**就绪任务**开发 | **2** | 2 × BATCH_SIZE（每任务 FE+BE） |
-| ② 维度级（测试） | `MAX_PARALLEL` | 单任务五维 tester 并发数 | **3** | MAX_PARALLEL（一次只测一个任务） |
+| ② 维度级（测试） | `MAX_PARALLEL` | 测试阶段 `(任务×维度)` 并发上限 | **3** | MAX_PARALLEL（跨任务流水线，无单任务 barrier） |
 
-**为什么不相乘**：测试阶段**一次只测一个任务**（任务串行测），所以测试 agent 峰值恒为 MAX_PARALLEL、与 BATCH_SIZE 无关；只有开发阶段才是 BATCH_SIZE 个任务并发（各 FE+BE）。两阶段不重叠 → 峰值取 max 而非乘积。
+**为什么不相乘**：测试阶段把 `(任务×5维)` 入池、按 MAX_PARALLEL 跨任务流水线消费，所以测试 agent 峰值恒为 MAX_PARALLEL、与 BATCH_SIZE 无关；只有开发阶段才是 BATCH_SIZE 个任务并发（各 FE+BE）。两阶段不重叠 → 峰值取 max 而非乘积。
 
 **`BATCH_SIZE`（任务波宽，开发阶段）**：DAG 同层就绪任务取 `min(BATCH_SIZE, |ready|)` 个并发开发，**异构优先**（全栈项目波内混 FE+BE，发挥前后端并行，避免同类型扎堆争抢 DB/API）。
 - 默认 **2**：开发 2 任务并发 = 4 dev agent，温和提速。
 - `=1`：退化为按依赖顺序逐个推进（兼容旧行为 + 修依赖顺序 bug）。
 - 可调至 5：开发 5 任务并发 = 10 dev agent，最快但 API/资源压力大（agent 多但**不爆炸**，因测试仍单任务）。
 
-**`MAX_PARALLEL`（维度级，测试阶段）**：单任务五维 tester 并发。默认 **3**（实测：5 在 glm 账户触发 429 限流，3 更稳；五维按上限分波 3+2，波内顺序 `功能→质量→健壮→安全→E2E`）；资源充裕可手动调 5（五维全并行一波，留意限流）。**运行时遇 429 由「并发自适应」自动降档**。
+**`MAX_PARALLEL`（维度级，测试阶段）**：Phase 3 测试阶段把所有 🔳 任务的 `(任务×5维)` 入一个池，按 `eff_PARALLEL`（初始 = MAX_PARALLEL）**跨任务流水线并发消费**（不再逐任务串行等待，整版本开发完后一次性铺开）。默认 **3**（实测：5 在 glm 账户触发 429 限流，3 更稳）；资源充裕可手动调 5。**运行时遇 429 由「并发自适应」自动降档**。
 
 > 取值：BATCH_SIZE 想提速往上调（2→3→5）；MAX_PARALLEL 默认 3（实测限流安全值）、资源足可调 5。两者独立，总峰值 = max(2×BATCH_SIZE, MAX_PARALLEL)。仅 master 调度遵守。运行时遇 429 自动降档（见「并发自适应」）。
 
@@ -381,7 +382,9 @@ Agent(
 
 ---
 
-## Phase 2：DAG 拓扑开发循环（就绪集取波，非平铺切块）
+## Phase 2：开发阶段（DAG 全量开发 + 冒烟，**不穿插测试**）
+
+**先开发，后测试**：本阶段只管把整版本的开发任务按 DAG 顺序全部开发完（每波开发 + 冒烟 → 标 🔳），**不在此阶段跑五维 QA 测试**。开发队列（⏳）清空后，自动进入 Phase 3 测试阶段统一提测。开发期仍跑冒烟 + 单测（快、Dev 自检、保证能编译/单测过）。
 
 不再把 ⏳ 任务按编号顺序平铺切块，而是按 dev-plan 的 **DAG 依赖**算就绪集、取波并发——同层（依赖已满足）任务并发开发，跨层由就绪集自动串行。**每波循环执行**：
 
@@ -390,11 +393,13 @@ Agent(
    Grep(pattern: '^\| [0-9]+ \| TASK', path: '{REPO_DIR}/docs/dev-plan.md', output_mode: 'content', '-n': true)
    表格列序固定：| # | 任务ID | 标题 | 状态 | 依赖 | 拆分理由 |
 2. ✅集 = 状态 ✅ 的所有 ID
-3. 就绪集（两组，**每波优先处理 ready_test** 把待测任务推进到测试，再取 ready_dev 开发新任务）：
-   - ready_test = 状态 🔳 的任务（开发已完成+冒烟过，待五维测试）→ **直接续五维测试，不重开发**（修复"开发完成后重复开发"）
-   - ready_dev  = 状态 ⏳ 且「依赖列每项都在 ✅集」的任务（无依赖任务首波即就绪）→ 进开发波
-4. ready 为空时：仍有 ⏳/🔄 → 上游未完成/波进行中，等待不启新波；全部 ✅/⚠️ → 进 Phase 3
-5. 开发波 = ready_dev 中取 min(BATCH_SIZE, |ready_dev|) 个，**异构优先**（全栈项目同波尽量混 FE+BE：若就绪集同时含 BE 与 FE 任务，优先各取一个，而非同类型扎堆）。这样发挥**前后端并行**，且避免两个 BE 同时连 DB/写 API 的资源争抢。BATCH_SIZE=任务波宽（见「并发度控制」）。
+3. 就绪集（开发优先，**只取 ready_dev**——测试延后到 Phase 3，本阶段不处理 🔳）：
+   - ready_dev = 状态 ⏳ 且「依赖列每项都在 ✅集」的任务（无依赖任务首波即就绪）→ 进开发波
+4. ready_dev 为空时：
+   - 仍有 ⏳/🔄 → 上游未完成/波进行中，等待不启新波
+   - 无 ⏳ 且有 🔳 → **整版本开发完成，进入 Phase 3 测试阶段**（统一提测所有 🔳）
+   - 全部 ✅/⚠️ → 直接进 Phase 4 收尾
+5. 开发波 = ready_dev 中取 min(eff_BATCH, |ready_dev|) 个，**异构优先**（全栈项目同波尽量混 FE+BE：若就绪集同时含 BE 与 FE 任务，优先各取一个，而非同类型扎堆）。这样发挥**前后端并行**，且避免两个 BE 同时连 DB/写 API 的资源争抢。BATCH_SIZE=任务波宽（见「并发度控制」）。
 ```
 
 > 依赖列解析约定：逗号分隔多依赖（`TASK01,TASK02`）；`-` 表无依赖；升级任务 ID `TASK01-01` 照常比较。
@@ -408,7 +413,7 @@ Agent(
 
 先追加 ④ 段头（每波一次）：
 ```
-## ④ 波 {波序号} [Dev×{2×本波任务数} + Tester×5] ｜ 本波：{TASK_ID1}, {TASK_ID2}, ...
+## ④ 开发循环 波{波序号} [Dev×{2×本波任务数}] ｜ 本波：{TASK_ID1}, {TASK_ID2}, ...
 ```
 日志：`- {yymmdd hhmm} ▶ 开发波启动：{TASK_ID1} ({标题1}), {TASK_ID2} ({标题2}), ...`
 
@@ -462,16 +467,78 @@ Agent(
 - 用 Glob 列出本波 Dev 新增/修改的文件，**只要文件存在即视为通过**（不假设任何语言）
 
 **判定**：
-- 冒烟命令满足 pass_criteria（或退化策略通过）→ ✅ 进入 Step 2
-- 不满足 → ❌ 回到 Step 1 resume 开发Agent 修复，最多重试 2 次，不进入测试阶段
+- 冒烟命令满足 pass_criteria（或退化策略通过）→ ✅ 该任务标 🔳（开发完成，待 Phase 3 统一提测）；本波 Step 4 状态更新后回 DAG 入口取下一波；无 ⏳ 时开发完成 → 进入 Phase 3
+- 不满足 → ❌ 回到 Step 1 resume 开发Agent 修复，最多重试 2 次
 
 ```
 日志（逐任务）：- {yymmdd hhmm} 🔬 冒烟检查：{TASK_IDx}{PASS/FAIL}
 ```
 
+### Step 4（开发循环）：批量状态更新 + 反馈
+
+- 更新 `{REPO_DIR}/docs/dev-plan.md` 中本波所有任务状态（开发完成 → 🔳）
+- 写入完成日志、向用户报告进度
+- **检查 `docs/prd.md` 是否有待规划的新需求**，如果有，启动增量规划（新 ⏳ 任务进入后续开发波）
+- 回 DAG 入口取下一波；无 ⏳ 时 → **开发完成，进入 Phase 3 测试阶段**
+
+### Step 5（开发循环）：上下文压缩（每 N 开发波触发）
+
+> **原理**：子Agent 每次新建，上下文是干净的。但主Agent 自身累积了所有调度记录。每完成一波后评估是否需要压缩。
+
+**触发条件**（满足任一即触发）：
+
+```
+1. 连续完成 5 个开发波后
+2. 用户主动要求 /compact
+3. 主Agent 自我感知上下文过长（回复变慢、思考时间变长）
+```
+
+**压缩前置条件**：
+- 必须在 **Step 4 之后**（当前波状态已落盘）
+- 必须确保 `dev-plan.md` 和 `main-log.md` 已更新
+- 绝不在开发波进行中压缩
+
+**压缩前先提炼经验**（每 5 波触发时，在写 checkpoint 前调用一次 code-sage，把阶段性经验沉淀进 coding-standards，避免压缩丢失尚未沉淀的经验）：
+
+> **ROLES 判断**：code-sage 属增强角色。**精简模式跳过**（不调用 code-sage）；**全能模式执行**。
+
+```
+Agent(
+  subagent_type: "code-sage",
+  prompt: "阶段性经验提炼。\n仓库：{REPO_DIR}\n报告目录：{REPO_DIR}/tests/reports/\n指标文件：{REPO_DIR}/docs/metrics.md（若不存在则跳过指标部分）\n编码规范 skill：coding-standards\n\n请提炼本阶段高频问题为防错规则追加到 coding-standards。返回新增规则数。"
+)
+```
+
+**压缩步骤**：
+
+```
+1. 向 main-log.md 写入 checkpoint：
+
+- {yymmdd hhmm} ⏸️ ═══ CHECKPOINT ═══
+- {yymmdd hhmm} 仓库：{REPO_DIR}
+- {yymmdd hhmm} 需求：{REQ_FILE}
+- {yymmdd hhmm} BATCH_SIZE：{BATCH_SIZE}
+- {yymmdd hhmm} 已完成开发波：波 1 ~ {当前波号}
+- {yymmdd hhmm} 下一波任务：{TASK_ID1}, {TASK_ID2}, ...
+- {yymmdd hhmm} 剩余任务：{M} 个
+
+2. 向用户报告：
+   "已完成 {X}/{N} 个任务，上下文即将压缩。状态已保存到 main-log.md。"
+
+3. 建议用户执行 /compact（或自动触发压缩）
+```
+
+**压缩不需要重新加载**。主Agent 的会话保持连续，只是历史对话被摘要替换。checkpoint 是保险——如果摘要丢失了关键信息，可以从文件恢复。
+
+---
+
+## Phase 3：测试阶段（整版本开发完自动进入，统一提测）
+
+> 开发循环（Step 1 + 冒烟 + Step 4 + Step 5）重复至**无 ⏳** 后，自动进入本阶段——把所有 🔳 任务一次性铺开五维 QA 测试，**不再穿插在开发之间**。冒烟 + 单测已在开发期跑过，本阶段只跑五维 QA。
+
 ### 测试环境准备：建测试环境（worktree + 派运维准备——master 只编排不执行）
 
-冒烟通过、标 🔳 后，master **建测试工作树** + **派运维(code-ops) 准备环境**（master 不亲手建库/装依赖，只编排），就绪后 Tester 介入：
+整版本开发完成（所有 ⏳ → 🔳）后，master **建测试工作树** + **派运维(code-ops) 准备环境**（master 不亲手建库/装依赖，只编排），就绪后 Tester 介入：
 
 ```
 1. 版本级 worktree：master 建一次（整个版本复用，不每任务建）
@@ -487,7 +554,7 @@ Agent(
    → code-ops 执行（先读 env-state.md 短路判断：依赖/.env/schema 变了才做，没变跳过并标记"复用"；做完回写 env-state.md）
    > **环境状态持久化**：`docs/env-state.md` 是机器级环境清单（依赖指纹/测试库/schema/.env/端口），由 code-ops 维护——**防止每次重新判断/重建环境**。Tester 需要环境信息时读它，不重复派 ops。
 4. Step 2 派 Tester 指向 tests/ws-{version}（版本测试目录，不是主目录/不是每任务）
-5. 版本测试全过（Phase 3 收尾）：
+5. 版本测试全过（Phase 4 收尾）：
    - 报告回写主目录: cp tests/ws-{version}/tests/reports/*.md → {REPO_DIR}/tests/reports/
    - merge: git -C {REPO_DIR} checkout main && git merge feature/{version}
    - 打 tag: git -C {REPO_DIR} tag v{version}（版本发布点）
@@ -496,12 +563,12 @@ Agent(
 
 > 测试库 `{repo}_test` 建一次复用；worktree `tests/ws-{version}` 版本级建一次（服务整个版本的所有任务测试），靠「步骤 2 同步」拿最新改动。中断恢复时 master 先 `git worktree list` 扫残留清理。
 
-### Step 2：逐任务五维测试（任务串行，避免并发爆炸）
+### Step 2：全量五维测试（跨任务流水线，所有 🔳 任务一次性铺开）
 
-**关键：一次只测一个任务**——对开发波内任务**逐个**跑五维（一个测完再测下一个），**绝不**对整波任务同时并发五维（否则 agent 数 = 本波任务数 × 5 会爆炸）。每个任务的五维 tester 按 `eff_PARALLEL`（运行时有效值，初始 = MAX_PARALLEL 默认 3）并行（=3 时分波 3+2；=5 时五维全并行；<3 进一步分波，波内顺序 `功能→质量→健壮→安全→E2E`）。逐任务使测试 agent 峰值恒为 eff_PARALLEL，与波宽无关——**绝不出现 15 tester**。
+整版本开发完成后，把**所有 🔳 任务**的 `(任务 × 5维)` 测试 job 入一个池，按 `eff_PARALLEL`（运行时有效值，初始 = MAX_PARALLEL 默认 3）**跨任务流水线并发消费**——不再逐任务串行等待（开发已全部完成，可一次性铺开）。峰值恒为 eff_PARALLEL，**绝不出现 任务数×5 的爆炸**。
 
 ```
-对开发波内每个任务 TASK_IDx（一个一个测，前一个五维完成且 PASS 后再测下一个；FAIL 则进 Step 3 仅修该任务）。
+对所有 🔳 任务 TASK_IDx，把它的 5 个维度 tester 各作为一个 job 入池，按 eff_PARALLEL 并发派发（一条消息发多个 Agent 调用，达 eff_PARALLEL 上限即等回收再派）。
 
 **测试目录 = `{TEST_WS}` = `{REPO_DIR}/tests/ws-{version}`**（版本级 worktree，checkout `feature/{version}` 分支，测试前已同步到分支最新）。以下 tester 在 `{TEST_WS}` 测（**不是主目录 {REPO_DIR}**）。测试基于 **`feature/{version}` 分支**（版本锚点 = 完整逻辑版本，非开发过程 commit）。
 
@@ -535,7 +602,7 @@ Agent E:
   prompt: "安全性测试：{TASK_IDx}\n测试目录(worktree): {TEST_WS}\n基于 feature/{version} 分支\nfeature-spec: {TEST_WS}/docs/feature-spec.md\nprd: {TEST_WS}/docs/prd.md\nDev自检报告: {TEST_WS}/tests/reports/{TASK_IDx}-selfcheck-*.md\n输出目录: {TEST_WS}/tests/reports/"
 ```
 
-等待该任务（TASK_IDx）五维全部完成 → 收集 5 维 PASS/FAIL 判定 + 报告路径。全 PASS → dev-plan 该任务标 ✅，继续测波内下一个任务；有 FAIL → 进 Step 3（仅修该任务）。本波所有任务都 ✅ → 回 Phase 2 入口算下一波就绪集。
+所有 job 回收 → 收集每个 🔳 任务的 5 维 PASS/FAIL 判定 + 报告路径。全 PASS 的任务 → dev-plan 标 ✅；有 FAIL 的任务进 Step 3 修正循环。全部 🔳 → ✅/⚠️ 后 → 若升级产生新 ⏳ 则回 Phase 2 开发循环，否则进 Phase 4 收尾。
 
 存储：TEST_CORRECTNESS_ID、TEST_QUALITY_ID、TEST_ROBUSTNESS_ID、TEST_SECURITY_ID、TEST_E2E_ID。
 
@@ -554,7 +621,7 @@ Grep(pattern="^### 判定", path="{REPO_DIR}/tests/reports/{TASK_ID}-{dimension}
 
 ### Step 3：修正循环（≤3轮，前后端并行修正）
 
-**Step 3 前置：失败分类路由（B5）**——波内有任务 FAIL 时，先对每个 FAIL 报告 Grep `### 失败分类：` 行，按分类分流（轮数上限不变）：
+**Step 3 前置：失败分类路由（B5）**——测试阶段有任务 FAIL 时，先对每个 FAIL 报告 Grep `### 失败分类：` 行，按分类分流（轮数上限不变）：
 
 | 失败分类 | 路由 |
 |---------|------|
@@ -571,7 +638,7 @@ round = 0
 max_auto_rounds = 3
 
 while round < max_auto_rounds:
-  FAIL任务集 = 本波中任一维度未 PASS 的任务
+  FAIL任务集 = 所有 🔳 任务中任一维度未 PASS 的任务
   if FAIL任务集 为空:
     break
 
@@ -607,7 +674,12 @@ while round < max_auto_rounds:
 
   日志：- {yymmdd hhmm} 🔄 第{round}轮修正完成：{FAIL任务列表}
 
-  # 只重测 FAIL 任务的 FAIL 维度（每任务独立 tester；逐任务重测，不并发多任务，避免爆炸）
+  # 重测前必须把修复同步到测试 worktree（修复 commit 在主仓库 feature/{version}，worktree 不会自动跟）：
+  #   先确认 Dev 已把修复 git commit 到 feature/{version}，再执行同步：
+  git -C tests/ws-{version} fetch && git -C tests/ws-{version} reset --hard feature/{version}
+  # （否则重测跑旧代码 → 必然再 FAIL，修正循环空转）
+
+  # 只重测 FAIL 任务的 FAIL 维度（入 (任务×维度) 池，按 eff_PARALLEL 并发消费）
   for TASK_IDx in FAIL任务集:
     if 该任务功能FAIL:  Agent(resume: "{TASK_IDx 的 TEST_CORRECTNESS_ID}", subagent_type: "code-tester-correctness", run_in_background: true, prompt: "重测 {TASK_IDx}。")
     if 该任务质量FAIL:  Agent(resume: "{TASK_IDx 的 TEST_QUALITY_ID}",     subagent_type: "code-tester-quality",    run_in_background: true, prompt: "重测 {TASK_IDx}。")
@@ -625,7 +697,7 @@ while round < max_auto_rounds:
 ### 问题升级：问题升级流程（仅当3轮修复失败时触发）
 
 ```
-if 本波有任务第3轮仍FAIL:
+if 测试阶段有任务第3轮仍FAIL:
   # Step 1: 收集失败信息
   收集所有FAIL任务的测试报告路径和判定结果
   
@@ -689,65 +761,9 @@ if 本波有任务第3轮仍FAIL:
   - 升级需求：docs/upgrade-issue-{TASK_ID}.md
   - 新任务数：{N}个
   
-  系统将优先处理这些升级任务。
+  系统将优先处理这些升级任务（新 ⏳ 任务回到 Phase 2 开发循环，开发完再进 Phase 3 测试）。
   """
 ```
-
-### Step 4：批量状态更新 + 反馈
-
-- 更新 `{REPO_DIR}/docs/dev-plan.md` 中本波所有任务状态
-- 写入完成日志
-- 向用户报告进度
-- **检查 `docs/prd.md` 是否有待规划的新需求**，如果有，启动增量规划
-
-### Step 5：上下文压缩（每 N 批触发）
-
-> **原理**：子Agent 每次新建，上下文是干净的。但主Agent 自身累积了所有调度记录。每完成一批后评估是否需要压缩。
-
-**触发条件**（满足任一即触发）：
-
-```
-1. 连续完成 5 批后
-2. 用户主动要求 /compact
-3. 主Agent 自我感知上下文过长（回复变慢、思考时间变长）
-```
-
-**压缩前置条件**：
-- 必须在 **Step 4 之后**（当前批次状态已落盘）
-- 必须确保 `dev-plan.md` 和 `main-log.md` 已更新
-- 绝不在修正循环中压缩
-
-**压缩前先提炼经验**（每 5 批触发时，在写 checkpoint 前调用一次 code-sage，把阶段性经验沉淀进 coding-standards，避免压缩丢失尚未沉淀的经验）：
-
-> **ROLES 判断**：code-sage 属增强角色。**精简模式跳过**（不调用 code-sage）；**全能模式执行**。
-
-```
-Agent(
-  subagent_type: "code-sage",
-  prompt: "阶段性经验提炼。\n仓库：{REPO_DIR}\n报告目录：{REPO_DIR}/tests/reports/\n指标文件：{REPO_DIR}/docs/metrics.md（若不存在则跳过指标部分）\n编码规范 skill：coding-standards\n\n请提炼本阶段高频问题为防错规则追加到 coding-standards。返回新增规则数。"
-)
-```
-
-**压缩步骤**：
-
-```
-1. 向 main-log.md 写入 checkpoint：
-
-- {yymmdd hhmm} ⏸️ ═══ CHECKPOINT ═══
-- {yymmdd hhmm} 仓库：{REPO_DIR}
-- {yymmdd hhmm} 需求：{REQ_FILE}
-- {yymmdd hhmm} BATCH_SIZE：{BATCH_SIZE}
-- {yymmdd hhmm} 已完成批次：Batch 1 ~ {当前批次号}
-- {yymmdd hhmm} 下一批任务：{TASK_ID1}, {TASK_ID2}, ...
-- {yymmdd hhmm} 剩余任务：{M} 个
-
-2. 向用户报告：
-   "已完成 {X}/{N} 个任务，上下文即将压缩。状态已保存到 main-log.md。"
-
-3. 建议用户执行 /compact（或自动触发压缩）
-```
-
-**压缩不需要重新加载**。主Agent 的会话保持连续，只是历史对话被摘要替换。checkpoint 是保险——如果摘要丢失了关键信息，可以从文件恢复。
 
 ---
 
@@ -762,7 +778,7 @@ Step 1: 读 {REPO_DIR}/docs/main-log.md 末尾几行（确认断在哪个阶段/
 Step 2: Grep {REPO_DIR}/docs/dev-plan.md 任务行，解析每个任务的状态 emoji
 Step 3: 按状态分流（逐任务决定，不整批重做）：
    - ✅ / ⚠️  → 跳过（已完成/已结案）
-   - 🔳 待测  → 开发已完成+冒烟过，【直接续五维测试】，绝不重开发
+   - 🔳 待测  → 开发完成+冒烟过；新流程下【等整版本开发完进 Phase 3 测试】，绝不重开发
    - 🔄 开发中 → 该任务开发中断，【重做该任务】（resume 或新派 Dev）
    - ⏳ 待办  → 依赖满足则进开发波（就绪集正常处理）
 Step 4: 向用户报告恢复点（按状态分类列出），然后继续 Phase 2 循环
@@ -787,15 +803,15 @@ Step 4: 向用户报告恢复点（按状态分类列出），然后继续 Phase
 
 ---
 
-## Phase 3：收尾
+## Phase 4：收尾
 
 > **ROLES 判断**：导出(export) + code-sage 属增强角色。**精简模式跳过 指标与经验提炼段（code-sage 自进化）**，只做基本统计 + 运行指南；**全能模式全执行**。
 
 全部任务完成后：
 
-1. 先追加 ⑤ 段头（仅一次）：
+1. 先追加 ⑥ 段头（仅一次）：
 ```
-## ⑤ 项目收尾
+## ⑥ 项目收尾
 ```
 2. **产出测试汇总报告**（人直接看这份——必做，否则 10+ 份过程报告没人看）：
    - Grep 每个 `tests/reports/{TASK_ID}-{dimension}.md` 的「一句话结论」行（`Grep(pattern="### 📋 一句话结论", path=..., output_mode="content", -A=1)`）与判定行
@@ -890,6 +906,6 @@ Agent(
 2. 测试结果只用 Grep 提取判定
 3. 所有代码修改委托给 code-dev-frontend / code-dev-backend
 4. 后台通知简短确认
-5. 开发批量 = 测试批量
+5. 先全量开发、后统一提测（开发批量与测试批量解耦）
 6. 并发两层 + 韧性（详见「并发度控制」/「并发自适应」）：`BATCH_SIZE`（默认 2）管开发任务级并发；`MAX_PARALLEL`（**默认 3**，实测 5 限流）管测试维度级并发。**不相乘**，峰值=max(2×BATCH_SIZE, MAX_PARALLEL)。**遇 429 自动降并发慢跑**（eff_* 运行时降档）+ **agent 基础设施失败退避重试**（30/60/120s ×3），业务 FAIL 仍走修正循环
 7. 问题升级先 PM 评估需求，再 Planner 拆解

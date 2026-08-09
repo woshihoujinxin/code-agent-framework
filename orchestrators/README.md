@@ -16,28 +16,21 @@
 ║                 │  feature-spec.md(测试契约F/B/S/E/Q)             ║
 ║                 │  dev-plan.md(⏳🔄✅⚠️) + smoke-checks.md        ║
 ║                 ▼                                                 ║
-║   ┌═══ 中层：批次循环（master 逐批消化 ⏳）══════════════════╗   ║
-║   ║   取一批 ⏳                                                ║   ║
-║   ║      ├── [FE Dev] ∥ [BE Dev]  ◄──契约+PRD+lessons        ║   ║
-║   ║      │      写代码+单测(tests/unit)+selfcheck             ║   ║
-║   ║      │   ◆ 冒烟关卡(跑单测+查selfcheck存在)               ║   ║
-║   ║      │      └ 不过→resume Dev 修                          ║   ║
-║   ║      ▼                                                    ║   ║
-║   ║   [correctness][quality][robustness][security][e2e]       ║   ║
-║   ║      五维并行  ◄──契约用例+PRD+selfcheck                  ║   ║
-║   ║      │ 测试报告(契约验证表 + P/F + 标签)                  ║   ║
-║   ║      │                                                    ║   ║
-║   ║   ┌── 内层：修正循环(≤3轮) ──────────┐                    ║   ║
-║   ║   │  FAIL→resume Dev                 │                    ║   ║
-║   ║   │    修代码+补单测+更selfcheck      │                    ║   ║
-║   ║   │    →resume Tester重测            │                    ║   ║
-║   ║   │      (取最后一次判定)             │                    ║   ║
-║   ║   └──────────────────────────────────┘                    ║   ║
-║   ║      ├── 全PASS→dev-plan标✅→下一批 ─┐                    ║   ║
-║   ║      └── 3轮仍FAIL→升级               │                    ║   ║
-║   ║                │ upgrade-issue.md    │                    ║   ║
-║   ║                ▼                     │                    ║   ║
-║   ║          [PM]评估→[架构师]重拆→新⏳──┘                    ║   ║
+║   ┌═══ 中层①：开发循环（逐波开发 ⏳，不穿插测试）════════════╗   ║
+║   ║   取一波 ⏳ → [FE Dev] ∥ [BE Dev] ◄──契约+PRD+lessons    ║   ║
+║   ║      写代码+单测(tests/unit)+selfcheck                    ║   ║
+║   ║      ◆ 冒烟关卡(跑单测+查selfcheck) └不过→resume Dev 修  ║   ║
+║   ║      ✅ 标 🔳(待测) → 取下一波；无 ⏳ → 开发完成          ║   ║
+║   ╚══════════════════════════════════════════════════════════╝   ║
+║                 ▼ 开发完一个版本 → 整版本提测                    ║
+║   ┌═══ 中层②：测试循环（所有 🔳 一次性铺开五维 QA）════════╗   ║
+║   ║   [correctness][quality][robustness][security][e2e]      ║   ║
+║   ║      (任务×5维) 跨任务流水线 ◄──契约用例+PRD+selfcheck  ║   ║
+║   ║   ┌── 内层：修正循环(≤3轮) ──────────┐                   ║   ║
+║   ║   │  FAIL→resume Dev→修+补单测→重测  │                   ║   ║
+║   ║   └──────────────────────────────────┘                   ║   ║
+║   ║   全PASS→dev-plan标✅；3轮仍FAIL→升级                    ║   ║
+║   ║          [PM]评估→[架构师]重拆→新⏳                       ║   ║
 ║   ╚══════════════════════════════════════════════════════════╝   ║
 ║                 ▼                                                 ║
 ║   [code-sage] ◄── 所有报告 + metrics                              ║
@@ -65,14 +58,14 @@
 | | 开发版 | 全流程版 |
 |---|---|---|
 | 主Agent | `dev-quality-orchestrator.md` | `delivery-orchestrator.md` |
-| 阶段 | 产品分析 → 计划 → 前后端开发 → 五维测试 | 计划 → 开发 → 审查 → 构建 → 校验 |
+| 阶段 | 产品分析 → 计划 → 前后端全量开发 → 整版本五维测试 | 计划 → 开发 → 审查 → 构建 → 校验 |
 | 子Agent | PM + 架构师 + FE/BE Dev + Tester×5 | 架构师 + FE/BE Dev + Reviewer + Builder + Validator |
 | 产出 | 可运行的代码 | 可部署的制品 |
 
 ### 开发版：需求 → 代码
 
 ```
-你提需求 → PM 分析写PRD → 架构师 拆任务 → 前后端并行开发 → 五维测试 → 修正循环 → 完成
+你提需求 → PM 分析写PRD → 架构师 拆任务 → 前后端全量并行开发 → 整版本五维测试 → 修正循环 → 完成
 ```
 
 ### 全流程版：需求 → 制品
@@ -151,17 +144,21 @@ clone 后 `.claude/` 自动包含 16 个 subagent、`/goal-d` `/goal-o` `/goal-i
 - 输出 `dev-plan.md` + `feature-spec.md`
 - 搭建项目骨架
 
-**Phase 2 — 逐批开发循环**
+**Phase 2 — 全量开发循环**（不穿插测试）
 
-每批任务执行：
+逐波开发所有任务：
 
 1. **前后端并行开发**：`code-dev-frontend` + `code-dev-backend` 并行编码
 2. **冒烟检查**：验证代码至少能跑，不通过则回到 Step 1
-3. **五维测试**：五个 Tester 并行审查（功能/质量/健壮/安全/E2E）
-4. **修正循环**（≤3 轮）：Dev 修复 → Tester 重测
-5. 全 PASS 后更新 `dev-plan.md`，向用户报告进度
+3. 标 🔳（待测），取下一波；全部开发完 → 进入 Phase 3
 
-**Phase 3 — 收尾**
+**Phase 3 — 整版本五维测试**
+
+1. **五维测试**：所有 🔳 任务一次性铺开，五个 Tester 跨任务流水线审查（功能/质量/健壮/安全/E2E）
+2. **修正循环**（≤3 轮）：Dev 修复 → Tester 重测
+3. 全 PASS 后更新 `dev-plan.md`，向用户报告进度
+
+**Phase 4 — 收尾**
 - 统计迭代情况
 - 输出完成报告
 - 进入等待状态，持续接收新需求
@@ -298,13 +295,13 @@ clone 后 `.claude/` 自动包含 16 个 subagent、`/goal-d` `/goal-o` `/goal-i
     TASK03 删除 + 标记完成 API
     TASK04 错误处理 + 参数验证
 
-  Phase 2: 逐批开发 →
-    TASK01: FE Dev + BE Dev → 冒烟检查 → 五维测试 → ✅ PASS (1轮)
-    TASK02: FE Dev + BE Dev → 功能FAIL → 修正 → 重测 → ✅ PASS (2轮)
-    TASK03: FE Dev + BE Dev → 五维测试 → ✅ PASS (1轮)
-    TASK04: BE Dev → 质量FAIL → 修正×2 → ✅ PASS (3轮)
+  Phase 2: 全量开发（不穿插测试）→
+    TASK01~04: FE/BE Dev 并行 → 冒烟检查 → 全标 🔳
 
-  Phase 3: 收尾 → 4/4 完成，平均 1.75 轮
+  Phase 3: 整版本五维测试 →
+    TASK01 ✅(1轮) / TASK02 功能FAIL→修正→✅(2轮) / TASK03 ✅(1轮) / TASK04 质量FAIL→✅(3轮)
+
+  Phase 4: 收尾 → 4/4 完成，平均 1.75 轮
 ```
 
 ---
@@ -313,7 +310,7 @@ clone 后 `.claude/` 自动包含 16 个 subagent、`/goal-d` `/goal-o` `/goal-i
 
 ### 调整测试维度
 
-编辑对应 Tester 文件的检查维度表。例如增加性能测试：在 `.claude/agents/` 下新增 `code-tester-performance.md`，并在主Agent 的 Phase 2 Step 2 中增加第 5 个 Tester。
+编辑对应 Tester 文件的检查维度表。例如增加性能测试：在 `.claude/agents/` 下新增 `code-tester-performance.md`，并在主Agent 的 Phase 3 测试阶段中增加该 Tester。
 
 ### 适配不同技术栈
 
