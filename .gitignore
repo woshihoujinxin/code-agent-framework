@@ -7,3 +7,13 @@ reasonix.toml
 # Python 缓存
 __pycache__/
 *.pyc
+
+# 测试项目（本地 clone，不入框架 repo）
+money/
+newtest/
+reasonixtest/
+demo-todo/
+testproject/
+
+# Agent 运行时记忆（各项目产生，不入框架 repo）
+.claude/agent-memory/
