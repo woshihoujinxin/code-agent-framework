@@ -94,7 +94,7 @@ skills:
   - `## 质量自查`：对照契约 Q 关注点的 checkbox
   - `## 全局一致性自审`（B4）：跨文件导入 / 组件 props / API 签名 / 数据流自查 → `IS_PASS: YES` 或 `NO`；NO 列出自修项（自修 ≤2 轮，修后复查）
   - `## 已知未覆盖项`：声明理由
-- **git commit（必须，硬契约）**：IS_PASS=YES 后执行 `git add -A && git commit -m "{TASK_ID}: {标题}"`，再 `git rev-parse HEAD` 取 hash 记入自检概要——代码版本化落盘（master 冒烟核对 commit、Tester 基于版本测）。**未 commit = 产出不合格**
+- **git 版本分支 + commit（必须，硬契约）**：开发前 `git checkout -b feature/{version}`（{version} = 本次大循环版本号，master 从 dev-plan 广播，如 feature/v0.0.1；从最新 main 切版本分支）；本任务开发完 `git add -A && git commit -m "{TASK_ID}: {标题}"`（**所有任务 + bug 修复都 commit 到 feature/{version}**）。selfcheck 记**分支名** + 最后一次 commit hash。**未 commit = 产出不合格**（master 冒烟核对 commit、Tester 基于 feature/{version} 分支测）
 
 ### 6. 输出
 - 前端代码 + 单测
