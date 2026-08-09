@@ -40,6 +40,27 @@
 
 ---
 
+## 契约层（硬底线 + 灵活执行）
+
+**理念**：契约是不可违反的**底线**（质量/版本/判定的最低保证），不是**牢笼**——契约规定"必须有/必须过"，不规定"怎么做"；契约之外的，AI 审时度势自行规划。
+
+### 硬契约（必须满足，master 机器校验，缺即止步）
+
+| 契约 | 要求 | 校验点 |
+|------|------|--------|
+| 测试契约 F/B/S/E/Q | Planner 必写、Dev 单测必覆盖 F/B/S、Tester 必逐条验证 | feature-spec 格式 + 冒烟覆盖率 + Tester 报告覆盖矩阵 |
+| Dev 产出 | 代码 + 单测 + selfcheck(IS_PASS) + **git commit** | 冒烟关卡核对（selfcheck 存在 + IS_PASS + commit） |
+| 冒烟回归 | master 跑**全部单测**（不只当前任务） | 冒烟关卡（Step 1b） |
+| 判定 | Tester 报告含 `### 判定` + `### 失败分类` + **commit hash** | Grep 取 |
+
+### 灵活条款（契约外，AI 自主——避免死板）
+
+> 契约是底线必须遵守；**契约未覆盖的情形，按项目实际审时度势、自行规划，并在报告说明决策与理由**。遇契约冲突/空白，优先保证需求目标，事后把新情况记入 lessons-learned 供 code-sage 沉淀为新规则。
+
+即：**实现方式、测试策略、任务拆分、应急应变——契约不管，AI 自主发挥；只有上表底线不能碰**。契约随项目经验增长（code-sage 自进化）。
+
+---
+
 ## 日志写入规范（主日志 docs/main-log.md）
 
 **定位**：主日志 = 整个项目的**全过程档案**——有开端、有结尾，每个阶段一节，每步留痕（时间/角色/动作/产出/判定）可追溯，且不影响主流程。以下规则是**硬性要求**：
@@ -380,10 +401,12 @@ Agent(
   Grep(pattern="^| {TASK_ID} |", path="{REPO_DIR}/docs/smoke-checks.md")
   执行该行的 smoke_command（按 pass_criteria 判定，通常 exit 0）
   执行该行的单元测试命令（单测命令，由 Dev 填写）— 全绿才算过
+  **+ 回归：跑全部单测**（不只当前任务——`pytest` 全跑 / `npm test` 全跑），之前所有任务的单测也必须全绿，发现回归 bug（如 T02 破坏 T01）立即止步
 
-检查 Dev 自检报告存在（自检是声明非闸门，内容由 Tester 核查，master 只验存在）：
-  Glob(pattern="{REPO_DIR}/tests/reports/{TASK_ID}-selfcheck-*.md")
-  无自检报告 → ❌ 回到 Step 1 resume Dev 补自检
+**契约核对**（硬底线，缺任一项 → ❌ resume Dev 补，不进测试）：
+  1. selfcheck 报告存在：Glob("{REPO_DIR}/tests/reports/{TASK_ID}-selfcheck-*.md")
+  2. selfcheck 含 `IS_PASS:`：Grep "IS_PASS" —— 无则补（防 TASK02 式虚报/缺失）
+  3. **代码已 git commit**：git -C {REPO_DIR} log --oneline 近 3 条含本 TASK_ID —— 未 commit 则让 Dev 提交（版本化落盘，Tester 基于版本测）
 ```
 
 **退化策略**：如果 `docs/smoke-checks.md` 不存在，或该 TASK_ID 的 smoke_command 为 `# none`：

@@ -16,6 +16,29 @@ description: |
 
 ---
 
+## 0. 契约与灵活（所有角色必读，最高优先级）
+
+**契约是底线，不是牢笼**：
+- **硬契约**（必须满足，master 机器校验，缺即止步）：测试契约 F/B/S/E/Q 必覆盖；Dev 产出含 `git commit` + selfcheck 含 `IS_PASS` + 覆盖用例矩阵；Tester 报告含 `### 判定` + `### 失败分类` + commit hash。
+- **灵活条款**（契约外，AI 自主）：契约未覆盖的情形（实现方式、测试策略、任务拆分、应急应变），按项目实际**审时度势、自行规划、随机应变**，并在报告说明决策与理由。遇契约冲突/空白，优先保证需求目标，事后记 lessons-learned 供 code-sage 沉淀为新规则。
+
+> 一句话：**底线不能碰，底线之外你自主发挥**。
+
+### 测试基于指定 commit 的操作规定（提测→测试的版本锚点）
+
+测试**必须基于一个明确的 commit 版本**，不能测"工作区当前态"（可能被改过）。操作链：
+
+| 步 | 角色 | 操作 |
+|----|------|------|
+| 提测 | master | Dev 冒烟通过、标 🔳 时，`git rev-parse HEAD` 记下 **Dev 的 commit hash**（提测锚点） |
+| 派测 | master | 派 Tester 时，**prompt 里传这个 commit hash**（"测试基于 commit {hash}"） |
+| 测前核对 | Tester | `git rev-parse HEAD` 核对 == 传入 hash；**不符 → `git checkout {hash}`** 到指定版本（或报告"版本不符"不测，绝不测错版本） |
+| 报告 | Tester | 标"基于 commit {hash}" |
+
+> 串行流程下 working tree 通常就停在 Dev commit（核对会一致）；核对/checkout 是**保险**——防止工作区被改后测了错版本。并行流水线（测 T02 时开发 T03）则必须 checkout 到 T02 commit（隔离）。
+
+---
+
 ## 1. 命名约定
 
 - **见名知意**：变量/函数/文件名禁用无意义缩写（`x`、`tmp`、`data2`），用完整词或公认缩写（`url`、`id`、`cfg`）

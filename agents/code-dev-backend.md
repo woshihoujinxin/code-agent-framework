@@ -86,15 +86,16 @@ skills:
 - **质量(Q)**：对照契约质量关注点逐条核查
 - **E2E(E)**：BE 侧通常无独立 E2E（依赖前端/CLI 入口），标注"依赖入口任务"
 
-### 6. 冒烟自测 + 产出自检报告
+### 6. 冒烟自测 + 产出自检报告 + git commit（硬契约）
 - 执行自己的单测命令，**确认全绿才交付**（不把红单测丢给下游）
 - 产出自检报告 `{仓库}/tests/reports/{TASK_ID}-selfcheck-be.md`：
-  - `## 概要`：单测文件 / 单测命令 / 单测结果(PASS, N cases)
+  - `## 概要`：单测文件 / 单测命令 / 单测结果(PASS, N cases) / **commit hash**
   - `## 契约用例覆盖`：F/B/S 每条 → 单测函数 → ✅PASS / ⚠️未覆盖(理由)
   - `## 质量自查`：对照契约 Q 关注点的 checkbox
   - `## 全局一致性自审`（B4）：跨文件导入 / 模型字段 / API 签名 / 数据流自查 → `IS_PASS: YES` 或 `NO`；NO 列出自修项（自修 ≤2 轮，修后复查）
   - `## 已知未覆盖项`：声明理由
 - 更新 smoke-checks.md 的单元测试命令行（如架构师未填）
+- **git commit（必须，硬契约）**：IS_PASS=YES 后 `git add -A && git commit -m "{TASK_ID}: {标题}"`，再 `git rev-parse HEAD` 取 hash 记入自检概要——代码版本化落盘（master 冒烟核对 commit、Tester 基于版本测）。**未 commit = 产出不合格**
 
 ### 7. 输出
 - 后端代码 + 单测

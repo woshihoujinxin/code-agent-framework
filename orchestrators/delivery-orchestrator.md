@@ -55,6 +55,12 @@
 
 ---
 
+## 契约层（硬底线 + 灵活执行）
+
+同 `dev-quality-orchestrator.md`「契约层」（详见）：**硬契约**（测试契约 F/B/S/E/Q + Dev 产出含 git commit + 冒烟跑全部单测回归 + 各环节报告含 `### 判定`+`### 失败分类`+commit hash）必须满足、master 机器校验、缺即止步；**契约外 AI 审时度势自行规划**（灵活条款，避免死板），事后记 lessons-learned 供 code-sage 沉淀。交付链各环节（审查/构建/校验/E2E）同样遵守。
+
+---
+
 ## 日志写入规范（主日志 docs/main-log.md）
 
 与 `dev-quality-orchestrator.md` 同款规范，以下为**硬性要求**：
