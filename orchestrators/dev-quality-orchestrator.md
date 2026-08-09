@@ -7,7 +7,7 @@
 ```
   需求 → [PM] → [架构师] ──契约(F/B/S/E/Q)──┐
                                             ▼
-   ┌─── 批次循环（你逐批推进 dev-plan 状态机 ⏳🔄✅⚠️）──────┐
+   ┌─── 批次循环（你逐批推进 dev-plan 状态机 ⏳🔄🔳✅⚠️）──────┐
    │  [FE Dev] ∥ [BE Dev]  写代码+单测+自检                   │
    │     │ ◆冒烟关卡(跑单测+查selfcheck存在)                  │
    │     ▼                                                    │
@@ -445,32 +445,34 @@ Agent(
 **关键：一次只测一个任务**——对开发波内任务**逐个**跑五维（一个测完再测下一个），**绝不**对整波任务同时并发五维（否则 agent 数 = 本波任务数 × 5 会爆炸）。每个任务的五维 tester 按 `eff_PARALLEL`（运行时有效值，初始 = MAX_PARALLEL 默认 3）并行（=3 时分波 3+2；=5 时五维全并行；<3 进一步分波，波内顺序 `功能→质量→健壮→安全→E2E`）。逐任务使测试 agent 峰值恒为 eff_PARALLEL，与波宽无关——**绝不出现 15 tester**。
 
 ```
-对开发波内每个任务 TASK_IDx（一个一个测，前一个五维完成且 PASS 后再测下一个；FAIL 则进 Step 3 仅修该任务）。下面是该任务的五维 tester 定义：
+对开发波内每个任务 TASK_IDx（一个一个测，前一个五维完成且 PASS 后再测下一个；FAIL 则进 Step 3 仅修该任务）。
+
+**测试目录 = `{TEST_WS}` = `{REPO_DIR}/tests/ws-{TASK_IDx}`**（Step 1c 建的 worktree，运维 code-ops 已备好测试库/依赖/.env）。以下 tester 在 `{TEST_WS}` 测（**不是主目录 {REPO_DIR}**）。master 派测时传 Dev 的 **commit hash**；tester 测前 `git -C {TEST_WS} rev-parse HEAD` 核对 == 传入 hash（不符 → 报告"版本不符"不测，绝不测错版本）。
 
 Agent A:
   subagent_type: "code-tester-correctness",
   run_in_background: true,
-  prompt: "功能正确性测试：{TASK_IDx}\n待测仓库：{REPO_DIR}\nfeature-spec: {REPO_DIR}/docs/feature-spec.md\nprd: {REPO_DIR}/docs/prd.md\nDev自检报告: {REPO_DIR}/tests/reports/{TASK_ID}-selfcheck-*.md\n输出目录: {REPO_DIR}/tests/reports/"
+  prompt: "功能正确性测试：{TASK_IDx}\n测试目录(worktree): {TEST_WS}\n基于 commit: {hash}（测前 git -C {TEST_WS} rev-parse HEAD 核对一致，不符则报告版本不符不测）\nfeature-spec: {TEST_WS}/docs/feature-spec.md\nprd: {TEST_WS}/docs/prd.md\nDev自检报告: {TEST_WS}/tests/reports/{TASK_IDx}-selfcheck-*.md\n输出目录: {TEST_WS}/tests/reports/"
 
 Agent B:
   subagent_type: "code-tester-quality",
   run_in_background: true,
-  prompt: "代码质量测试：{TASK_IDx}\n待测仓库：{REPO_DIR}\nfeature-spec: {REPO_DIR}/docs/feature-spec.md\nprd: {REPO_DIR}/docs/prd.md\nDev自检报告: {REPO_DIR}/tests/reports/{TASK_ID}-selfcheck-*.md\n视觉基准（如存在）：{PROTO_PATH}\n输出目录: {REPO_DIR}/tests/reports/"
+  prompt: "代码质量测试：{TASK_IDx}\n测试目录(worktree): {TEST_WS}\n基于 commit: {hash}（测前核对）\nfeature-spec: {TEST_WS}/docs/feature-spec.md\nprd: {TEST_WS}/docs/prd.md\nDev自检报告: {TEST_WS}/tests/reports/{TASK_IDx}-selfcheck-*.md\n视觉基准（参考，主目录）: {REPO_DIR}/docs/prototype/\n输出目录: {TEST_WS}/tests/reports/"
 
 Agent C:
   subagent_type: "code-tester-robustness",
   run_in_background: true,
-  prompt: "健壮性测试：{TASK_IDx}\n待测仓库：{REPO_DIR}\nfeature-spec: {REPO_DIR}/docs/feature-spec.md\nprd: {REPO_DIR}/docs/prd.md\nDev自检报告: {REPO_DIR}/tests/reports/{TASK_ID}-selfcheck-*.md\n输出目录: {REPO_DIR}/tests/reports/"
+  prompt: "健壮性测试：{TASK_IDx}\n测试目录(worktree): {TEST_WS}\n基于 commit: {hash}（测前核对）\nfeature-spec: {TEST_WS}/docs/feature-spec.md\nprd: {TEST_WS}/docs/prd.md\nDev自检报告: {TEST_WS}/tests/reports/{TASK_IDx}-selfcheck-*.md\n输出目录: {TEST_WS}/tests/reports/"
 
 Agent D:
   subagent_type: "code-tester-e2e",
   run_in_background: true,
-  prompt: "端到端测试：{TASK_IDx}\n待测仓库：{REPO_DIR}\nfeature-spec: {REPO_DIR}/docs/feature-spec.md\nprd: {REPO_DIR}/docs/prd.md\ndesign: {REPO_DIR}/docs/design.md（含时序图——E 场景链路依据；若只有 architecture.md 则传该路径）\nDev自检报告: {REPO_DIR}/tests/reports/{TASK_ID}-selfcheck-*.md\n输出目录: {REPO_DIR}/tests/reports/"
+  prompt: "端到端测试：{TASK_IDx}\n测试目录(worktree): {TEST_WS}\n基于 commit: {hash}（测前核对）\nfeature-spec: {TEST_WS}/docs/feature-spec.md\nprd: {TEST_WS}/docs/prd.md\ndesign: {TEST_WS}/docs/design.md（含时序图）\nDev自检报告: {TEST_WS}/tests/reports/{TASK_IDx}-selfcheck-*.md\n输出目录: {TEST_WS}/tests/reports/"
 
 Agent E:
   subagent_type: "code-tester-security",
   run_in_background: true,
-  prompt: "安全性测试：{TASK_IDx}\n待测仓库：{REPO_DIR}\nfeature-spec: {REPO_DIR}/docs/feature-spec.md\nprd: {REPO_DIR}/docs/prd.md\nDev自检报告: {REPO_DIR}/tests/reports/{TASK_ID}-selfcheck-*.md\n输出目录: {REPO_DIR}/tests/reports/"
+  prompt: "安全性测试：{TASK_IDx}\n测试目录(worktree): {TEST_WS}\n基于 commit: {hash}（测前核对）\nfeature-spec: {TEST_WS}/docs/feature-spec.md\nprd: {TEST_WS}/docs/prd.md\nDev自检报告: {TEST_WS}/tests/reports/{TASK_IDx}-selfcheck-*.md\n输出目录: {TEST_WS}/tests/reports/"
 ```
 
 等待该任务（TASK_IDx）五维全部完成 → 收集 5 维 PASS/FAIL 判定 + 报告路径。全 PASS → dev-plan 该任务标 ✅，继续测波内下一个任务；有 FAIL → 进 Step 3（仅修该任务）。本波所有任务都 ✅ → 回 Phase 2 入口算下一波就绪集。

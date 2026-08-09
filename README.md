@@ -50,7 +50,7 @@ python .claude/tools/sync-compat.py deploy .
 
 | 能力 | Claude Code | opencode | Reasonix |
 |------|-------------|----------|----------|
-| 15 个 subagent（PM/架构师/Dev/五维 Tester/…） | `agents/`（原生） | `.opencode/agents/`（生成） | `.reasonix/skills/`（生成，runAs: subagent） |
+| 16 个 subagent（PM/架构师/Dev/五维 Tester/运维/…） | `agents/`（原生） | `.opencode/agents/`（生成） | `.reasonix/skills/`（生成，runAs: subagent） |
 | 命令 `/goal-d` `/goal-o` `/goal-init` | `commands/`（原生） | `.opencode/commands/`（生成） | **原生读 `workspace/.claude/commands`，零改动** |
 | 知识库 skills（编码规范/设计系统/原型模板） | `skills/`（原生） | **原生读 `.claude/skills/`，零改动** | **原生读 `workspace/.claude/skills`，零改动** |
 | 项目指令 | CLAUDE.md | AGENTS.md（CLAUDE.md 回退） | REASONIX.md / AGENTS.md / CLAUDE.md |
@@ -84,7 +84,7 @@ python .claude/tools/sync-compat.py deploy . # 重新部署到项目根（或再
 
 | 目录 | 内容 |
 |------|------|
-| `agents/` | 15 个 subagent（PM / 架构师 / 前后端 Dev / 五维 Tester / 原型构建师 / 导出专家 / code-sage） |
+| `agents/` | 16 个 subagent（PM / 架构师 / 前后端 Dev / 五维 Tester / 运维 / 原型构建师 / 导出专家 / code-sage） |
 | `commands/` | `/goal-init`（部署适配层到项目根）、`/goal-d`（研发质量编排）、`/goal-o`（交付编排）入口 |
 | `orchestrators/` | 两个编排器定义 + 完整文档 + demo |
 | `skills/coding-standards/` | 编码规范 + 自进化规则库（code-sage 自动追加） |
