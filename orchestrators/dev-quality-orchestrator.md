@@ -420,6 +420,26 @@ Agent(
 日志（逐任务）：- {yymmdd hhmm} 🔬 冒烟检查：{TASK_IDx}{PASS/FAIL}
 ```
 
+### Step 1c：建测试环境（worktree + 派运维准备——master 只编排不执行）
+
+冒烟通过、标 🔳 后，master **建测试工作树** + **派运维(code-ops) 准备环境**（master 不亲手建库/装依赖，只编排），就绪后 Tester 介入：
+
+```
+1. master 记 commit: hash=$(git -C {REPO_DIR} rev-parse HEAD)   # Dev 的 commit（测试锚点）
+2. master 建 worktree: git -C {REPO_DIR} worktree add tests/ws-{TASK_IDx} {hash}
+   → tests/ws-{TASK_IDx} 独立工作树，checkout 到 Dev commit，主目录不动
+3. master 派运维(code-ops) 准备环境（执行者，master 不代办）：
+   Agent(code-ops, prompt: "准备测试环境 tests/ws-{TASK_IDx}：装依赖 + 建测试库 {repo}_test + 对比开发库 {repo} 逐级同步 schema(库/表/字段/索引) + 配 .env(测试库/测试端口)。读 design.md「端口与库规划」段。完成后返回就绪报告。")
+   → code-ops 执行装依赖/建库/同步/.env，产出 tests/reports/{TASK}-env-prepare.md
+4. 就绪后，Step 2 派 Tester 指向 tests/ws-{TASK_IDx}（测试目录，不是主目录）
+5. 测完（Step 2 判定后）：
+   - 报告回写主目录: cp tests/ws-{TASK_IDx}/tests/reports/{TASK}*.md → {REPO_DIR}/tests/reports/
+   - 销毁测试环境: git -C {REPO_DIR} worktree remove tests/ws-{TASK_IDx}
+   日志: - {yymmdd hhmm} 🧹 销毁测试环境 tests/ws-{TASK_IDx}（报告已回写主目录）
+```
+
+> 测试库 `{repo}_test` 跨任务复用（不 drop，运维每次对比同步即可）；worktree 每任务建/销毁（轻量）。中断恢复时 master 先 `git worktree list` 扫残留测试目录清理。
+
 ### Step 2：逐任务五维测试（任务串行，避免并发爆炸）
 
 **关键：一次只测一个任务**——对开发波内任务**逐个**跑五维（一个测完再测下一个），**绝不**对整波任务同时并发五维（否则 agent 数 = 本波任务数 × 5 会爆炸）。每个任务的五维 tester 按 `eff_PARALLEL`（运行时有效值，初始 = MAX_PARALLEL 默认 3）并行（=3 时分波 3+2；=5 时五维全并行；<3 进一步分波，波内顺序 `功能→质量→健壮→安全→E2E`）。逐任务使测试 agent 峰值恒为 eff_PARALLEL，与波宽无关——**绝不出现 15 tester**。
