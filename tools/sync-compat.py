@@ -11,7 +11,7 @@ sync-compat.py — 从 Claude Code 真源生成 opencode / Reasonix 适配层(�
   * 命令(/goal-d /goal-o /goal-init)与知识库 skills:
       - Reasonix 原生扫描 <workspace>/.claude/commands 与 <workspace>/.claude/skills → 零改动;
       - opencode 原生扫描 <project>/.claude/skills → 零改动;但命令需 .opencode/commands/。
-    因此本脚本只为 opencode 生成命令副本,为两个工具生成 15 个 subagent 薄壳。
+    因此本脚本只为 opencode 生成命令副本,为两个工具生成 16 个 subagent 薄壳。
 
 用法:
   python tools/sync-compat.py build            # 仓库内生成 .opencode/ 与 .reasonix/(提交进仓库)
