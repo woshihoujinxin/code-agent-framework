@@ -14,7 +14,7 @@
 我需要你作为编码项目的主Agent，按照 dev-quality-orchestrator.md 定义的流程完成开发。
 需求文档：./requirements.md
 代码仓库：./
-任务波宽：1（逐个推进；=2 启用同层并发，见 dev-quality-orchestrator「并发度控制」）
+任务波宽：1（本演练显式设 1 逐个推进；默认 = 最大化取全部就绪任务，见「并发度控制」）
 ```
 
 ---
