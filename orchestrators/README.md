@@ -182,6 +182,7 @@ clone 后 `.claude/` 自动包含 19 个 subagent、`/goal-d` `/goal-o` `/goal-i
 | 架构师 | `code-planner.md` | `code-planner` | 共用 |
 | 前端开发 | `code-dev-frontend.md` | `code-dev-frontend` | 开发版 |
 | 后端开发 | `code-dev-backend.md` | `code-dev-backend` | 共用 |
+| 运维 | `code-ops.md` | `code-ops` | 共用（测试环境/依赖准备） |
 | 功能测试 | `code-tester-correctness.md` | `code-tester-correctness` | 共用 |
 | 质量测试 | `code-tester-quality.md` | `code-tester-quality` | 共用 |
 | 健壮测试 | `code-tester-robustness.md` | `code-tester-robustness` | 共用 |
