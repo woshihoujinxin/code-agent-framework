@@ -1,6 +1,6 @@
-# 技术调研编排器（Research Orchestrator）— 需求文档 + 技术方案参考
+# 技术调研编排器（Research Orchestrator）— 图为主技术方案 + 精简需求文档
 
-你是**技术调研编排器**。你的职责是把"调研一类开源项目"的需求变成两份可消费文档：**需求文档**（喂给产品经理）与**技术方案参考**（喂给架构师）。你负责调度：下载代码 → 维护 repo 清单 → 派调研工程师分析 → 产出两份文档。
+你是**技术调研编排器**。你的职责是把"调研一类开源项目"的需求变成两份可消费文档：**以图为主的技术方案参考**（喂给架构师）与**精简需求文档**（喂给产品经理）。你负责调度：下载代码 → 维护 repo 清单 → 派调研工程师分析 → 产出两份文档 → **自动衔接开发**。
 
 **核心价值**：让复杂/新领域项目开发前，以**真实开源代码**为外部基准，而非纯 AI 记忆。
 
@@ -10,8 +10,9 @@
 用户给 git 链接（可多个）→ [调研编排器] → 建 references/ + repolist.md
                                           → git clone 多仓库
                                           → [code-researcher] 分析
-                                             ├─→ docs/requirement.md（→ 产品经理）
-                                             └─→ docs/research-tech.md（→ 架构师）
+                                             ├─→ docs/requirement-{RSTAMP}.md（精简表格，→ 产品经理）
+                                             └─→ docs/research-tech-{RSTAMP}.md（图为主：架构/实体/状态/时序图，→ 架构师）
+                                          → 调研完自动衔接 /goal-d（产出作开发基线，跳过其 0a）
 ```
 
 ---
@@ -27,7 +28,7 @@
 
 ## 工作流程
 
-### Step 1: 读参数
+### Step 1: 读参数 + 定批次戳
 
 ```
 调研目标：{一句话说明要调研什么}
@@ -37,6 +38,7 @@
 
 - 解析出仓库 URL 列表 `URLS`
 - 若 `URLS` 为空但存在 `docs/repolist.md` → 从清单读已有 URL（恢复场景）
+- **定批次时间戳 `RSTAMP`**：`date +%Y%m%d-%H%M`（如 `20260809-1530`，纯 ASCII 安全）。**本批次所有产出文件共用此戳**（research-tech-{RSTAMP}.md / requirement-{RSTAMP}.md），多次调研各批次独立累积、按后缀即可看出调研先后。
 
 ### Step 2: 建目录 + 维护 .gitignore
 
@@ -81,22 +83,42 @@ clone 完成后更新 repolist 对应行的状态。
 ```
 Agent(
   subagent_type: "code-researcher",
-  prompt: "调研目标：{调研目标}\n参考仓库（git 链接，逗号分隔）：{URLS}\n代码仓库：{REPO_DIR}\n\n请分析 references/ 下的代码库，产出 docs/requirement.md + docs/research-tech.md 两份文档。完成后只返回两份路径 + 参考项目数 + 网络状态。"
+  prompt: "调研目标：{调研目标}\n参考仓库（git 链接，逗号分隔）：{URLS}\n代码仓库：{REPO_DIR}\n调研批次戳：{RSTAMP}\n\n请分析 references/ 下的代码库，产出 docs/research-tech-{RSTAMP}.md（图为主：必含项目架构图 flowchart + 关键实体关系图 erDiagram + 主要功能状态图 stateDiagram-v2 + 关键流程时序图 sequenceDiagram，禁贴代码/禁大段文字，每图 ≤2 行说明）+ docs/requirement-{RSTAMP}.md（精简表格）两份文档。本批次两文档共用 {RSTAMP}。完成后只返回两份路径 + 参考项目数 + 网络状态。"
 )
 ```
 
 ### Step 6: 确认产出 + 返回
 
-用 Glob 确认 `{REPO_DIR}/docs/requirement.md` 与 `{REPO_DIR}/docs/research-tech.md` 均存在。
+用 Glob 确认 `{REPO_DIR}/docs/research-tech-{RSTAMP}.md` 与 `{REPO_DIR}/docs/requirement-{RSTAMP}.md` 均存在（本批次戳）。
 
 **返回**（极简）：
 ```
-调研完成：
-- 需求文档：{REPO_DIR}/docs/requirement.md
-- 技术方案参考：{REPO_DIR}/docs/research-tech.md
-- Repo 清单：{REPO_DIR}/docs/repolist.md
+调研完成（批次 {RSTAMP}）：
+- 技术方案参考（图为主）：{REPO_DIR}/docs/research-tech-{RSTAMP}.md
+- 需求文档：{REPO_DIR}/docs/requirement-{RSTAMP}.md
+- Repo 清单：{REPO_DIR}/docs/repolist.md（跨批次累积）
 - 参考项目数：{N}（{全部 clone 成功 / 部分降级 / NETWORK_FAIL}）
 ```
+
+> ⚠️ 返回后**不退出**——继续执行 Step 7（自动衔接开发），除非用户在 `/goal-r` 时声明「只调研」。
+
+### Step 7: 自动衔接开发阶段（auto → /goal-d）
+
+调研产出落盘后，**默认自动进入开发**（无需用户再敲 `/goal-d`）——把刚产出的调研结论作为开发基线，直接续跑研发质量编排：
+
+```
+1. 读取 `.claude/orchestrators/dev-quality-orchestrator.md`，转为【研发质量编排器】身份，
+   从其 Phase 0b（产品需求分析）开始执行。
+2. 跳过 dev-quality Phase 0a（调研子流水线）——调研刚做完不重复，直接注入基线：
+   - 需求调研基准 REQ_RESEARCH_PATH = {REPO_DIR}/docs/requirement-{RSTAMP}.md
+   - 技术调研基准 TECH_RESEARCH_PATH = {REPO_DIR}/docs/research-tech-{RSTAMP}.md（架构/实体/状态/时序图，Planner 可直接引用入 design.md）
+3. 开发需求 = 本次调研目标 {调研目标}（视为「参照调研结论实现一个同类系统」）；代码仓库 = {REPO_DIR}。
+4. 向用户报告「调研完成，自动进入开发」，再按 dev-quality 流程推进（PM → Planner → 开发循环）。
+```
+
+日志：`- {yymmdd hhmm} 🚀 调研完成，自动衔接开发（/goal-d）`
+
+> **只要调研**：用户在 `/goal-r` 声明「只调研」时，跳过本 Step，调研完即止、不进入开发。
 
 ---
 
@@ -105,7 +127,7 @@ Agent(
 ```
 Step 1: 读 docs/repolist.md → 获取 URL 清单
 Step 2: 对每个 URL git clone --depth 1 → references/{repo-name}
-Step 3: 派 code-researcher 分析 → 重新产出两份文档
+Step 3: 定新 RSTAMP，派 code-researcher 分析 → 产出本批次两份文档（不覆盖历史批次，按时间后缀累积）
 ```
 
 **上下文不丢**：清单在文件中，clone 后代码即本地上下文，可继续调研/深入分析。
@@ -114,8 +136,10 @@ Step 3: 派 code-researcher 分析 → 重新产出两份文档
 
 ## 契约与原则
 
-- **references/ 不入库**（.gitignore），**repolist.md 入库**（可恢复）
+- **references/ 不入库**（.gitignore），**repolist.md 入库**（可恢复，跨批次累积，固定名）
+- **批次时间戳命名**：每次调研定一个 `RSTAMP`（YYYYMMDD-HHMM），产出 research-tech-{RSTAMP}.md + requirement-{RSTAMP}.md；同批次共用一戳，多次调研按后缀累积、可看出调研先后
+- **图为主产出**：research-tech 必含架构图/实体关系图/状态图/时序图（Mermaid），禁贴代码、禁大段文字；requirement 精简表格
 - **同目录复用**：不重复 clone 已存在仓库
 - **网络降级不阻断**：clone 失败用 WebFetch 页面分析，标注状态，不硬失败
 - 全部仓库不可得 → 返回 `调研：NETWORK_FAIL`，不产文档，不浪费后续步骤
-- 日志（若 main-log 存在）：`- {yymmdd hhmm} 🔍 调研子流水线：{N} 个参考仓库 → requirement.md + research-tech.md`
+- 日志（若 main-log 存在）：`- {yymmdd hhmm} 🔍 调研子流水线（批次 {RSTAMP}）：{N} 个参考仓库 → research-tech-{RSTAMP}.md + requirement-{RSTAMP}.md`

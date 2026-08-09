@@ -95,11 +95,11 @@ PRD 写完后自动判断：场景含前端/Web → `code-prototype-builder` 产
 
 ### 调研子流水线（A4）— 复杂需求先调研业界开源再开发
 
-复杂/新领域需求（agent 框架、分布式、AI 应用）开发前，`code-researcher` 下载用户提供的开源仓库（git 链接）到 `references/` 作为真实上下文，提炼**两份文档**：
-- `docs/requirement.md` — 需求成分（产品能做什么）→ 喂给产品经理写 PRD
-- `docs/research-tech.md` — 技术方案参考（如何解决技术问题）→ 喂给架构师写 design.md
+复杂/新领域需求（agent 框架、分布式、AI 应用）开发前，`code-researcher` 下载用户提供的开源仓库（git 链接）到 `references/` 作为真实上下文，提炼**两份文档**（按批次时间戳 `{RSTAMP}`=YYYYMMDD-HHMM 命名，多次调研各批次独立累积）：
+- `docs/research-tech-{RSTAMP}.md` — **以图为主**的技术方案参考（项目架构图 + 关键实体关系图 + 主要功能状态图 + 关键流程时序图，Mermaid；禁贴代码/禁大段文字）→ 喂给架构师写 design.md
+- `docs/requirement-{RSTAMP}.md` — 精简需求文档（表格：功能清单/借鉴点）→ 喂给产品经理写 PRD
 
-`docs/repolist.md` 记录 repo 清单（入库），换机器/换会话可按 URL 重新 clone 恢复调研。`/goal-r` 命令可独立触发调研；goal-d 标准 SOP 对复杂需求自动插入本段（A4）。
+`docs/repolist.md` 记录 repo 清单（入库，跨批次累积），换机器/换会话可按 URL 重新 clone 恢复调研。`/goal-r` 命令触发调研，**调研完成后自动衔接 `/goal-d` 进入开发**（产出作开发基线，跳过其 0a 调研段；只要调研请声明「只调研」）；goal-d 标准 SOP 对复杂需求自动插入本段（A4）。
 
 ---
 
@@ -235,9 +235,9 @@ clone 后 `.claude/` 自动包含 16 个 subagent、`/goal-d` `/goal-o` `/goal-i
 | `docs/architecture.md` | 全局架构设计（复杂项目拆分：上下文划分+模块图） | 架构师 |
 | `docs/feature-spec.md` | 每个任务的功能规格+测试契约 | 架构师 |
 | `docs/lessons-learned.md` | 跨任务经验积累 | Dev（修正后更新） |
-| `docs/requirement.md` | 调研提炼的需求文档（需求成分，A4） | 调研工程师（复杂需求） |
-| `docs/research-tech.md` | 调研提炼的技术方案参考（A4） | 调研工程师（复杂需求） |
-| `docs/repolist.md` | 调研 repo 清单（URL/clone 路径，可恢复继续调研） | 调研编排器 |
+| `docs/requirement-{RSTAMP}.md` | 调研提炼的需求文档（精简表格，按批次时间戳命名，A4） | 调研工程师（复杂需求） |
+| `docs/research-tech-{RSTAMP}.md` | 调研提炼的技术方案参考·图为主（架构/实体关系/状态/时序图，按批次时间戳命名，A4） | 调研工程师（复杂需求） |
+| `docs/repolist.md` | 调研 repo 清单（URL/clone 路径，跨批次累积，可恢复继续调研） | 调研编排器 |
 | `references/` | 第三方 clone 代码目录（进 .gitignore，不入库） | 调研编排器 |
 | `docs/prototype/` | 高保真原型 + DESIGN.md（视觉基准，A3） | 原型构建师（Web项目） |
 | `exports/` | 导出交付物（HTML/PDF/PPTX/ZIP，A5） | 导出专家（交付版） |
