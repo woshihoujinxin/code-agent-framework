@@ -250,7 +250,7 @@ Agent(
 
 ### 测试环境准备：建测试环境（worktree + 派运维）
 
-冒烟通过、标 🔳 后，建测试环境（同 `dev-quality-orchestrator.md` 测试环境准备 详解）：master 建 worktree `tests/ws-{TASK_IDx}` + 派运维(code-ops) 准备（装依赖/建测试库 `{repo}_test`/对比开发库同步 schema/.env 测试端口）。**交付链各环节（审查→构建→校验→E2E）在测试目录 `tests/ws-{TASK_IDx}` 跑**（基于 Dev commit、独立库/端口、不影响主目录开发）。测完 master 报告回写主目录 + `git worktree remove` 销毁。
+冒烟通过、标 🔳 后，建测试环境（同 `dev-quality-orchestrator.md` 测试环境准备 详解）：master 建**版本级 worktree** `tests/ws-{version}`（checkout `feature/{version}` 分支）+ 派运维(code-ops) 准备（装依赖短路/建测试库 `{repo}_test`/对比开发库同步 schema/.env 测试端口）。**交付链各环节（审查→构建→校验→E2E）在测试目录 `tests/ws-{version}` 跑**（基于 feature/{version} 分支、独立库/端口、不影响主目录开发）。**每次测前 worktree 同步**（fetch + checkout/reset 到分支最新，防测旧版）。测完 master 报告回写主目录 + merge `feature/{version}`→main + tag `v{version}` + worktree 清理。
 
 ### Step 2：代码审查
 
@@ -258,7 +258,7 @@ Agent(
 Agent(
   subagent_type: "code-reviewer",
   run_in_background: true,
-  prompt: "代码审查：{TASK_IDs}\n测试目录(worktree): {REPO_DIR}/tests/ws-{TASK_IDx}（基于 commit {hash}）\nfeature-spec: {REPO_DIR}/docs/feature-spec.md\ndesign: {REPO_DIR}/docs/design.md（含架构风格与技术决策记录——架构合理性审查依据）\n输出目录: {REPO_DIR}/tests/ws-{TASK_IDx}/tests/reports/"
+  prompt: "代码审查：{TASK_IDs}\n测试目录(worktree): {REPO_DIR}/tests/ws-{version}（版本级）（基于 feature/{version} 分支）\nfeature-spec: {REPO_DIR}/docs/feature-spec.md\ndesign: {REPO_DIR}/docs/design.md（含架构风格与技术决策记录——架构合理性审查依据）\n输出目录: {REPO_DIR}/tests/ws-{version}（版本级）/tests/reports/"
 )
 ```
 
@@ -272,7 +272,7 @@ Agent(
 Agent(
   subagent_type: "build-builder",
   run_in_background: true,
-  prompt: "构建：{TASK_IDs}\n构建目录(worktree): {REPO_DIR}/tests/ws-{TASK_IDx}（基于 commit {hash}）\n输出目录: {REPO_DIR}/tests/ws-{TASK_IDx}/tests/reports/"
+  prompt: "构建：{TASK_IDs}\n构建目录(worktree): {REPO_DIR}/tests/ws-{version}（版本级）（基于 feature/{version} 分支）\n输出目录: {REPO_DIR}/tests/ws-{version}（版本级）/tests/reports/"
 )
 ```
 
@@ -286,7 +286,7 @@ Agent(
 Agent(
   subagent_type: "artifact-validator",
   run_in_background: true,
-  prompt: "制品校验：{TASK_IDs}\n校验目录(worktree): {REPO_DIR}/tests/ws-{TASK_IDx}（基于 commit {hash}）\nfeature-spec: {REPO_DIR}/docs/feature-spec.md\n输出目录: {REPO_DIR}/tests/ws-{TASK_IDx}/tests/reports/"
+  prompt: "制品校验：{TASK_IDs}\n校验目录(worktree): {REPO_DIR}/tests/ws-{version}（版本级）（基于 feature/{version} 分支）\nfeature-spec: {REPO_DIR}/docs/feature-spec.md\n输出目录: {REPO_DIR}/tests/ws-{version}（版本级）/tests/reports/"
 )
 ```
 
@@ -300,7 +300,7 @@ Agent(
 Agent(
   subagent_type: "code-tester-e2e",
   run_in_background: true,
-  prompt: "端到端测试：{TASK_IDs}\n测试目录(worktree): {REPO_DIR}/tests/ws-{TASK_IDx}（基于 commit {hash}，测前 git rev-parse HEAD 核对）\nfeature-spec: {REPO_DIR}/docs/feature-spec.md\nprd: {REPO_DIR}/docs/prd.md\ndesign: {REPO_DIR}/docs/design.md（含时序图——E 场景链路依据；若只有 architecture.md 则传该路径）\nDev自检报告: {REPO_DIR}/tests/reports/{TASK_ID}-selfcheck-*.md\n输出目录: {REPO_DIR}/tests/ws-{TASK_IDx}/tests/reports/"
+  prompt: "端到端测试：{TASK_IDs}\n测试目录(worktree): {REPO_DIR}/tests/ws-{version}（版本级）（基于 feature/{version} 分支，测前 git rev-parse HEAD 核对）\nfeature-spec: {REPO_DIR}/docs/feature-spec.md\nprd: {REPO_DIR}/docs/prd.md\ndesign: {REPO_DIR}/docs/design.md（含时序图——E 场景链路依据；若只有 architecture.md 则传该路径）\nDev自检报告: {REPO_DIR}/tests/reports/{TASK_ID}-selfcheck-*.md\n输出目录: {REPO_DIR}/tests/ws-{version}（版本级）/tests/reports/"
 )
 ```
 
@@ -399,6 +399,13 @@ while round < 3:
 ```
 ## ⑤ 项目收尾
 ```
+
+**版本收尾（大循环完成）**：
+1. 交付链报告回写主目录
+2. `git checkout main && git merge feature/{version}`（合并版本分支）
+3. `git tag v{version}`（打版本 tag，如 v0.0.1）
+4. `git worktree remove tests/ws-{version}` + `git branch -d feature/{version}`（清理）
+5. 日志：`- {yymmdd hhmm} 🏷️ 版本 {version} 完成 → tag v{version}`
 
 ```
 - {yymmdd hhmm} 🏁 ════ 项目完成 ════
