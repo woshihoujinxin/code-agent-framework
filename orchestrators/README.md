@@ -254,6 +254,8 @@ clone 后 `.claude/` 自动包含 19 个 subagent、`/goal-d` `/goal-o` `/goal-i
 | `docs/main-log.md` | 全流程日志 + checkpoint | 主Agent |
 | `docs/upgrade-issue-*.md` | 问题升级需求文档 | 主Agent（3轮修复失败时） |
 | `tests/reports/` | 测试报告目录 | Tester×5 |
+| `tests/reports/{TASK_ID}-{dimension}.json` | 单维结构化判定（report-schema 契约） | Tester×5 |
+| `tests/reports/results.json` | 全量结果 JSON（任务状态 + 各维判定，机器真源） | 主Agent |
 | `tests/unit/` | 单元测试 | Dev（覆盖契约 F/B/S 用例） |
 | `tests/reports/{TASK_ID}-selfcheck-*.md` | Dev 自检报告（声明契约用例覆盖） | Dev |
 

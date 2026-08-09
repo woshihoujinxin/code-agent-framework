@@ -9,41 +9,40 @@ description: 五维测试结果（TestResult）——查看各任务五维测试
 - 代码仓库：`./`（即 `{REPO_DIR}`）
 - 可选参数：`$ARGUMENTS`（为空 → 五维总览；为任务 ID 如 `TASK03` → 单任务五维详情）
 
-## 数据源
+## 数据源（优先级：JSON → SUMMARY → MD grep）
 
-- 主源：`{REPO_DIR}/tests/reports/{TASK_ID}-{dimension}.md`（`dimension` = `correctness` / `quality` / `robustness` / `security` / `e2e`）
+- **机器真源**：`{REPO_DIR}/tests/reports/results.json`（master 按 `coding-standards/references/report-schema.md` 维护：任务状态 + 各维度 verdict/conclusion/classification/rounds/report）——有它直接读，最快最可靠
 - 收尾汇总：`{REPO_DIR}/tests/reports/SUMMARY-{version}.md`（Phase 4 产出，人看的整版汇总）
-- 报告结构：`### 📋 一句话结论` ｜ `### 判定：PASS/FAIL` ｜ `### 失败分类：`（FAIL 时）｜ `### 问题标签`（FAIL 时）
-- **重测是追加写**（`## 第 N 次测试` 段逐次追加）→ **判定/结论一律取行号最大者 = 最新轮次**
+- 兜底：`{REPO_DIR}/tests/reports/{TASK_ID}-{dimension}.md`（`dimension` = `correctness`/`quality`/`robustness`/`security`/`e2e`；无 JSON 的旧项目回退 grep）
+- 报告结构（回退时用）：`### 📋 一句话结论` ｜ `### 判定：PASS/FAIL` ｜ `### 失败分类：` ｜ `### 问题标签`
+- **重测追加写**（MD 是 `## 第 N 次测试` 逐次追加）→ 回退时**判定取行号最大者 = 最新轮次**；JSON 天然只存最新
 
 ---
 
 ## 模式 1：五维总览（$ARGUMENTS 为空）
 
-1. 若存在 `SUMMARY-{version}.md` → 直接呈现其汇总表（任务 × 五维 + 一句话结论，最省事）
-2. 否则逐任务汇总（Grep 各维度报告最新判定 + 一句话结论）：
+1. **读 `results.json`**（存在时）：直接呈现 任务 × 五维 表 + 一句话结论：
 
    | 任务 | 功能 | 质量 | 健壮 | 安全 | E2E | 一句话结论 |
    |------|------|------|------|------|-----|-----------|
    | TASK01 | ✅ | ✅ | ❌ | ✅ | — | 核心链路可用，边界一处缺校验 |
 
-   判定提取：`Grep(pattern="^### 判定", path="{REPO_DIR}/tests/reports/{TASK_ID}-{dimension}.md", "-n": true)` → **取行号最大的那一行**的 PASS/FAIL（PASS→✅，FAIL→❌）；无该维度报告 → `—`
+   `verdict` → ✅/❌；JSON 中无该维度键 → `—`（未测）
+2. 无 `results.json` → 有 `SUMMARY-{version}.md` 则呈现其汇总表；都没有才逐任务 grep 各维度 MD 报告最新判定（`^### 判定` 取行号最大者）
 3. 顶部进度行：`已测 {X}/{N} 任务 ｜ 全 PASS {a} ｜ 有 FAIL {b}`
 4. 若 `tests/reports/` 不存在或为空 → 提示"还没进入测试阶段（开发完才测），无测试结果"
 
 ## 模式 2：单任务五维详情（$ARGUMENTS = TASK_ID）
 
-对 `{TASK_ID}` 逐个维度读报告，取**最新一次测试**段：
+对 `{TASK_ID}` 读 `results.json` 中该任务的 `tests`（存在时直接呈现）；无 JSON 才逐个维度 grep 报告取最新判定：
 
 | 维度 | 判定 | 一句话结论 | 失败分类 |
 |------|------|-----------|---------|
 | 功能正确性 | PASS | {结论} | - |
 | 代码质量 | FAIL | {结论} | 实现Bug |
 
-- 判定行：各维度报告 `### 判定`（最新轮次）
-- 一句话结论：各维度报告「一句话结论」行（**子串匹配 `一句话结论` 防 emoji 编码差异**，取最新轮次）
-- 失败分类：FAIL 维度报告 `### 失败分类`；附 `### 问题标签`
-- 每条附报告路径 `tests/reports/{TASK_ID}-{dimension}.md`
+- 判定/结论/失败分类：JSON 直读；无 JSON 回退各维度报告（`### 判定` /「一句话结论」子串匹配 / `### 失败分类`，取最新轮次）
+- 附 `rounds`（测了几轮）与报告路径 `tests/reports/{TASK_ID}-{dimension}.md`
 
 ## 约束
 

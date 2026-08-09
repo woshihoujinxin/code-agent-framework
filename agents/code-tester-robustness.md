@@ -89,6 +89,8 @@ FAIL 时在报告判定行后写 `### 问题标签` 段，标签**必须从下�
 
 写入 `{输出目录}/{TASK_ID}-robustness.md`。
 
+**同时写结构化判定** `{输出目录}/{TASK_ID}-robustness.json`（按 `coding-standards/references/report-schema.md` §1，覆盖写=最新轮次；UTF-8、`verdict` 大写，含 schemaVersion/taskId/dimension/round/verdict/conclusion/classification/tags/report 路径）。
+
 **报告结构（PASS 与 FAIL 都必须写「一句话结论」+「用例明细」）**——报告是给人看的，读者要能一眼看懂"测了什么边界/异常、怎么测的、结果如何、健壮性行不行"：
 
 ```markdown

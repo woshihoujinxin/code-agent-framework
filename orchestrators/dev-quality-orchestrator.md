@@ -632,7 +632,7 @@ Agent E:
   prompt: "安全性测试：{TASK_IDx}\n测试目录(worktree): {TEST_WS}\n基于 feature/{version} 分支\nfeature-spec: {TEST_WS}/docs/feature-spec.md\nprd: {TEST_WS}/docs/prd.md\nDev自检报告: {TEST_WS}/tests/reports/{TASK_IDx}-selfcheck-*.md\n输出目录: {TEST_WS}/tests/reports/"
 ```
 
-所有 job 回收 → 收集每个 🔳 任务的 5 维 PASS/FAIL 判定 + 报告路径。全 PASS 的任务 → dev-plan 标 ✅；有 FAIL 的任务进 Step 3 修正循环。全部 🔳 → ✅/⚠️ 后 → 若升级产生新 ⏳ 则回 Phase 2 开发循环，否则进 Phase 4 收尾。
+所有 job 回收 → 收集每个 🔳 任务的 5 维 PASS/FAIL 判定 + 报告路径。**同步 results.json**：首次测试前初始化 `tests/reports/results.json`（`{"schemaVersion":1,"version":"v{version}","project":"{REPO_DIR 名}","tasks":{}}`）；测试后读各 `tests/reports/{TASK_ID}-{dimension}.json`（tester 按 `coding-standards/references/report-schema.md` 产出），合并进 results.json 对应任务/维度（verdict/conclusion/classification/rounds/report），任务状态与 dev-plan 同步。全 PASS 的任务 → dev-plan 标 ✅；有 FAIL 的任务进 Step 3 修正循环。全部 🔳 → ✅/⚠️ 后 → 若升级产生新 ⏳ 则回 Phase 2 开发循环，否则进 Phase 4 收尾。
 
 存储：TEST_CORRECTNESS_ID、TEST_QUALITY_ID、TEST_ROBUSTNESS_ID、TEST_SECURITY_ID、TEST_E2E_ID。
 
@@ -717,7 +717,7 @@ while round < max_auto_rounds:
     if 该任务安全FAIL:  Agent(resume: "{TASK_IDx 的 TEST_SECURITY_ID}",    subagent_type: "code-tester-security",   run_in_background: true, prompt: "重测 {TASK_IDx}。")
     if 该任务E2E_FAIL:  Agent(resume: "{TASK_IDx 的 TEST_E2E_ID}",         subagent_type: "code-tester-e2e",        run_in_background: true, prompt: "重测 {TASK_IDx}。")
 
-  等待完成 → 更新结果
+  等待完成 → 更新结果，并**重合并 results.json**（tester 已覆盖写最新 JSON，重新同步被重测任务的维度判定）
 ```
 
 **循环结束判定**：
@@ -844,7 +844,7 @@ Step 4: 向用户报告恢复点（按状态分类列出），然后继续 Phase
 ## ⑥ 项目收尾
 ```
 2. **产出测试汇总报告**（人直接看这份——必做，否则 10+ 份过程报告没人看）：
-   - Grep 每个 `tests/reports/{TASK_ID}-{dimension}.md` 的「一句话结论」行（`Grep(pattern="### 📋 一句话结论", path=..., output_mode="content", -A=1)`）与判定行
+   - 从 `tests/reports/results.json` 读每个任务的各维度判定 + 一句话结论（机器真源，最快最可靠）；无 results.json（旧项目）才回退 Grep 各 `tests/reports/{TASK_ID}-{dimension}.md` 的「一句话结论」行与判定行
    - 汇总写 `tests/reports/SUMMARY-{version}.md`（1 份，覆盖写）：
      ```markdown
      # {version} 测试汇总
