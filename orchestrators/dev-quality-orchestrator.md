@@ -444,8 +444,9 @@ Agent(
    - 同步命令：git -C tests/ws-{version} fetch && git -C tests/ws-{version} reset --hard feature/{version}
    - → worktree = feature/{version} 最新，再派下一个 Tester（不测旧代码，也不破坏在读测试）
 3. master 派运维(code-ops) 准备环境（首次建，后续复用）：
-   Agent(code-ops, prompt: "准备测试环境 tests/ws-{version}：装依赖（增量，依赖声明变了才装）+ 建测试库 {repo}_test + 对比开发库同步 schema + 配 .env(测试库/测试端口)。读 design.md「端口与库规划」段。完成后返回就绪报告。")
-   → code-ops 执行（短路判断：依赖/.env/schema 变了才做，没变跳过）
+   Agent(code-ops, prompt: "准备测试环境 tests/ws-{version}：先读主仓库 docs/env-state.md（环境状态清单，code-ops 维护），按指纹短路——装依赖（增量，依赖声明变了才装）+ 建测试库 {repo}_test + 对比开发库同步 schema + 配 .env(测试库/测试端口)。读 design.md「端口与库规划」段。完成后回写 env-state.md 并返回就绪报告。")
+   → code-ops 执行（先读 env-state.md 短路判断：依赖/.env/schema 变了才做，没变跳过并标记"复用"；做完回写 env-state.md）
+   > **环境状态持久化**：`docs/env-state.md` 是机器级环境清单（依赖指纹/测试库/schema/.env/端口），由 code-ops 维护——**防止每次重新判断/重建环境**。Tester 需要环境信息时读它，不重复派 ops。
 4. Step 2 派 Tester 指向 tests/ws-{version}（版本测试目录，不是主目录/不是每任务）
 5. 版本测试全过（Phase 3 收尾）：
    - 报告回写主目录: cp tests/ws-{version}/tests/reports/*.md → {REPO_DIR}/tests/reports/
