@@ -53,7 +53,7 @@ skills:
 读 PRD「视觉意图」段；若无此段则从用户故事推断受众与调性。按 `visual-directions.md` 的"选择指南"定位 5 大视觉方向之一。
 
 ### 2. 选系统
-从 `design-systems-library.md` 精选 12 套中选 1 套匹配的（默认 `Default (Neutral Modern)` 兜底）。若用户有自有品牌，执行 `brand-extraction-protocol.md` 5 步提取，融合品牌色值 + 所选系统结构 = 专属令牌。
+从 `design-systems-library.md` **71 套**中选 1 套匹配的：命中 1–12 套详细令牌 → 直接用它；命中 13–71 套扩展索引 → 按 `design-system-schema.md` 9 段结构 + 该行视觉特征现生成令牌（默认 `Default (Neutral Modern)` 兜底）。若用户有自有品牌，执行 `brand-extraction-protocol.md` 5 步提取，融合品牌色值 + 所选系统结构 = 专属令牌。
 
 ### 3. 出令牌
 按 `design-system-schema.md` 9 段结构写 `DESIGN.md`：色彩（HEX + CSS 变量）、字体栈、组件规范、间距、深度、响应式。令牌必须过 WCAG AA 对比度。

@@ -82,9 +82,15 @@
 | **快速模式** | 小需求（≤10 源文件 / 单模块 / 无多端 / 无复杂状态） | 压缩版循环：PM 简洁PRD + 架构师 ≤3 大任务 + 单 Dev + 五维 1 轮 + 修正 ≤2 轮；**测试契约照常产**（feature-spec F/B/S/E/Q 共享上下文保证不变） |
 | **BugFix** | 明确 bug 描述 | resume 相关 Dev + 受影响维度重测，不重走 PM/Planner |
 
-### 原型子流水线（A3）— Web 需求自动出高保真原型
+### 原型子流水线（A3）— Web 需求自动出高保真原型（团队链路）
 
-PRD 写完后自动判断：场景含前端/Web → `code-prototype-builder` 产出 `docs/prototype/index.html` + `DESIGN.md`（视觉基准：前端 Dev 对齐令牌、quality tester 核查视觉一致性）；纯 CLI/API → SKIP 不浪费。交付版尾端再加 `code-export-specialist` 导出 HTML/PDF/PPTX/ZIP 到 `exports/`（A5）。
+PRD 写完后自动判断：场景含前端/Web → 走「**需求发现 → 原型构建 → 独立审查 →（可选）导出**」链路：
+- `code-discovery-analyst` 提炼 5 维设计需求摘要（场景/受众/调性/品牌/规模）+ 推荐方向；调性/品牌未定时向用户确认
+- `code-prototype-builder` 从 **71 套设计系统**选型，产出 `docs/prototype/index.html` + `DESIGN.md`（视觉基准：前端 Dev 对齐令牌、quality tester 核查视觉一致性）
+- `code-prototype-critic` **独立 5 维评审 + Anti-Slop 门控**，不过 → 返回构建师修（≤2 轮）
+- 用户要求时 `code-export-specialist` 导出 HTML/PDF/PPTX/ZIP 到 `exports/`（A5）
+
+纯 CLI/API → SKIP 不浪费。
 
 ### 调研子流水线（A4）— 复杂需求先调研业界开源再开发
 
@@ -109,7 +115,7 @@ git clone https://github.com/woshihoujinxin/code-agent-framework.git .claude
 > 不想 `.claude/` 带嵌套 `.git`：clone 后 `rm -rf .claude/.git`
 > **更新框架**：`cd my-project/.claude && git pull`（再重启 Claude Code）
 
-clone 后 `.claude/` 自动包含 16 个 subagent、`/goal-d` `/goal-o` `/goal-init` 命令、两个编排器、3 个 skills（coding-standards / design-systems / prototype-templates）——**无需手动复制任何文件**。
+clone 后 `.claude/` 自动包含 19 个 subagent、`/goal-d` `/goal-o` `/goal-init` 命令、两个编排器、3 个 skills（coding-standards / design-systems / prototype-templates）——**无需手动复制任何文件**。
 
 **按项目调整编码规范**（可选）：编辑 `.claude/skills/coding-standards/SKILL.md` 的 §1–§4（命名/结构/模式/测试）。末段「自进化规则」由 code-sage 自动追加，不要手改。
 
@@ -184,7 +190,9 @@ clone 后 `.claude/` 自动包含 16 个 subagent、`/goal-d` `/goal-o` `/goal-i
 | Builder | `build-builder.md` | `build-builder` | 全流程版 |
 | Validator | `artifact-validator.md` | `artifact-validator` | 全流程版 |
 | 经验提炼 | `code-sage.md` | `code-sage` | 共用（自进化） |
+| 需求发现分析师 | `code-discovery-analyst.md` | `code-discovery-analyst` | Web项目（A3）前置 |
 | 原型构建师 | `code-prototype-builder.md` | `code-prototype-builder` | Web项目（A3） |
+| 原型审查官 | `code-prototype-critic.md` | `code-prototype-critic` | Web项目（A3）质量门 |
 | 技术调研 | `code-researcher.md` | `code-researcher` | 复杂需求（A4） |
 | 导出交付 | `code-export-specialist.md` | `code-export-specialist` | 全流程版（A5） |
 
@@ -237,6 +245,8 @@ clone 后 `.claude/` 自动包含 16 个 subagent、`/goal-d` `/goal-o` `/goal-i
 | `docs/repolist.md` | 调研 repo 清单（URL/clone 路径，跨批次累积，可恢复继续调研） | 调研编排器 |
 | `references/` | 第三方 clone 代码目录（进 .gitignore，不入库） | 调研编排器 |
 | `docs/prototype/` | 高保真原型 + DESIGN.md（视觉基准，A3） | 原型构建师（Web项目） |
+| `docs/prototype/discovery.md` | 5 维设计需求摘要（A3 前置） | 需求发现分析师（Web项目） |
+| `docs/prototype/critique.md` | 原型质量审查报告（5维+Anti-Slop，A3） | 原型审查官（Web项目） |
 | `exports/` | 导出交付物（HTML/PDF/PPTX/ZIP，A5） | 导出专家（交付版） |
 | `docs/main-log.md` | 全流程日志 + checkpoint | 主Agent |
 | `docs/upgrade-issue-*.md` | 问题升级需求文档 | 主Agent（3轮修复失败时） |
