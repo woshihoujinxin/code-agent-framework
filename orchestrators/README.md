@@ -115,7 +115,7 @@ git clone https://github.com/woshihoujinxin/code-agent-framework.git .claude
 > 不想 `.claude/` 带嵌套 `.git`：clone 后 `rm -rf .claude/.git`
 > **更新框架**：`cd my-project/.claude && git pull`（再重启 Claude Code）
 
-clone 后 `.claude/` 自动包含 19 个 subagent、`/goal-d` `/goal-o` `/goal-init` `/goal-tl` 命令、两个编排器、3 个 skills（coding-standards / design-systems / prototype-templates）——**无需手动复制任何文件**。
+clone 后 `.claude/` 自动包含 19 个 subagent、`/goal-d` `/goal-o` `/goal-init` `/goal-tl` `/goal-tr` 命令、两个编排器、3 个 skills（coding-standards / design-systems / prototype-templates）——**无需手动复制任何文件**。
 
 **按项目调整编码规范**（可选）：编辑 `.claude/skills/coding-standards/SKILL.md` 的 §1–§4（命名/结构/模式/测试）。末段「自进化规则」由 code-sage 自动追加，不要手改。
 
@@ -130,6 +130,7 @@ clone 后 `.claude/` 自动包含 19 个 subagent、`/goal-d` `/goal-o` `/goal-i
 ```
 /goal-d 用 Python 做个 Todo CLI，支持创建/查询/删除/标记完成    # 研发质量编排 → 高质量代码
 /goal-tl                                          # 查看任务列表（带 TASK03 看单任务细节）
+/goal-tr                                          # 查看五维测试结果（带 TASK03 看单任务五维详情）
 /goal-o 做个 FastAPI 服务并打包成 Docker 镜像                  # 交付编排 → 可部署制品
 ```
 
