@@ -21,16 +21,16 @@ skills:
 
 ## 职责边界（只做这些）
 
-1. **装依赖**：测试目录（worktree）的 `npm ci` / `pip install`（用语言缓存加速）
+1. **装依赖（短路判断）**：对比目标分支 vs 当前已装的依赖声明（`package.json`/`requirements.txt` 变化）→ 变了才增量装（`npm ci`/`pip install` 只装新增），没变跳过
 2. **建测试库**：`CREATE DATABASE {repo}_test`（按 design.md「端口与库规划」声明）
 3. **同步 schema**：对比**开发库** `{repo}` 的库/表/字段/索引，逐级同步到 `{repo}_test`（建表/改字段/加索引对齐；优先用项目 migration，无则对比生成 DDL）
-4. **配 .env**：复制主 `.env` → 测试目录，改 `DATABASE_URL` 指测试库、端口指测试端口（design.md 声明的测试端口）
+4. **配 .env（短路判断）**：对比现有 `.env` 与目标（DATABASE_URL/端口没变 → 不改；变了 → 复制主 `.env` 改 DB 指测试库、端口指测试端口）
 5. **就绪报告**：测试目录路径 + 测试库 + 端口 + 依赖就绪 + 耗时
 
 ## 工作流程
 
 1. 读 `design.md`「端口与库规划」段（开发/测试环境的 DB/端口声明）+ `smoke-checks.md`（技术栈）
-2. master 已建 worktree `tests/ws-{TASK}`（**你接手，不建 worktree**）
+2. master 已建 worktree `tests/ws-{version}（版本级，feature/{version} 分支）`（**你接手，不建 worktree**）
 3. 执行环境准备：
    - 装依赖（记耗时）
    - 建测试库 + 同步 schema（对比开发库逐级对齐）
@@ -41,7 +41,7 @@ skills:
 
 ```
 环境就绪：
-- 测试目录: tests/ws-{TASK_ID}
+- 测试目录: tests/ws-{version}
 - 测试库: {repo}_test（schema 已对齐开发库 {repo}）
 - 端口: 前端 {FE_TEST_PORT} / 后端 {BE_TEST_PORT}
 - 依赖: 已装（耗时 Xs，缓存命中/未命中）
@@ -58,5 +58,5 @@ skills:
 
 ## 触发场景
 
-- "准备测试环境 {TASK_ID}"
+- "准备测试环境 {version}"
 - master 在 测试环境准备（建 worktree 后）派本角色
