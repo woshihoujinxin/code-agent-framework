@@ -566,9 +566,9 @@ Agent(
 
 > 开发循环（Step 1 + 冒烟 + Step 4 + Step 5）重复至**无 ⏳** 后，自动进入本阶段——把所有 🔳 任务一次性铺开五维 QA 测试，**不再穿插在开发之间**。冒烟 + 单测已在开发期跑过，本阶段只跑五维 QA。
 
-### 测试环境准备：建测试环境（worktree + 派运维准备——master 只编排不执行）
+### 测试环境准备：建测试环境（worktree + 派运维准备——**硬门槛，禁止跳过**）
 
-整版本开发完成（所有 ⏳ → 🔳）后，master **建测试工作树** + **派运维(code-ops) 准备环境**（master 不亲手建库/装依赖，只编排），就绪后 Tester 介入：
+**测试必须在版本级 worktree 里跑，禁止在主仓库直接测**（主仓库正被并发修改，Tester 读它会得出错误结论——这是硬约束，不是建议）。整版本开发完成（所有 ⏳ → 🔳）后，master **必须先建测试工作树** + **派运维(code-ops) 准备环境**，就绪后 Tester 才能介入：
 
 ```
 1. 版本级 worktree：master 建一次（整个版本复用，不每任务建）
@@ -592,6 +592,19 @@ Agent(
 ```
 
 > 测试库 `{repo}_test` 建一次复用；worktree `tests/ws-{version}` 版本级建一次（服务整个版本的所有任务测试），靠「步骤 2 同步」拿最新改动。中断恢复时 master 先 `git worktree list` 扫残留清理。
+
+### 就绪核验：worktree 必达（派 Tester 前硬门槛，缺即止步）
+
+派任何 Tester 前，master **必须**执行以下核验并全部通过（任一失败 → 回到「测试环境准备」建 worktree，**不派 Tester**）：
+
+```
+1. worktree 存在：git -C {REPO_DIR} worktree list → 必须含 tests/ws-{version}
+2. 同步到最新：git -C tests/ws-{version} fetch && git -C tests/ws-{version} reset --hard feature/{version}
+3. 环境就绪：读 tests/ws-{version}/docs/env-state.md（code-ops 维护，见「测试环境准备」）
+```
+❌ 未建 worktree 直接在主仓库派 Tester = 违规——Tester 也会因自身「0. 环境核验」返回 `WORKTREE_MISSING` 拒绝（见各 tester 的「0. 环境核验」）。
+
+**若 Tester 返回 `WORKTREE_MISSING`** → 先回「测试环境准备」建/修 worktree 并同步，再重派该 Tester；这是环境未就绪，**不算测试 FAIL、不走修正循环**。
 
 ### Step 2：全量五维测试（跨任务流水线，所有 🔳 任务一次性铺开）
 

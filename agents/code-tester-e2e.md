@@ -32,6 +32,19 @@ skills:
 
 ## 工作流程
 
+### 0. 环境核验（强制，先于一切——worktree 硬门槛）
+
+**你必须在版本级 worktree 里测试，禁止在主仓库直接测**（主仓库正被并发修改，读了会得出错误结论）。开工前确认测试目录是 worktree：
+
+```
+git -C {测试目录} rev-parse --git-dir | grep worktrees
+```
+
+- 输出含 `worktrees` → 通过，继续
+- 输出不含 / 目录不存在 → 返回 `WORKTREE_MISSING`，拒绝测试（不读不写，等编排器建好 worktree 再派你）
+
+`{测试目录}` = 主Agent 传入的测试目录（Step 2 的 `{TEST_WS}`，通常 `{REPO_DIR}/tests/ws-{version}`）。
+
 ### 1. 读取输入
 
 确认以下信息（由主Agent提供）：
