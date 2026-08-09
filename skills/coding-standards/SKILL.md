@@ -26,16 +26,16 @@ description: |
 
 ### 测试基于指定 commit 的操作规定（提测→测试的版本锚点）
 
-测试**必须基于一个明确的 commit 版本**，不能测"工作区当前态"（可能被改过）。操作链：
+测试**必须基于版本分支 `feature/{version}`**（逻辑完整版本），不能测"工作区当前态"（可能被改过）。操作链：
 
 | 步 | 角色 | 操作 |
 |----|------|------|
-| 提测 | master | Dev 冒烟通过、标 🔳 时，`git rev-parse HEAD` 记下 **Dev 的 commit hash**（提测锚点） |
-| 派测 | master | 派 Tester 时，**prompt 里传这个 commit hash**（"测试基于 commit {hash}"） |
-| 测前核对 | Tester | `git rev-parse HEAD` 核对 == 传入 hash；**不符 → `git checkout {hash}`** 到指定版本（或报告"版本不符"不测，绝不测错版本） |
-| 报告 | Tester | 标"基于 commit {hash}" |
+| 提测 | master | 版本 worktree `tests/ws-{version}` checkout `feature/{version}` 分支 |
+| 同步 | master | 每次测前 worktree **同步**：`git -C ws-{version} fetch && checkout feature/{version} && reset --hard feature/{version}`（防测旧版） |
+| 派测 | master | 派 Tester 指向 `tests/ws-{version}`，prompt 写"基于 feature/{version} 分支" |
+| 报告 | Tester | 标"基于 feature/{version}"（版本锚点） |
 
-> 串行流程下 working tree 通常就停在 Dev commit（核对会一致）；核对/checkout 是**保险**——防止工作区被改后测了错版本。并行流水线（测 T02 时开发 T03）则必须 checkout 到 T02 commit（隔离）。
+> 版本分支 = 该版本所有任务 + bug 修复的完整逻辑版本（多个 commit 累积），比单个 commit 稳定、可并行、可复现。开发在 feature/{version} 分支 commit，测试基于该分支（worktree 同步拿最新）。
 
 ---
 
