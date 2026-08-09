@@ -112,6 +112,10 @@
    - **精简模式**（快速出 MVP）：核心 7 角色——PM / Planner / Dev / 冒烟 / correctness / e2e / **ops**（E2E 需 worktree 环境）。增强关闭（quality/robustness/security/prototype/export/code-sage 跳过）。
    - **全能模式**（默认，全量质量门）：全开（核心 7 + quality + robustness + security + prototype + export + code-sage）。**与现有行为一致**。
    - 用户指定模式 or 自定义开关（如"精简+security"）；默认**全能**。记录到速览行。
+7. **确认大循环版本号 `{version}`**（本次开发 = 一个版本，完成后打 tag）：
+   - `git -C {REPO_DIR} tag` 取最新 tag（如 v0.0.1）→ 递增 `v0.0.2`；无 tag → `v0.0.1`
+   - **广播版本分支 `feature/{version}`** 给所有 agent（PM/Planner/Dev/运维/测试）：全部开发 + bug 修复 commit 到该分支，测试基于该分支
+   - 记录版本号到速览行（`v{version}`）
 
 **日志写入**：按「日志写入规范」骨架创建（{项目名} = REPO_DIR 目录名），写 ① 项目启动 段：
 ```
@@ -431,20 +435,25 @@ Agent(
 冒烟通过、标 🔳 后，master **建测试工作树** + **派运维(code-ops) 准备环境**（master 不亲手建库/装依赖，只编排），就绪后 Tester 介入：
 
 ```
-1. master 记 commit: hash=$(git -C {REPO_DIR} rev-parse HEAD)   # Dev 的 commit（测试锚点）
-2. master 建 worktree: git -C {REPO_DIR} worktree add tests/ws-{TASK_IDx} {hash}
-   → tests/ws-{TASK_IDx} 独立工作树，checkout 到 Dev commit，主目录不动
-3. master 派运维(code-ops) 准备环境（执行者，master 不代办）：
-   Agent(code-ops, prompt: "准备测试环境 tests/ws-{TASK_IDx}：装依赖 + 建测试库 {repo}_test + 对比开发库 {repo} 逐级同步 schema(库/表/字段/索引) + 配 .env(测试库/测试端口)。读 design.md「端口与库规划」段。完成后返回就绪报告。")
-   → code-ops 执行装依赖/建库/同步/.env，产出 tests/reports/{TASK}-env-prepare.md
-4. 就绪后，Step 2 派 Tester 指向 tests/ws-{TASK_IDx}（测试目录，不是主目录）
-5. 测完（Step 2 判定后）：
-   - 报告回写主目录: cp tests/ws-{TASK_IDx}/tests/reports/{TASK}*.md → {REPO_DIR}/tests/reports/
-   - 销毁测试环境: git -C {REPO_DIR} worktree remove tests/ws-{TASK_IDx}
-   日志: - {yymmdd hhmm} 🧹 销毁测试环境 tests/ws-{TASK_IDx}（报告已回写主目录）
+1. 版本级 worktree：master 建一次（整个版本复用，不每任务建）
+   git -C {REPO_DIR} worktree add tests/ws-{version} feature/{version}
+   → tests/ws-{version} 独立工作树，checkout 到版本分支 feature/{version}，主目录不动
+2. **测试前 worktree 同步**（每次测前必做，否则测旧版）：
+   git -C tests/ws-{version} fetch（拉分支最新 commit）
+   git -C tests/ws-{version} checkout feature/{version}
+   git -C tests/ws-{version} reset --hard feature/{version}（工作树 = 分支最新）
+3. master 派运维(code-ops) 准备环境（首次建，后续复用）：
+   Agent(code-ops, prompt: "准备测试环境 tests/ws-{version}：装依赖（增量，依赖声明变了才装）+ 建测试库 {repo}_test + 对比开发库同步 schema + 配 .env(测试库/测试端口)。读 design.md「端口与库规划」段。完成后返回就绪报告。")
+   → code-ops 执行（短路判断：依赖/.env/schema 变了才做，没变跳过）
+4. Step 2 派 Tester 指向 tests/ws-{version}（版本测试目录，不是主目录/不是每任务）
+5. 版本测试全过（Phase 3 收尾）：
+   - 报告回写主目录: cp tests/ws-{version}/tests/reports/*.md → {REPO_DIR}/tests/reports/
+   - merge: git -C {REPO_DIR} checkout main && git merge feature/{version}
+   - 打 tag: git -C {REPO_DIR} tag v{version}（版本发布点）
+   - 清理: git -C {REPO_DIR} worktree remove tests/ws-{version} + git branch -d feature/{version}
 ```
 
-> 测试库 `{repo}_test` 跨任务复用（不 drop，运维每次对比同步即可）；worktree 每任务建/销毁（轻量）。中断恢复时 master 先 `git worktree list` 扫残留测试目录清理。
+> 测试库 `{repo}_test` 建一次复用；worktree `tests/ws-{version}` 版本级建一次（服务整个版本的所有任务测试），靠「步骤 2 同步」拿最新改动。中断恢复时 master 先 `git worktree list` 扫残留清理。
 
 ### Step 2：逐任务五维测试（任务串行，避免并发爆炸）
 
