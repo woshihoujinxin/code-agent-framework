@@ -18,4 +18,4 @@ description: 初始化部署本框架（生成 .opencode/ 与 .reasonix/ 适配�
    - `.reasonix/skills/` 下每个目录含 SKILL.md，目录数与 `.claude/agents/` 一致（当前 16 个）
    - 若数量不一致，说明 deploy 未生效或版本不匹配，重新运行第 2 步并检查输出。
 4. **输出摘要**：列出复制了哪些目录、各目录文件数。
-5. **告知用户**：重启 opencode / Reasonix 后即可使用 `/goal-d`、`/goal-o`、`/goal-init` 与 16 个 subagent（opencode 用 `@<agent名>`，Reasonix 用 `/<agent名> <任务>`）。
+5. **告知用户**：重启 opencode / Reasonix 后即可使用 `/goal-d`、`/goal-o`、`/goal-init` 与 19 个 subagent（opencode 用 `@<agent名>`，Reasonix 用 `/<agent名> <任务>`）。
