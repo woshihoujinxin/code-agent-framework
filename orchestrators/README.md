@@ -93,6 +93,14 @@
 
 PRD 写完后自动判断：场景含前端/Web → `code-prototype-builder` 产出 `docs/prototype/index.html` + `DESIGN.md`（视觉基准：前端 Dev 对齐令牌、quality tester 核查视觉一致性）；纯 CLI/API → SKIP 不浪费。交付版尾端再加 `code-export-specialist` 导出 HTML/PDF/PPTX/ZIP 到 `exports/`（A5）。
 
+### 调研子流水线（A4）— 复杂需求先调研业界开源再开发
+
+复杂/新领域需求（agent 框架、分布式、AI 应用）开发前，`code-researcher` 下载用户提供的开源仓库（git 链接）到 `references/` 作为真实上下文，提炼**两份文档**：
+- `docs/requirement.md` — 需求成分（产品能做什么）→ 喂给产品经理写 PRD
+- `docs/research-tech.md` — 技术方案参考（如何解决技术问题）→ 喂给架构师写 design.md
+
+`docs/repolist.md` 记录 repo 清单（入库），换机器/换会话可按 URL 重新 clone 恢复调研。`/goal-r` 命令可独立触发调研；goal-d 标准 SOP 对复杂需求自动插入本段（A4）。
+
 ---
 
 ## 安装（一键）
@@ -180,6 +188,7 @@ clone 后 `.claude/` 自动包含 16 个 subagent、`/goal-d` `/goal-o` `/goal-i
 | Validator | `artifact-validator.md` | `artifact-validator` | 全流程版 |
 | 经验提炼 | `code-sage.md` | `code-sage` | 共用（自进化） |
 | 原型构建师 | `code-prototype-builder.md` | `code-prototype-builder` | Web项目（A3） |
+| 技术调研 | `code-researcher.md` | `code-researcher` | 复杂需求（A4） |
 | 导出交付 | `code-export-specialist.md` | `code-export-specialist` | 全流程版（A5） |
 
 > 注：两个版本都用 `code-dev-frontend.md` + `code-dev-backend.md`（前后端分离开发）；区别在全流程版多了 Reviewer/Builder/Validator 制品环节。
@@ -226,6 +235,10 @@ clone 后 `.claude/` 自动包含 16 个 subagent、`/goal-d` `/goal-o` `/goal-i
 | `docs/architecture.md` | 全局架构设计（复杂项目拆分：上下文划分+模块图） | 架构师 |
 | `docs/feature-spec.md` | 每个任务的功能规格+测试契约 | 架构师 |
 | `docs/lessons-learned.md` | 跨任务经验积累 | Dev（修正后更新） |
+| `docs/requirement.md` | 调研提炼的需求文档（需求成分，A4） | 调研工程师（复杂需求） |
+| `docs/research-tech.md` | 调研提炼的技术方案参考（A4） | 调研工程师（复杂需求） |
+| `docs/repolist.md` | 调研 repo 清单（URL/clone 路径，可恢复继续调研） | 调研编排器 |
+| `references/` | 第三方 clone 代码目录（进 .gitignore，不入库） | 调研编排器 |
 | `docs/prototype/` | 高保真原型 + DESIGN.md（视觉基准，A3） | 原型构建师（Web项目） |
 | `exports/` | 导出交付物（HTML/PDF/PPTX/ZIP，A5） | 导出专家（交付版） |
 | `docs/main-log.md` | 全流程日志 + checkpoint | 主Agent |

@@ -252,12 +252,49 @@
 
 ## Phase 0：产品需求分析
 
+### 0a. 调研子流水线（A4，按需判断，先于 PM）
+
+> **ROLES 判断**：调研属增强角色。**精简模式跳过本步**（直接进 Phase 0）；**全能模式执行**。
+
+**目的**：复杂/新领域需求开发前，以**真实开源代码**为外部基准，产出需求文档 + 技术方案参考，让 PM 与架构师各自加载上下文后产最终 PRD 与 design.md——解决"纯 AI 记忆开发、方案质量无外部基准"的短板。
+
+**触发条件**（满足任一即触发）：
+- 需求涉及**复杂技术栈 / 新领域**（如 agent 框架、分布式系统、AI 应用）——编排器根据需求描述判断，拿不准走调研
+- 用户传入 `参考仓库：{git 链接列表}` 参数（显式要求调研某类项目）
+- 需求文档含"技术调研"要求
+
+**流程**（复用 `orchestrators/research-orchestrator.md` 的编排逻辑）：
+
+```
+1. 建 {REPO_DIR}/references/ 目录 + .gitignore 追加（第三方代码不入库）
+2. 维护 {REPO_DIR}/docs/repolist.md（可恢复 repo 清单，入库）
+3. 逐个 git clone --depth 1（短路复用：目录已存在则跳过；失败 → WebFetch 降级标注）
+4. 派 code-researcher：
+   Agent(
+     subagent_type: "code-researcher",
+     prompt: "调研目标：{需求摘要}\n参考仓库（git 链接，逗号分隔）：{URLS}\n代码仓库：{REPO_DIR}\n\n请分析 references/ 下的代码库，产出 docs/requirement.md + docs/research-tech.md 两份文档。"
+   )
+5. 用 Glob 确认两份文档产出：
+   - docs/requirement.md → 记录 REQ_RESEARCH_PATH
+   - docs/research-tech.md → 记录 TECH_RESEARCH_PATH
+```
+
+**消费注入**（关键——调研结论强制进 PM/Planner 上下文）：
+- **PM**（Phase 0 prompt）：注入 `需求调研基准：{REQ_RESEARCH_PATH}，PRD 需求池/用户故事须对齐调研提炼的需求成分，可补充自身产品判断，偏离须说明理由`
+- **Planner**（Phase 1 prompt）：注入 `技术调研基准：{TECH_RESEARCH_PATH}，design.md 技术选型/ADR 须对齐推荐方案，或明确写"偏离理由"`
+
+**恢复机制**：换机器/换会话时读 `docs/repolist.md` 获取 URL → 重新 clone 到 references/ → 派 code-researcher 重新产出，不丢调研上下文。
+
+日志：`- {yymmdd hhmm} 🔍 调研子流水线：{N} 个参考仓库 → requirement.md + research-tech.md`
+
+### 0b. 产品需求分析
+
 如果用户提供的是原始需求描述（而非已编写的需求文档），先启动产品经理进行需求分析：
 
 ```
 Agent(
   subagent_type: "code-product-manager",
-  prompt: "需求描述：{USER_REQUIREMENT}\n代码仓库：{REPO_DIR}\n\n请分析需求并编写 PRD 文档到 docs/prd.md。完成后返回 PRD 路径。"
+  prompt: "需求描述：{USER_REQUIREMENT}\n代码仓库：{REPO_DIR}\n需求调研基准（如存在）：{REQ_RESEARCH_PATH}\n\n请分析需求并编写 PRD 文档到 docs/prd.md。完成后返回 PRD 路径。"
 )
 ```
 
@@ -316,7 +353,7 @@ Agent(
 ```
 Agent(
   subagent_type: "code-planner",
-  prompt: "需求文档路径：{REQ_FILE}\n代码仓库：{REPO_DIR}\n工程文档目录：{REPO_DIR}/docs\n\n请阅读需求文档和编码规范，产出 dev-plan.md、feature-spec.md 等工程文档到 docs/ 目录，并搭建项目骨架。完成后只返回文件路径列表。"
+  prompt: "需求文档路径：{REQ_FILE}\n代码仓库：{REPO_DIR}\n工程文档目录：{REPO_DIR}/docs\n技术调研基准（如存在）：{TECH_RESEARCH_PATH}，design.md 技术选型/ADR 须对齐推荐方案，或明确写\"偏离理由\"\n\n请阅读需求文档和编码规范，产出 dev-plan.md、feature-spec.md 等工程文档到 docs/ 目录，并搭建项目骨架。完成后只返回文件路径列表。"
 )
 ```
 
@@ -758,8 +795,28 @@ Step 4: 向用户报告恢复点（按状态分类列出），然后继续 Phase
 ```
 ## ⑤ 项目收尾
 ```
-2. 统计各任务迭代情况
-3. 写入最终统计到 main-log.md
+2. **产出测试汇总报告**（人直接看这份——必做，否则 10+ 份过程报告没人看）：
+   - Grep 每个 `tests/reports/{TASK_ID}-{dimension}.md` 的「一句话结论」行（`Grep(pattern="### 📋 一句话结论", path=..., output_mode="content", -A=1)`）与判定行
+   - 汇总写 `tests/reports/SUMMARY-{version}.md`（1 份，覆盖写）：
+     ```markdown
+     # {version} 测试汇总
+
+     ## 总体结论
+     {全部任务是否通过、系统能不能用——一句话人话结论}
+
+     ## 各任务测试结果
+     | 任务 | 一句话结论 | 功能 | 质量 | 健壮 | 安全 | E2E |
+     |------|-----------|------|------|------|------|-----|
+     | TASK01 | {该任务一句话结论} | ✅/❌ | ... | ... | ... | ... |
+     | ... | | | | | | |
+
+     ## 失败项（若有）
+     - {TASK_ID} {维度}: {一句话问题 + 报告路径}
+     ```
+   - 判定列取各报告 `### 判定`（PASS→✅，FAIL→❌）
+   - 日志：`- {yymmdd hhmm} 📄 测试汇总 → tests/reports/SUMMARY-{version}.md`
+3. 统计各任务迭代情况
+4. 写入最终统计到 main-log.md
 
 ```
 - {yymmdd hhmm} 🏁 ════ 项目完成 ════
