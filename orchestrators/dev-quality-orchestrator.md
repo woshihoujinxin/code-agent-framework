@@ -108,6 +108,10 @@
 3. 确认需求文件路径，记为 `REQ_FILE`（**不要读取内容，只记录路径**）
 4. 创建日志文件 `{REPO_DIR}/docs/main-log.md`，写入项目信息
 5. 确认任务波宽，记为 `BATCH_SIZE`（开发阶段同层并发任务数，**默认 2**；=1 则按依赖顺序逐个推进）
+6. **确认角色配置（精简/全能）**，记为 `ROLES`（影响后续派哪些角色）：
+   - **精简模式**（快速出 MVP）：核心 7 角色——PM / Planner / Dev / 冒烟 / correctness / e2e / **ops**（E2E 需 worktree 环境）。增强关闭（quality/robustness/security/prototype/export/code-sage 跳过）。
+   - **全能模式**（默认，全量质量门）：全开（核心 7 + quality + robustness + security + prototype + export + code-sage）。**与现有行为一致**。
+   - 用户指定模式 or 自定义开关（如"精简+security"）；默认**全能**。记录到速览行。
 
 **日志写入**：按「日志写入规范」骨架创建（{项目名} = REPO_DIR 目录名），写 ① 项目启动 段：
 ```
@@ -448,6 +452,10 @@ Agent(
 对开发波内每个任务 TASK_IDx（一个一个测，前一个五维完成且 PASS 后再测下一个；FAIL 则进 Step 3 仅修该任务）。
 
 **测试目录 = `{TEST_WS}` = `{REPO_DIR}/tests/ws-{TASK_IDx}`**（Step 1c 建的 worktree，运维 code-ops 已备好测试库/依赖/.env）。以下 tester 在 `{TEST_WS}` 测（**不是主目录 {REPO_DIR}**）。master 派测时传 Dev 的 **commit hash**；tester 测前 `git -C {TEST_WS} rev-parse HEAD` 核对 == 传入 hash（不符 → 报告"版本不符"不测，绝不测错版本）。
+
+**按 `ROLES` 配置只派启用的 tester**（精简省 token，全能全量）：
+- **精简模式**：只派 **Agent A（correctness）+ Agent D（e2e）**——功能验收 + 端到端。跳 B(quality)/C(robustness)/E(security)。
+- **全能模式**：A-E 全派。
 
 Agent A:
   subagent_type: "code-tester-correctness",
