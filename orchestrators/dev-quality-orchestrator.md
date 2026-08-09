@@ -280,6 +280,8 @@ Agent(
 
 ## Phase 0.5：原型子流水线（A3，自动判断）
 
+> **ROLES 判断**：原型属增强角色。**精简模式跳过本步**（直接进 Phase 1）；**全能模式执行**。
+
 PRD 写完后、计划开始前，**自动判断是否需要原型**——由 code-prototype-builder 读 PRD「视觉意图」段自行判断（编排器不读需求内容）：
 
 ```
@@ -667,6 +669,8 @@ if 本波有任务第3轮仍FAIL:
 
 **压缩前先提炼经验**（每 5 批触发时，在写 checkpoint 前调用一次 code-sage，把阶段性经验沉淀进 coding-standards，避免压缩丢失尚未沉淀的经验）：
 
+> **ROLES 判断**：code-sage 属增强角色。**精简模式跳过**（不调用 code-sage）；**全能模式执行**。
+
 ```
 Agent(
   subagent_type: "code-sage",
@@ -734,6 +738,8 @@ Step 4: 向用户报告恢复点（按状态分类列出），然后继续 Phase
 ---
 
 ## Phase 3：收尾
+
+> **ROLES 判断**：导出(export) + code-sage 属增强角色。**精简模式跳过 Phase 3.5（code-sage 自进化）**，只做基本统计 + 运行指南；**全能模式全执行**。
 
 全部任务完成后：
 
