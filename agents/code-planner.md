@@ -72,6 +72,7 @@ skills:
 - **领域服务**：跨聚合的领域操作收敛为领域服务
 - **任务拆分按聚合/上下文组织**：dev-plan 的任务边界尽量贴合聚合边界，避免跨聚合散拆
 - **测试契约以领域行为为单位**：feature-spec 的 F 用例覆盖聚合不变量与业务规则，B/S 用例覆盖领域约束
+- **目录骨架**：建项目骨架时按 coding-standards §3b「DDD 目录骨架」创建 `src/domain/ application/ interface/ infrastructure/` 四层目录（每层含说明职责的最小占位文件）
 
 > 快速模式 / BugFix 不注入 DDD，不执行本节。
 
