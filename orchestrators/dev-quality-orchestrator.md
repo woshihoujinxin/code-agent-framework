@@ -119,6 +119,11 @@
    - `git -C {REPO_DIR} tag` 取最新 tag（如 v0.0.1）→ 递增 `v0.0.2`；无 tag → `v0.0.1`
    - **广播版本分支 `feature/{version}`** 给所有 agent（PM/Planner/Dev/运维/测试）：全部开发 + bug 修复 commit 到该分支，测试基于该分支
    - 记录版本号到速览行（`v{version}`）
+8. **存量检测（决定走「存量模式」还是新项目全流程）**：
+   - 存量判定：`{REPO_DIR}` 存在源文件（`src/`/`app/` 或根目录代码）且（有 `.git` 提交历史 或 `package.json`/`pyproject.toml`/`go.mod` 或已有 `tests/` 或已有 `docs/`）
+   - **存量** → 记 `项目类型：存量`，进入「存量模式」（修旧如旧，见下节）
+   - **新项目** → 记 `项目类型：新项目`
+   - 记录到速览行（`项目类型：{新项目/存量}`）
 
 **日志写入**：按「日志写入规范」骨架创建（{项目名} = REPO_DIR 目录名），写 ① 项目启动 段：
 ```
@@ -129,6 +134,29 @@
 - {yymmdd hhmm} 🚀 需求进入：{REQ_FILE}
 - {yymmdd hhmm} 🔢 批次大小 {BATCH_SIZE} ｜ 模式：{模式}
 ```
+
+---
+
+## 存量模式（修旧如旧——适配存量开发方式，不套用框架循环）
+
+**核心原则**：存量项目有自己的一套开发模式（可能不符合 DDD/TDD），**照它的方式来改**——不把框架的三层循环、五维质量门、DDD、完整设计文档**强套**上去。检测见「初始化」第 8 步（有源文件 + git 历史/依赖声明/tests/docs → `项目类型：存量`）。
+
+**三条铁律**：
+
+1. **先摸清存量怎么开发**（Planner 增量第一步，修旧如旧的前提）：产出 `docs/project-profile.md`（存量开发模式画像）：
+   - 架构/分层模式（DDD？MVC？单体脚本？）
+   - 测试方式（有无、命令、风格——pytest/jest/无测试）
+   - 命名约定、错误处理、依赖/构建方式
+2. **适配不套用**：
+   - 新代码**跟存量风格一致**（分层/命名/错误处理/模式），不因框架规范改写存量
+   - 不强制 DDD（存量不是 DDD 就不注入方法论）、不强制完整 design.md（存量可只产「改动设计说明」增量追加）
+   - 不覆盖已有 docs/（prd/design/dev-plan），增量追加
+3. **验证用存量自己的方式**：
+   - 存量有测试 → 冒烟/回归跑**项目已有测试命令**（读 `package.json scripts.test` / `pytest` 等）+ 新增单测照存量风格
+   - 存量**无测试** → 不强制五维契约/单测，以项目自身构建/运行/冒烟验证为准
+   - 五维质量门存量模式**降级**：不适用 TDD 的存量不强套五维，按项目实际（如只跑功能/构建/端到端）
+
+**循环降级**：存量小改动走 BugFix/快速（改 → 项目自身验证 → 交付），不重走 PM/Planner 全流程；大功能走完整循环但按存量模式适配。
 
 ---
 
@@ -388,7 +416,7 @@ Agent(
 ```
 Agent(
   subagent_type: "code-planner",
-  prompt: "需求文档路径：{REQ_FILE}\n代码仓库：{REPO_DIR}\n工程文档目录：{REPO_DIR}/docs\n技术调研基准（如存在）：{TECH_RESEARCH_PATH}，design.md 技术选型/ADR 须对齐推荐方案，或明确写\"偏离理由\"\n\n请阅读需求文档和编码规范，产出 dev-plan.md、feature-spec.md 等工程文档到 docs/ 目录，并搭建项目骨架。完成后只返回文件路径列表。"
+  prompt: "需求文档路径：{REQ_FILE}\n代码仓库：{REPO_DIR}\n工程文档目录：{REPO_DIR}/docs\n技术调研基准（如存在）：{TECH_RESEARCH_PATH}，design.md 技术选型/ADR 须对齐推荐方案，或明确写\"偏离理由\"\n存量模式（{项目类型=存量 时}）：先读 {REPO_DIR} 已有代码结构与配置，产出 docs/project-profile.md（存量开发模式画像：架构/分层模式、测试方式、命名/错误处理、依赖/构建），**照存量的开发模式增量设计**（旧 dev-plan/feature-spec 续号、TASK 编号延续），不套用 DDD/完整 design.md 模板，不覆盖已有 docs\n\n请阅读需求文档和编码规范，产出 dev-plan.md、feature-spec.md 等工程文档到 docs/ 目录（存量则增量），并搭建/沿用项目骨架。完成后只返回文件路径列表。"
 )
 ```
 
@@ -481,7 +509,7 @@ Agent(
 
 **开发完成后，必须先验证代码至少能加载/编译，再启动测试。跳过此步会导致测试全 FAIL 浪费资源。**
 
-冒烟命令**从 `docs/smoke-checks.md` 读取，禁止硬编码任何语言特定的 import 命令**（避免耦合 Python）：
+冒烟命令**从 `docs/smoke-checks.md` 读取，禁止硬编码任何语言特定的 import 命令**（避免耦合 Python）。**存量项目（无 smoke-checks.md）→ 从项目已有配置读测试命令**（Node `package.json` 的 `scripts.test`、Python `pyproject.toml`/`pytest.ini`、Go `go test ./...`），跑**项目全部已有测试** + Dev 新增单测：
 
 ```
 对开发批次内每个 TASK_IDx（逐个冒烟）：
@@ -497,7 +525,8 @@ Agent(
 ```
 
 **退化策略**：如果 `docs/smoke-checks.md` 不存在，或该 TASK_ID 的 smoke_command 为 `# none`：
-- 用 Glob 列出本批 Dev 新增/修改的文件，**只要文件存在即视为通过**（不假设任何语言）
+- **存量项目** → 优先用项目已有测试命令（`package.json scripts.test` / `pytest` 等）跑全量 + 新增单测；项目无测试 → 用项目自身构建/启动验证（`npm run build` / `python -m compileall` / 起服务），**不全凭"文件存在"**
+- 新项目无 smoke-checks → 用 Glob 列出本批 Dev 新增/修改的文件，**只要文件存在即视为通过**（不假设任何语言）
 
 **判定**：
 - 冒烟命令满足 pass_criteria（或退化策略通过）→ ✅ 该任务标 🔳（开发完成，待 Phase 3 统一提测）；本批 Step 4 状态更新后回 DAG 入口取下一批；无 ⏳ 时开发完成 → 进入 Phase 3
