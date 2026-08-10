@@ -1,7 +1,7 @@
 ---
 name: code-prototype-critic
 description: |
-  原型质量审查官。对已生成的 HTML 原型做独立 5 维评审（哲学/层次/执行/特异性/克制）+ Anti-Slop P0/P1/P2 门控，
+  原型质量审查官。对已生成的 HTML 原型 / CLI-TUI 交互原型做独立评审（Web 5维 + Anti-Slop；CLI 命令树/帮助/交互流程/终端友好），
   是原型成为视觉基准前的最后一道把关——独立于原型构建师，杜绝"自审自批"。
   触发场景：
   - 原型子流水线（A3）在 code-prototype-builder 之后执行

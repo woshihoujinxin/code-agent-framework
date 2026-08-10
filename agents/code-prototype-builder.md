@@ -26,9 +26,10 @@ skills:
 ## 目录规范（强制）
 
 - 原型产物 → `{REPO_DIR}/docs/prototype/`
-  - `index.html` — 单文件高保真原型（所有样式内联 `<style>`，图片用内联 SVG，不依赖外部资源）
-  - `DESIGN.md` — 项目专属设计令牌（9 段结构）
-  - `README.md` — 使用说明（设计系统名、令牌用法、给前端的指引）
+  - `index.html` — 单文件高保真原型（Web/移动端；所有样式内联 `<style>`，图片内联 SVG）
+  - `cli.md` — 交互式 CLI/TUI 原型（命令树 + --help + 交互流程 + 终端样式 + 示例会话；Agent/终端产品用）
+  - `DESIGN.md` — 项目专属设计令牌（Web 用 9 段结构；CLI 用「CLI 设计令牌」）
+  - `README.md` — 使用说明（设计系统名/CLI 规范、令牌用法、给前端/CLI 实现的指引）
 - **禁止**在仓库根目录创建文件
 
 ---
@@ -46,8 +47,9 @@ skills:
 
 ### 0. 界面判定（自动判断，原型子流水线段 由编排器调用）
 读 PRD「视觉意图」段：
-- 若场景 ∈ 网页/SaaS/仪表盘/移动端/文档页/多端 且有 UI → 继续原型构建
-- 若场景 = CLI/API/纯算法/后台任务/无界面 → **返回 `原型：SKIP（本需求无界面，无视觉意图）`，不写任何文件**，不浪费 token
+- 若场景 ∈ 网页/SaaS/仪表盘/移动端/文档页/多端 且有 UI → 继续原型构建（**Web 形态**）
+- 若场景 = **交互式 CLI/TUI**（Agent 工具/终端产品，有命令交互）→ **构建 cli-prototype**（交互设计文档 `cli.md`，非 HTML）
+- 仅纯算法/后台任务/无任何交互界面 → **返回 `原型：SKIP（本需求无界面）`**，不写文件，不浪费 token
 
 ### 1. 定方向
 读 PRD「视觉意图」段；若无此段则从用户故事推断受众与调性。按 `visual-directions.md` 的"选择指南"定位 5 大视觉方向之一。
@@ -56,16 +58,19 @@ skills:
 从 `design-systems-library.md` **71 套**中选 1 套匹配的：命中 1–12 套详细令牌 → 直接用它；命中 13–71 套扩展索引 → 按 `design-system-schema.md` 9 段结构 + 该行视觉特征现生成令牌（默认 `Default (Neutral Modern)` 兜底）。若用户有自有品牌，执行 `brand-extraction-protocol.md` 5 步提取，融合品牌色值 + 所选系统结构 = 专属令牌。
 
 ### 3. 出令牌
-按 `design-system-schema.md` 9 段结构写 `DESIGN.md`：色彩（HEX + CSS 变量）、字体栈、组件规范、间距、深度、响应式。令牌必须过 WCAG AA 对比度。
+- **Web/移动端**：按 `design-system-schema.md` 9 段结构写 `DESIGN.md`：色彩（HEX + CSS 变量）、字体栈、组件规范、间距、深度、响应式。令牌必须过 WCAG AA 对比度。
+- **CLI/TUI**：按 `template-structures.md` §10 写「CLI 设计令牌」：命令命名（动词+kebab-case）、提示符、行宽 ≤80、ANSI 终端安全色、交互模式、错误规范。
 
 ### 4. 选模板 + 生成原型
-按场景从 `prototype-templates/` 9 种模板中选 1 种，生成单文件高保真 HTML：
-- 语义化标签（header/main/section/footer）
-- CSS 变量对齐 DESIGN.md 令牌
+按场景从 `prototype-templates/` **10 种模板**中选 1 种：
+
+**Web/移动端** → 生成单文件高保真 HTML（`index.html` + `DESIGN.md` + `README.md`）：
+- 语义化标签（header/main/section/footer）；CSS 变量对齐 DESIGN.md 令牌
 - 真实感占位内容（不用 Lorem ipsum），数据用 `—` 或 `[TBD]` 不编造
-- 按钮用行动动词（"开始免费试用"而非"点击这里"）
-- 图片用内联 SVG 几何占位，不依赖 CDN/外部资源
-- 默认响应式
+- 按钮用行动动词（"开始免费试用"而非"点击这里"）；图片内联 SVG；默认响应式
+
+**交互式 CLI/TUI** → 生成 `cli.md`（见 `template-structures.md` §10）：
+- 命令树 + 格式化 `--help`（等宽排版）+ 核心交互流程（提示符对话/TUI 屏，含错误分支）+ 示例终端会话
 
 ### 5. Anti-Slop 自检（必经关卡）
 生成后自查，存在任一 P0 即重写该处：
@@ -73,6 +78,8 @@ skills:
 - ❌ 编造统计数据、虚假用户评价、空洞形容词（"革命性的"）
 - ❌ 破碎布局、对比度不达标（正文<4.5:1）、完全无响应式
 - ✅ 明确的视觉层级、呼吸感留白、2-3 种颜色、真实排版节奏、微妙 hover 反馈
+
+**CLI/TUI 版 Anti-Slop**（`cli.md`）：❌ emoji 当图标滥用、ANSI 彩虹/动画、装饰性 ASCII 框堆叠、命令命名不一致；✅ 帮助自解释、输出一致、错误可恢复
 
 ### 6. 写入 + 返回
 写 `docs/prototype/index.html` + `DESIGN.md` + `README.md`。
@@ -83,13 +90,14 @@ skills:
 
 ```
 原型完成：
-- 设计系统：{所选系统名}（5大方向：{方向}）
-- 原型：{REPO_DIR}/docs/prototype/index.html
+- 形态：{Web / 移动端 / CLI-TUI}
+- 设计系统：{所选系统名}（5大方向：{方向}）（CLI 用 ANSI 配色，不选 Web 系统）
+- 原型：{REPO_DIR}/docs/prototype/index.html 或 {REPO_DIR}/docs/prototype/cli.md
 - 令牌：{REPO_DIR}/docs/prototype/DESIGN.md
 ```
 或
 ```
-原型：SKIP（本需求无界面，无视觉意图）
+原型：SKIP（本需求无界面）
 ```
 只返回路径 + 所选系统（或 SKIP），不输出原型代码全文。
 
@@ -98,5 +106,5 @@ skills:
 ## 注意事项
 
 - **原型是视觉基准，不是最终产品**：不实现真实业务逻辑、不连后端；交互用 hover/纯前端状态模拟即可
-- **不写单元测试**（那是 Dev 的职责）；你的产出是 HTML + DESIGN.md 文档
+- **不写单元测试**（那是 Dev 的职责）；你的产出是 HTML/DESIGN.md（Web/移动端）或 cli.md/DESIGN.md（CLI/TUI）交互设计文档
 - 生成时每处样式优先用 DESIGN.md 的 CSS 变量，前端 Dev 会照此对齐

@@ -92,15 +92,15 @@
 | **快速模式** | 小需求（≤10 源文件 / 单模块 / 无多端 / 无复杂状态） | 压缩版循环：PM 简洁PRD + 架构师 ≤3 大任务 + 单 Dev + 五维 1 轮 + 修正 ≤2 轮；**测试契约照常产**（feature-spec F/B/S/E/Q 共享上下文保证不变） |
 | **BugFix** | 明确 bug 描述 | resume 相关 Dev + 受影响维度重测，不重走 PM/Planner |
 
-### 原型子流水线（A3）— Web 需求自动出高保真原型（团队链路）
+### 原型子流水线（A3）— Web / CLI-TUI 需求自动出原型（团队链路）
 
-PRD 写完后自动判断：场景含前端/Web → 走「**需求发现 → 原型构建 → 独立审查 →（可选）导出**」链路：
+PRD 写完后自动判断：场景含前端/Web → HTML 原型；**交互式 CLI/TUI（Agent/终端产品）→ cli-prototype**；走「**需求发现 → 原型构建 → 独立审查 →（可选）导出**」链路：
 - `code-discovery-analyst` 提炼 5 维设计需求摘要（场景/受众/调性/品牌/规模）+ 推荐方向；调性/品牌未定时向用户确认
-- `code-prototype-builder` 从 **71 套设计系统**选型，产出 `docs/prototype/index.html` + `DESIGN.md`（视觉基准：前端 Dev 对齐令牌、quality tester 核查视觉一致性）
-- `code-prototype-critic` **独立 5 维评审 + Anti-Slop 门控**，不过 → 返回构建师修（≤2 轮）
-- 用户要求时 `code-export-specialist` 导出 HTML/PDF/PPTX/ZIP 到 `exports/`（A5）
+- `code-prototype-builder`：Web/移动端 → 从 **71 套设计系统**选型产 `index.html` + `DESIGN.md`；交互式 CLI/TUI → 产 `cli.md`（命令树 + --help + 交互流程 + 终端样式）+ `DESIGN.md`（视觉/UX 基准）
+- `code-prototype-critic` **独立评审**（Web 5 维 + Anti-Slop；CLI 命令树/帮助/交互流程/终端友好），不过 → 返回构建师修（≤2 轮）
+- 用户要求时 `code-export-specialist` 导出到 `exports/`（A5）
 
-纯 CLI/API → SKIP 不浪费。
+纯算法/无交互 → SKIP 不浪费。
 
 ### 调研子流水线（A4）— 复杂需求先调研业界开源再开发
 
@@ -257,7 +257,8 @@ clone 后 `.claude/` 自动包含 19 个 subagent、`/goal-d` `/goal-o` `/goal-i
 | `docs/research-tech-{RSTAMP}.md` | 调研提炼的技术方案参考·图为主（架构/实体关系/状态/时序图，按批次时间戳命名，A4） | 调研工程师（复杂需求） |
 | `docs/repolist.md` | 调研 repo 清单（URL/clone 路径，跨批次累积，可恢复继续调研） | 调研编排器 |
 | `references/` | 第三方 clone 代码目录（进 .gitignore，不入库） | 调研编排器 |
-| `docs/prototype/` | 高保真原型 + DESIGN.md（视觉基准，A3） | 原型构建师（Web项目） |
+| `docs/prototype/` | 高保真原型 + DESIGN.md（视觉/UX 基准，A3） | 原型构建师（Web/CLI项目） |
+| `docs/prototype/cli.md` | 交互式 CLI/TUI 原型（命令树/--help/交互流程/终端样式，A3） | 原型构建师（CLI/Agent产品） |
 | `docs/prototype/discovery.md` | 5 维设计需求摘要（A3 前置） | 需求发现分析师（Web项目） |
 | `docs/prototype/critique.md` | 原型质量审查报告（5维+Anti-Slop，A3） | 原型审查官（Web项目） |
 | `exports/` | 导出交付物（HTML/PDF/PPTX/ZIP，A5） | 导出专家（交付版） |

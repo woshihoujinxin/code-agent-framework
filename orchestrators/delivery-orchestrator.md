@@ -176,7 +176,7 @@ PRD 写完后、计划开始前，启动 code-prototype-builder 读 PRD「视觉
 ```
 Agent(
   subagent_type: "code-prototype-builder",
-  prompt: "需求/PRD：{REPO_DIR}/docs/prd.md\n代码仓库：{REPO_DIR}\n\n请读 PRD「视觉意图」段：若场景含前端/Web → 生成 docs/prototype/index.html + DESIGN.md + README.md；若为 CLI/API/无界面 → 返回「原型：SKIP」不写文件。完成后只返回路径或 SKIP。"
+  prompt: "需求/PRD：{REPO_DIR}/docs/prd.md\n代码仓库：{REPO_DIR}\n\n请读 PRD「视觉意图」段：若场景含前端/Web → 生成 docs/prototype/index.html + DESIGN.md + README.md；若为交互式 CLI/TUI（Agent/终端产品）→ 生成 docs/prototype/cli.md + DESIGN.md；仅纯算法/无交互 → 返回「原型：SKIP」不写文件。完成后只返回路径或 SKIP。"
 )
 ```
 

@@ -330,7 +330,7 @@ Agent(
 
 PRD 写完后、计划开始前，**自动判断是否需要原型**，走「需求发现 → 原型构建 → 独立审查 →（可选）导出」链路：
 
-**Step 0 界面判断**：由 code-prototype-builder 读 PRD「视觉意图」段自行判断（编排器不读需求内容）；无界面的 CLI/API 直接 SKIP。
+**Step 0 界面判断**：由 code-prototype-builder 读 PRD「视觉意图」段自行判断（编排器不读需求内容）；Web/移动端 → HTML 原型，交互式 CLI/TUI（Agent/终端产品）→ cli-prototype，仅纯算法/无交互 → SKIP。
 
 **Step 1 需求发现**（先于构建——先问清再动手）：
 ```
@@ -345,7 +345,7 @@ Agent(
 ```
 Agent(
   subagent_type: "code-prototype-builder",
-  prompt: "需求/PRD：{REPO_DIR}/docs/prd.md\n需求摘要：{REPO_DIR}/docs/prototype/discovery.md（若有：5 维结论 + 推荐方向，据此选系统/模板）\n代码仓库：{REPO_DIR}\n\n读 PRD「视觉意图」段 + 需求摘要：若场景含前端/Web（网页/SaaS/仪表盘/移动端/文档页/多端）→ 从 71 套设计系统选型，生成 docs/prototype/index.html + DESIGN.md + README.md；若为 CLI/API/无界面 → 返回「原型：SKIP」不写文件。完成后只返回路径或 SKIP。"
+  prompt: "需求/PRD：{REPO_DIR}/docs/prd.md\n需求摘要：{REPO_DIR}/docs/prototype/discovery.md（若有：5 维结论 + 推荐方向，据此选系统/模板）\n代码仓库：{REPO_DIR}\n\n读 PRD「视觉意图」段 + 需求摘要：若场景含前端/Web（网页/SaaS/仪表盘/移动端/文档页/多端）→ 从 71 套设计系统选型，生成 docs/prototype/index.html + DESIGN.md + README.md；若为交互式 CLI/TUI（Agent/终端产品）→ 生成 docs/prototype/cli.md（命令树 + --help + 交互流程 + 终端样式）+ DESIGN.md；仅纯算法/无交互 → 返回「原型：SKIP」不写文件。完成后只返回路径或 SKIP。"
 )
 ```
 
@@ -363,7 +363,7 @@ Agent(
 ```
 Agent(
   subagent_type: "code-export-specialist",
-  prompt: "导出审查通过的原型 {REPO_DIR}/docs/prototype/index.html 到 {REPO_DIR}/exports/（默认 HTML 单文件；用户要求 PDF/PPTX/ZIP 则按需）。完成后返回导出文件路径。"
+  prompt: "导出审查通过的原型（{REPO_DIR}/docs/prototype/index.html 或 cli.md，按实际形态）到 {REPO_DIR}/exports/（默认 HTML/单文件；用户要求 PDF/PPTX/ZIP 则按需）。完成后返回导出文件路径。"
 )
 ```
 
