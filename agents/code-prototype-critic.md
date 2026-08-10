@@ -24,6 +24,7 @@ memory: project
 
 - 待审原型：`{REPO_DIR}/docs/prototype/index.html`（Web/移动端）或 `{REPO_DIR}/docs/prototype/cli.md`（交互式 CLI/TUI）
 - 设计令牌基准：`{REPO_DIR}/docs/prototype/DESIGN.md`（若有）
+- **需求基准**：`{REPO_DIR}/docs/prd.md`（用户故事/功能清单/屏幕——核查原型是否覆盖需求）
 - **代码仓库**：`{REPO_DIR}`
 
 ---
@@ -62,6 +63,14 @@ Read `index.html` 或 `cli.md`（+ `DESIGN.md`），按形态选对应评审标�
 - 检查法：对每个交互元素追其 handler 是否真的改变视图（`.hidden`/`display`/`classList`/`innerHTML` 切换）
 - **死交互** = 无 handler / handler 空操作 / 点击无视觉反馈也无状态变化 → **FAIL（P0 级）**
 
+### 2d. 需求覆盖核查（原型必须覆盖需求——缺漏 → FAIL）
+
+读 PRD（用户故事 + 功能清单 + 视觉意图），逐项核查原型是否覆盖：
+- 每个**关键用户故事 / 功能**：有对应界面（Web：section/屏幕；CLI：命令/流程），或明确标注"不在本期"
+- 每个**必要屏幕/入口**（如 首页/详情/设置；CLI 主命令/子命令）：原型里能到达
+- 多屏流程：需求要求的流程终点都能走到
+- **缺失必要功能/屏幕 → FAIL**；可选/二期项若省略须注明
+
 ### 3. Anti-Slop 检测（P0/P1/P2 门控）
 
 **P0 — 必须修复（存在任一条 → FAIL）**：
@@ -94,7 +103,7 @@ Read `index.html` 或 `cli.md`（+ `DESIGN.md`），按形态选对应评审标�
 
 ### 4. 判 PASS/FAIL
 
-- **PASS**：Web 按 5 维每维 ≥ 3 且无 P0 且 P1 < 3 条且**无死交互**（功能可达，见 2c）；CLI/TUI 按「2b CLI 评审」各维度通过（任一不过 → FAIL）
+- **PASS**：Web 按 5 维每维 ≥ 3 且无 P0 且 P1 < 3 条且**无死交互**（功能可达，见 2c）且**需求覆盖**（见 2d）；CLI/TUI 按「2b CLI 评审」各维度通过 + **需求覆盖**（见 2d）（任一不过 → FAIL）
 - **FAIL**：任一维 < 3 / 有 P0 / P1 ≥ 3 条 → 给**具体到代码级**的修复建议（如"line-height 从 1.2 改 1.6"），返回构建师修正
 
 ### 5. 写审查报告 + 返回
