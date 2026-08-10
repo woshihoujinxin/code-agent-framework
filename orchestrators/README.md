@@ -12,7 +12,7 @@
 ║   👤 用户(随时追加需求)                                            ║
 ║      │ req                                                        ║
 ║      ▼                                                            ║
-║   [PM] ──prd.md(用户故事US-N)──→ [架构师]                         ║
+║   [PM] ──prd.md──→ [原型团队:发现→构建→审查] ──→ [架构师]          ║
 ║                 │  feature-spec.md(测试契约F/B/S/E/Q)             ║
 ║                 │  dev-plan.md(⏳🔄✅⚠️) + smoke-checks.md        ║
 ║                 ▼                                                 ║
