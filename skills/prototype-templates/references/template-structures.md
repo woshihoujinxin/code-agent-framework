@@ -310,7 +310,7 @@
 
 ## 10. cli-prototype（交互式 CLI / TUI——Agent/终端产品）
 
-> CLI/TUI 无 HTML 界面，原型是**交互设计文档**（命令树 + --help + 交互流程 + 终端样式 + 示例会话），作为 CLI 实现的 UX 基准。产出：`cli.md` + `DESIGN.md` + `README.md`。
+> CLI/TUI 无 HTML 界面，原型是**交互设计文档 + 可运行模拟器**（命令树 + --help + 交互流程 + 终端样式 + 示例会话 + 可跑的 mock），作为 CLI 实现的 UX 基准。产出：`cli.md` + `mock-cli.{py|ts}` + `DESIGN.md` + `README.md`。
 
 ### cli.md 结构
 
@@ -332,6 +332,20 @@
 ## 5. 示例终端会话
 {一段完整 mock 会话，展示典型使用路径}
 ```
+
+### mock-cli.{py|ts}（可运行模拟器——CLI 的"可打开"等价物）
+
+> 网页原型 index.html 能直接打开体验；CLI 用**可运行模拟脚本**让用户实际跑一遍交互，达到同等"高保真可试"。
+
+- **语言**：按项目技术栈选（Python 默认，或匹配项目 Node/TS）
+- **模拟内容**（与 cli.md 命令树/流程严格一致）：
+  - `--help` / 子命令分发 / 参数校验
+  - 交互提示符对话（prompt → 输入 → 输出，含错误分支）
+  - 进度指示、（TUI 产品则渲染 ANSI 屏幕）
+  - Ctrl-C 中断恢复
+- **终端规范**：ANSI 终端安全色 + 行宽 ≤80，与 DESIGN.md「CLI 设计令牌」一致
+- **运行**：`python mock-cli.py`（交互演示）/ `python mock-cli.py <子命令> --help`
+- 纯占位逻辑，不接真实后端
 
 ### DESIGN.md（CLI 设计令牌）
 

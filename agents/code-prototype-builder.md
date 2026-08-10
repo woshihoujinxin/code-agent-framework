@@ -28,6 +28,7 @@ skills:
 - 原型产物 → `{REPO_DIR}/docs/prototype/`
   - `index.html` — 单文件高保真原型（Web/移动端；所有样式内联 `<style>`，图片内联 SVG）
   - `cli.md` — 交互式 CLI/TUI 原型（命令树 + --help + 交互流程 + 终端样式 + 示例会话；Agent/终端产品用）
+  - `mock-cli.{py|ts}` — CLI 可运行模拟器（`python mock-cli.py` 实际体验交互；Agent/终端产品用）
   - `DESIGN.md` — 项目专属设计令牌（Web 用 9 段结构；CLI 用「CLI 设计令牌」）
   - `README.md` — 使用说明（设计系统名/CLI 规范、令牌用法、给前端/CLI 实现的指引）
 - **禁止**在仓库根目录创建文件
@@ -69,8 +70,9 @@ skills:
 - 真实感占位内容（不用 Lorem ipsum），数据用 `—` 或 `[TBD]` 不编造
 - 按钮用行动动词（"开始免费试用"而非"点击这里"）；图片内联 SVG；默认响应式
 
-**交互式 CLI/TUI** → 生成 `cli.md`（见 `template-structures.md` §10）：
-- 命令树 + 格式化 `--help`（等宽排版）+ 核心交互流程（提示符对话/TUI 屏，含错误分支）+ 示例终端会话
+**交互式 CLI/TUI** → 生成 `cli.md` + `mock-cli.{py|ts}`（见 `template-structures.md` §10）：
+- `cli.md`：命令树 + 格式化 `--help` + 核心交互流程（提示符对话/TUI 屏，含错误分支）+ 示例终端会话
+- `mock-cli`：可运行模拟器（--help/子命令分发/交互对话/错误分支/进度/Ctrl-C），`python mock-cli.py` 可实际跑——CLI 的"可打开体验"
 
 ### 5. Anti-Slop 自检（必经关卡）
 生成后自查，存在任一 P0 即重写该处：
@@ -92,7 +94,7 @@ skills:
 原型完成：
 - 形态：{Web / 移动端 / CLI-TUI}
 - 设计系统：{所选系统名}（5大方向：{方向}）（CLI 用 ANSI 配色，不选 Web 系统）
-- 原型：{REPO_DIR}/docs/prototype/index.html 或 {REPO_DIR}/docs/prototype/cli.md
+- 原型：{REPO_DIR}/docs/prototype/index.html 或 {REPO_DIR}/docs/prototype/cli.md（+ mock-cli 模拟器）
 - 令牌：{REPO_DIR}/docs/prototype/DESIGN.md
 ```
 或

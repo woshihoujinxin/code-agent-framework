@@ -96,7 +96,7 @@
 
 PRD 写完后自动判断：场景含前端/Web → HTML 原型；**交互式 CLI/TUI（Agent/终端产品）→ cli-prototype**；走「**需求发现 → 原型构建 → 独立审查 →（可选）导出**」链路：
 - `code-discovery-analyst` 提炼 5 维设计需求摘要（场景/受众/调性/品牌/规模）+ 推荐方向；调性/品牌未定时向用户确认
-- `code-prototype-builder`：Web/移动端 → 从 **71 套设计系统**选型产 `index.html` + `DESIGN.md`；交互式 CLI/TUI → 产 `cli.md`（命令树 + --help + 交互流程 + 终端样式）+ `DESIGN.md`（视觉/UX 基准）
+- `code-prototype-builder`：Web/移动端 → 从 **71 套设计系统**选型产 `index.html` + `DESIGN.md`；交互式 CLI/TUI → 产 `cli.md` + `mock-cli.{py|ts}`（可运行模拟器）+ `DESIGN.md`（视觉/UX 基准）
 - `code-prototype-critic` **独立评审**（Web 5 维 + Anti-Slop；CLI 命令树/帮助/交互流程/终端友好），不过 → 返回构建师修（≤2 轮）
 - 用户要求时 `code-export-specialist` 导出到 `exports/`（A5）
 
@@ -259,6 +259,7 @@ clone 后 `.claude/` 自动包含 19 个 subagent、`/goal-d` `/goal-o` `/goal-i
 | `references/` | 第三方 clone 代码目录（进 .gitignore，不入库） | 调研编排器 |
 | `docs/prototype/` | 高保真原型 + DESIGN.md（视觉/UX 基准，A3） | 原型构建师（Web/CLI项目） |
 | `docs/prototype/cli.md` | 交互式 CLI/TUI 原型（命令树/--help/交互流程/终端样式，A3） | 原型构建师（CLI/Agent产品） |
+| `docs/prototype/mock-cli.{py\|ts}` | CLI 可运行模拟器（`python mock-cli.py` 体验交互，A3） | 原型构建师（CLI/Agent产品） |
 | `docs/prototype/discovery.md` | 5 维设计需求摘要（A3 前置） | 需求发现分析师（Web项目） |
 | `docs/prototype/critique.md` | 原型质量审查报告（5维+Anti-Slop，A3） | 原型审查官（Web项目） |
 | `exports/` | 导出交付物（HTML/PDF/PPTX/ZIP，A5） | 导出专家（交付版） |
