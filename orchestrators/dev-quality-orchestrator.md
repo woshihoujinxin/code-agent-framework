@@ -650,6 +650,7 @@ Agent(
 **按 `ROLES` 配置只派启用的 tester**（精简省 token，全能全量）：
 - **精简模式**：只派 **Agent A（correctness）+ Agent D（e2e）**——功能验收 + 端到端。跳 B(quality)/C(robustness)/E(security)。
 - **全能模式**：A-E 全派。
+- **存量模式（五维降级）**：存量项目按「存量模式」适配——有测试体系 → 照存量测试命令全量跑 + 按项目实际抽维度；**无测试体系的存量不强套五维** → 只派 A(correctness) + D(e2e)，或按项目实际用构建/运行验证替代（见「存量模式」节）。
 
 Agent A:
   subagent_type: "code-tester-correctness",
