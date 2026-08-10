@@ -79,11 +79,11 @@
 ```markdown
 # 研发主日志 · {项目名}
 
-> 🧭 速览：{当前阶段} ｜ 模式：{模式} ｜ 进度：{X}/{N} ｜ 本波：{P}通过/{F}失败 ｜ 修正：{R}轮
+> 🧭 速览：{当前阶段} ｜ 模式：{模式} ｜ 进度：{X}/{N} ｜ 本批：{P}通过/{F}失败 ｜ 修正：{R}轮
 
 ## ① 项目启动
 - {yymmdd hhmm} 🚀 需求进入：{REQ_FILE / 需求摘要}
-- {yymmdd hhmm} 🔢 波宽 {BATCH_SIZE} ｜ 模式：{模式}
+- {yymmdd hhmm} 🔢 批次大小 {BATCH_SIZE} ｜ 模式：{模式}
 
 ## ② 需求分析 [PM + 原型]
 ## ③ 计划 [Planner]
@@ -108,16 +108,16 @@
 1. 用户提供需求文档路径和代码仓库路径
 2. 确认 `REPO_DIR`（代码仓库根目录）和 `REQ_FILE`（需求文档路径）
 3. 创建 `{REPO_DIR}/docs/main-log.md`（按「日志写入规范」骨架：速览行 + ① 项目启动 段）
-4. 确认任务波宽 `BATCH_SIZE`（开发同层并发任务数，**默认 2**）
+4. 确认批次大小 `BATCH_SIZE`（开发同层并发任务数，**默认 2**）
 
 **日志写入**：按「日志写入规范」骨架创建（{项目名} = REPO_DIR 目录名），写 ① 项目启动 段：
 ```
 # 研发主日志 · {项目名}
-> 🧭 速览：① 项目启动 ｜ 模式：{模式} ｜ 进度：0/{N} ｜ 本波：— ｜ 修正：0轮
+> 🧭 速览：① 项目启动 ｜ 模式：{模式} ｜ 进度：0/{N} ｜ 本批：— ｜ 修正：0轮
 
 ## ① 项目启动
 - {yymmdd hhmm} 🚀 需求进入：{REQ_FILE}
-- {yymmdd hhmm} 🔢 波宽 {BATCH_SIZE} ｜ 模式：{模式}
+- {yymmdd hhmm} 🔢 批次大小 {BATCH_SIZE} ｜ 模式：{模式}
 ```
 
 ---
@@ -200,36 +200,36 @@ Agent(
 
 ---
 
-## Phase 2：DAG 拓扑执行（就绪集取波，非平铺切块）
+## Phase 2：DAG 拓扑执行（就绪集取批，非平铺切块）
 
-按 dev-plan 的 **DAG 依赖**算就绪集、取波并发开发，整波任务再一起走交付链（审查→构建→校验→E2E）。**每波循环**：
+按 dev-plan 的 **DAG 依赖**算就绪集、取批并发开发，整批任务再一起走交付链（审查→构建→校验→E2E）。**每批循环**：
 
 ```
 1. Grep dev-plan.md 任务行：Grep(pattern: '^\| [0-9]+ \| TASK', path: '{REPO_DIR}/docs/dev-plan.md', output_mode: 'content', '-n': true)
    解析每行 {ID | 状态 | 依赖}（列序：| # | 任务ID | 标题 | 状态 | 依赖 | 拆分理由 |）
 2. ✅集 = 状态 ✅ 的 ID；ready = 状态 ⏳ 且依赖列每项都在 ✅集
 3. ready 空：仍有 ⏳/🔄 → 等待；全部 ✅/⚠️ → 进 Phase 3
-4. 开发波 = **全部 ready（最大化并发，主动开足 agent，不等用户提醒拆分）**；仅当显式设 BATCH_SIZE 或 429 降档（eff_BATCH）时才截断。**异构优先**（全栈项目同波尽量混 FE+BE，发挥前后端并行，避免同类型扎堆争抢）。BATCH_SIZE=任务波宽（默认最大化）。
+4. 开发批次 = **全部 ready（最大化并发，主动开足 agent，不等用户提醒拆分）**；仅当显式设 BATCH_SIZE 或 429 降档（eff_BATCH）时才截断。**异构优先**（全栈项目同批尽量混 FE+BE，发挥前后端并行，避免同类型扎堆争抢）。BATCH_SIZE=批次大小（默认最大化）。
 ```
 
-> 依赖列：逗号分隔多依赖；`-` 表无依赖；升级 ID `TASK01-01` 照常比较。本波 `{TASK_IDs}` = 开发波内所有任务 ID，后续交付链对**整波**走。
+> 依赖列：逗号分隔多依赖；`-` 表无依赖；升级 ID `TASK01-01` 照常比较。本批 `{TASK_IDs}` = 开发批次内所有任务 ID，后续交付链对**整批**走。
 
-### Step 1：开发波并发开发（按项目类型派角色）
+### Step 1：开发批次并发开发（按项目类型派角色）
 
-**先读 dev-plan「项目类型」**（`Grep(pattern: '项目类型：', path: '{REPO_DIR}/docs/dev-plan.md')`）决定开发波角色：
-- **纯前端** → 波内每任务仅派 `code-dev-frontend`（整项目无后端，绝不派 BE）
-- **纯后端** → 波内每任务仅派 `code-dev-backend`
-- **全栈** → 波内每任务按任务归属列派 FE/BE（任务只涉一端则只派对应一个）
+**先读 dev-plan「项目类型」**（`Grep(pattern: '项目类型：', path: '{REPO_DIR}/docs/dev-plan.md')`）决定开发批次角色：
+- **纯前端** → 批内每任务仅派 `code-dev-frontend`（整项目无后端，绝不派 BE）
+- **纯后端** → 批内每任务仅派 `code-dev-backend`
+- **全栈** → 批内每任务按任务归属列派 FE/BE（任务只涉一端则只派对应一个）
 
-进入 ④ 段（每波一次），先追加段头：
+进入 ④ 段（每批一次），先追加段头：
 ```
-## ④ 波 {波序号} [Dev×{2×本波任务数} + 交付链] ｜ 本波：{TASK_IDs}
+## ④ 批 {批序号} [Dev×{2×本批任务数} + 交付链] ｜ 本批：{TASK_IDs}
 ```
 
-**波内每个就绪任务各派 FE+BE，全部后台并行**（任务级 × 前后端级，峰值 2×BATCH_SIZE dev agent）：
+**批内每个就绪任务各派 FE+BE，全部后台并行**（任务级 × 前后端级，峰值 2×BATCH_SIZE dev agent）：
 
 ```
-对开发波内每个任务 TASK_IDx，各启动：
+对开发批次内每个任务 TASK_IDx，各启动：
 Agent(
   subagent_type: "code-dev-frontend",
   run_in_background: true,
@@ -242,11 +242,11 @@ Agent(
 )
 ```
 
-等待开发波全部完成 → 逐任务提取 FE_DEV_ID/BE_DEV_ID，写日志 + dev-plan 标 🔳（待测，非 🔄）：
-- `- {yymmdd hhmm} ▶ 开发波启动：{TASK_IDs}`
+等待开发批次全部完成 → 逐任务提取 FE_DEV_ID/BE_DEV_ID，写日志 + dev-plan 标 🔳（待测，非 🔄）：
+- `- {yymmdd hhmm} ▶ 开发批次启动：{TASK_IDs}`
 - `- {yymmdd hhmm} ✅ 开发完成：{TASK_IDx} (FE_DEV_ID: {id}, BE_DEV_ID: {id})`（逐任务一行）
 
-> 任务只涉前端或后端时，该任务仅启动对应开发 Agent。交付链（Step 2-5）对本波 `{TASK_IDs}` 整体走。
+> 任务只涉前端或后端时，该任务仅启动对应开发 Agent。交付链（Step 2-5）对本批 `{TASK_IDs}` 整体走。
 
 ### 测试环境准备：建测试环境（worktree + 派运维）
 
@@ -310,7 +310,7 @@ Agent(
 
 ### 导出交付：导出交付（A5，有前端/原型时）
 
-本波含前端 UI（有 `docs/prototype/` 或前端产物）且 E2E PASS 后，启动 code-export-specialist 导出交付物到 `{REPO_DIR}/exports/`：
+本批含前端 UI（有 `docs/prototype/` 或前端产物）且 E2E PASS 后，启动 code-export-specialist 导出交付物到 `{REPO_DIR}/exports/`：
 
 ```
 Agent(
@@ -389,7 +389,7 @@ while round < 3:
 - {yymmdd hhmm} 剩余任务：{M} 个
 ```
 
-压缩后从 checkpoint 恢复——**按任务状态精确续跑**（同 `dev-quality-orchestrator.md`「压缩后恢复机制」）：✅/⚠️ 跳过、**🔳 待测直接续交付链（不重开发）**、🔄 重做该任务、⏳ 进开发波。不再粗暴重做整批。
+压缩后从 checkpoint 恢复——**按任务状态精确续跑**（同 `dev-quality-orchestrator.md`「压缩后恢复机制」）：✅/⚠️ 跳过、**🔳 待测直接续交付链（不重开发）**、🔄 重做该任务、⏳ 进开发批次。不再粗暴重做整批。
 
 ---
 
@@ -431,6 +431,6 @@ while round < 3:
 2. 审查/构建/校验/E2E报告只用 Grep 提取判定
 3. 所有代码修改委托给 code-dev
 4. 后台通知简短确认
-5. 开发波 = 审查波 = 构建波 = 校验波 = E2E 波（交付链对整波走）
+5. 开发批次 = 审查批 = 构建批 = 校验批 = E2E 批（交付链对整批走）
 6. 下游顺序：审查 → 构建 → 校验 → E2E（每步依赖前步通过）
 7. 并发两层 + 韧性（见 `dev-quality-orchestrator.md`「并发度控制」/「并发自适应」）：`BATCH_SIZE`（默认最大化取全部就绪）管开发任务级并发；`MAX_PARALLEL`（**默认 3**，实测 5 限流）管测试维度级；交付链 审查→构建→校验→E2E 本就串行。**不相乘**，峰值 = max(2×|就绪|, MAX_PARALLEL)。**遇 429 自动降并发慢跑**（eff_* 降档）+ **agent 失败退避重试**（见 DQO「agent 调用容错」），业务 FAIL 走修正循环

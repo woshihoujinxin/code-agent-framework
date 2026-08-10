@@ -14,7 +14,7 @@
 我需要你作为编码项目的主Agent，按照 dev-quality-orchestrator.md 定义的流程完成开发。
 需求文档：./requirements.md
 代码仓库：./
-任务波宽：1（本演练显式设 1 逐个推进；默认 = 最大化取全部就绪任务，见「并发度控制」）
+批次大小：1（本演练显式设 1 逐个推进；默认 = 最大化取全部就绪任务，见「并发度控制」）
 ```
 
 ---
@@ -56,7 +56,7 @@ Planner 产出的 `dev-plan.md`：
 
 ---
 
-## Phase 2：开发循环（DAG 就绪集取波，BATCH_SIZE=1 逐个推进，**只开发+冒烟、不测试**；调度逻辑以 dev-quality-orchestrator.md 真源为准）
+## Phase 2：开发循环（DAG 就绪集取批，BATCH_SIZE=1 逐个推进，**只开发+冒烟、不测试**；调度逻辑以 dev-quality-orchestrator.md 真源为准）
 
 ### Batch 1: TASK01
 
