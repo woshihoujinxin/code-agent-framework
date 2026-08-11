@@ -124,6 +124,12 @@
    - **存量** → 记 `项目类型：存量`，进入「存量模式」（修旧如旧，见下节）
    - **新项目** → 记 `项目类型：新项目`
    - 记录到速览行（`项目类型：{新项目/存量}`）
+9. **评审门控（若已有评审纪要）**：
+   - Glob 检查 `docs/review-meeting-*.md`（评审编排器产出）：
+     - **存在且整体结论为「通过/有条件通过」** → 记 `REVIEW_MEETING` = 该文件路径，注入 Phase 1 Planner prompt（见下）；**有条件通过 → 条件项必须在 dev-plan/feature-spec 落实**
+     - **存在但「不通过」** → 提醒用户评审未过，**不启动开发**（建议重跑 `/goal-review` 或调整需求）
+     - **不存在** → 正常流程；若任务规模较大（预计 ≥5 任务），向用户提示「可先跑 `/goal-review` 评审方案再开发」（不强制，小项目可跳过）
+   - 评审已产出的 PRD/原型/方案 → 对应阶段**跳过重产**（Phase 0b 有 PRD 则跳过 PM；Phase 1 有方案则 Planner 增量修订），只落实评审「方案变更记录」与「行动项」
 
 **日志写入**：按「日志写入规范」骨架创建（{项目名} = REPO_DIR 目录名），写 ① 项目启动 段：
 ```
@@ -322,6 +328,8 @@
 
 ### 0b. 产品需求分析
 
+> **评审复用**：若评审门控已确认 `docs/prd.md` 存在且含本次需求（经 `/goal-review` 评审产出）→ **跳过 PM**，直接用现有 PRD，不重复分析。
+
 如果用户提供的是原始需求描述（而非已编写的需求文档），先启动产品经理进行需求分析：
 
 ```
@@ -355,6 +363,7 @@ Agent(
 ## 原型子流水线段：原型子流水线（A3，自动判断）
 
 > **ROLES 判断**：原型属增强角色。**精简模式跳过本步**（直接进 Phase 1）；**全能模式执行**。
+> **评审复用**：若评审门控已确认 `docs/prototype/` 存在（经 `/goal-review` 评审产出）→ **跳过本段**，直接用评审通过的原型作 PROTO_PATH，不重复构建。
 
 PRD 写完后、计划开始前，**自动判断是否需要原型**，走「需求发现 → 原型构建 → 独立审查 →（可选）导出」链路：
 
@@ -416,7 +425,7 @@ Agent(
 ```
 Agent(
   subagent_type: "code-planner",
-  prompt: "需求文档路径：{REQ_FILE}\n代码仓库：{REPO_DIR}\n工程文档目录：{REPO_DIR}/docs\n技术调研基准（如存在）：{TECH_RESEARCH_PATH}，design.md 技术选型/ADR 须对齐推荐方案，或明确写\"偏离理由\"\n存量模式（{项目类型=存量 时}）：先读 {REPO_DIR} 已有代码结构与配置，产出 docs/project-profile.md（存量开发模式画像：架构/分层模式、测试方式、命名/错误处理、依赖/构建），**照存量的开发模式增量设计**（旧 dev-plan/feature-spec 续号、TASK 编号延续），不套用 DDD/完整 design.md 模板，不覆盖已有 docs\n\n请阅读需求文档和编码规范，产出 dev-plan.md、feature-spec.md 等工程文档到 docs/ 目录（存量则增量），并搭建/沿用项目骨架。完成后只返回文件路径列表。"
+  prompt: "需求文档路径：{REQ_FILE}\n代码仓库：{REPO_DIR}\n工程文档目录：{REPO_DIR}/docs\n技术调研基准（如存在）：{TECH_RESEARCH_PATH}，design.md 技术选型/ADR 须对齐推荐方案，或明确写\"偏离理由\"\n评审纪要（如存在）：{REVIEW_MEETING}，dev-plan/feature-spec 须**逐条落实其「方案变更记录」与「行动项」**，已在评审产出则增量修订不重写\n存量模式（{项目类型=存量 时}）：先读 {REPO_DIR} 已有代码结构与配置，产出 docs/project-profile.md（存量开发模式画像：架构/分层模式、测试方式、命名/错误处理、依赖/构建），**照存量的开发模式增量设计**（旧 dev-plan/feature-spec 续号、TASK 编号延续），不套用 DDD/完整 design.md 模板，不覆盖已有 docs\n\n请阅读需求文档和编码规范，产出 dev-plan.md、feature-spec.md 等工程文档到 docs/ 目录（存量则增量），并搭建/沿用项目骨架。完成后只返回文件路径列表。"
 )
 ```
 
@@ -485,12 +494,12 @@ Agent(
 Agent(
   subagent_type: "code-dev-frontend",
   run_in_background: true,
-  prompt: "前端开发任务：{TASK_IDx} ({标题x})\ndev-plan: {REPO_DIR}/docs/dev-plan.md\nfeature-spec: {REPO_DIR}/docs/feature-spec.md（含测试契约）\nprd: {REPO_DIR}/docs/prd.md\nlessons-learned: {REPO_DIR}/docs/lessons-learned.md\nsmoke-checks: {REPO_DIR}/docs/smoke-checks.md\n视觉基准（如存在）：{PROTO_PATH}\n\n按测试契约 F/B/S 用例写单测到 tests/unit/，覆盖归属 FE 的用例，产出 tests/reports/{TASK_IDx}-selfcheck-fe.md 自检报告。"
+  prompt: "前端开发任务：{TASK_IDx} ({标题x})\ndev-plan: {REPO_DIR}/docs/dev-plan.md\nfeature-spec: {REPO_DIR}/docs/feature-spec.md（含测试契约）\n五维验收标准（开发前必读，对齐质量/健壮/安全判卷标准）：{REPO_DIR}/.claude/skills/coding-standards/references/test-acceptance-standards.md\nprd: {REPO_DIR}/docs/prd.md\nlessons-learned: {REPO_DIR}/docs/lessons-learned.md\nsmoke-checks: {REPO_DIR}/docs/smoke-checks.md\n视觉基准（如存在）：{PROTO_PATH}\n\n按测试契约 F/B/S 用例写单测到 tests/unit/，覆盖归属 FE 的用例，产出 tests/reports/{TASK_IDx}-selfcheck-fe.md 自检报告。"
 )
 Agent(
   subagent_type: "code-dev-backend",
   run_in_background: true,
-  prompt: "后端开发任务：{TASK_IDx} ({标题x})\ndev-plan: {REPO_DIR}/docs/dev-plan.md\nfeature-spec: {REPO_DIR}/docs/feature-spec.md（含测试契约）\nprd: {REPO_DIR}/docs/prd.md\nlessons-learned: {REPO_DIR}/docs/lessons-learned.md\nsmoke-checks: {REPO_DIR}/docs/smoke-checks.md\n\n按测试契约 F/B/S 用例写单测到 tests/unit/，覆盖归属 BE 的用例，产出 tests/reports/{TASK_IDx}-selfcheck-be.md 自检报告。"
+  prompt: "后端开发任务：{TASK_IDx} ({标题x})\ndev-plan: {REPO_DIR}/docs/dev-plan.md\nfeature-spec: {REPO_DIR}/docs/feature-spec.md（含测试契约）\n五维验收标准（开发前必读，对齐质量/健壮/安全判卷标准）：{REPO_DIR}/.claude/skills/coding-standards/references/test-acceptance-standards.md\nprd: {REPO_DIR}/docs/prd.md\nlessons-learned: {REPO_DIR}/docs/lessons-learned.md\nsmoke-checks: {REPO_DIR}/docs/smoke-checks.md\n\n按测试契约 F/B/S 用例写单测到 tests/unit/，覆盖归属 BE 的用例，产出 tests/reports/{TASK_IDx}-selfcheck-be.md 自检报告。"
 )
 # 本批所有任务的 FE/BE 全部并行启动（一条消息发多个 Agent 调用）
 ```

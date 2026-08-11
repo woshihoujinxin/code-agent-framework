@@ -53,6 +53,7 @@ git -C {测试目录} rev-parse --git-dir | grep worktrees
 
 ### 2. 必读文件（按顺序）
 
+0. **五维验收标准** `coding-standards/references/test-acceptance-standards.md` — 共享契约：**Q 维度的验收维度表（命名/函数/重复/注释/模式/一致性/视觉/DDD）与 FAIL 阈值是本文件 §4 判定标准的基准**，与 Dev 看同一张卷子
 1. **feature-spec.md** 的「测试契约」段 — **质量关注点(Q)** 是审查重点
 2. **Dev 自检报告** `{输出目录}/{TASK_ID}-selfcheck-*.md` 的 Q 段 — 看 Dev 的质量自查声明
 3. **Dev 修改的代码文件** — Glob 变更文件，完整阅读

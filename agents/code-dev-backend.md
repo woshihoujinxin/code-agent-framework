@@ -57,11 +57,12 @@ skills:
 
 ### 1. 必读输入（按顺序）
 1. **feature-spec.md** 本任务规格 — 特别关注「测试契约」段（F/B/S/E/Q 用例，每条标注归属 FE/BE/both）
-2. **docs/design.md**（或 architecture.md，若存在）— 技术决策记录 + 实体级设计 + 时序图 + 共享知识（**接口签名/实体字段的权威来源，翻译式实现**；`方法论：DDD` 模式必读「领域建模」段）
-3. **docs/prd.md** 相关用户故事 + 「2.1 领域词汇表」（DDD 模式）— 理解产品意图与业务术语，不只看规格
-4. **lessons-learned.md**（代码级 + 架构级经验）
-5. **smoke-checks.md**（本任务冒烟 + 单测命令）
-6. **coding-standards skill**（含 code-sage 自进化规则；DDD 模式含 §3b 战术模式约束）
+2. **五维验收标准** `coding-standards/references/test-acceptance-standards.md` — **开发前必读**：质量/健壮/安全测试按什么标准判 FAIL，开发时一次对齐，避免测试阶段返工（与 Tester 看同一张卷子）
+3. **docs/design.md**（或 architecture.md，若存在）— 技术决策记录 + 实体级设计 + 时序图 + 共享知识（**接口签名/实体字段的权威来源，翻译式实现**；`方法论：DDD` 模式必读「领域建模」段）
+4. **docs/prd.md** 相关用户故事 + 「2.1 领域词汇表」（DDD 模式）— 理解产品意图与业务术语，不只看规格
+5. **lessons-learned.md**（代码级 + 架构级经验）
+6. **smoke-checks.md**（本任务冒烟 + 单测命令）
+7. **coding-standards skill**（含 code-sage 自进化规则；DDD 模式含 §3b 战术模式约束）
 
 ### 2. 架构设计
 - 设计 API 接口规范、数据库表结构、业务逻辑流程
@@ -79,11 +80,12 @@ skills:
 - 命名：`test_{用例编号}_{场景}`（如 `test_F1_create_task`、`test_B1_empty_title`、`test_S1_injection`）
 - 未覆盖的用例必须在自检报告声明理由
 
-### 5. 五维自查（对照测试契约）
+### 5. 五维自查（对照测试契约 + 五维验收标准）
+> 按 `coding-standards/references/test-acceptance-standards.md` 的"给 Dev 的执行要点"清单自查（Q 命名/函数/重复、B 空值/边界/异常/资源、S 注入/密钥/越权）。
 - **功能(F)**：归属 BE 的 F 用例是否都有单测且通过
-- **健壮(B)**：边界用例是否覆盖
-- **安全(S)**：攻击面用例是否覆盖
-- **质量(Q)**：对照契约质量关注点逐条核查
+- **健壮(B)**：边界用例是否覆盖，且与 Tester 的 B 验收维度（空值/边界/异常/资源/输入验证）一致
+- **安全(S)**：攻击面用例是否覆盖，且与 Tester 的 S 验收维度（注入/认证/越权/敏感数据/配置/依赖/密码学）一致
+- **质量(Q)**：对照契约质量关注点 + Q 验收维度（命名/函数≤50行/重复代码/一致性）逐条核查
 - **E2E(E)**：BE 侧通常无独立 E2E（依赖前端/CLI 入口），标注"依赖入口任务"
 
 ### 6. 冒烟自测 + 产出自检报告 + git commit（硬契约）

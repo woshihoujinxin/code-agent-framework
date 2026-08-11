@@ -70,6 +70,7 @@ git -C {测试目录} rev-parse --git-dir | grep worktrees
 
 ### 2. 必读文件（按顺序）
 
+0. **五维验收标准** `coding-standards/references/test-acceptance-standards.md` — 共享契约：**S 维度的 7 类攻击面与 FAIL 阈值（任一高危/中危≥3）是本文件 §4 判定标准的基准**，与 Dev 看同一张卷子
 1. **docs/prd.md** — 识别业务语境中的敏感功能（认证、授权、支付、数据访问），理解攻击价值
 2. **feature-spec.md** 的「测试契约」段 — **S 安全用例是验证基准**（每条含攻击输入+预期）
 3. **Dev 自检报告** `{输出目录}/{TASK_ID}-selfcheck-*.md` 的 S 段 — 看 Dev 声称哪些已覆盖

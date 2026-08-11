@@ -35,11 +35,13 @@ python .claude/tools/sync-compat.py deploy .
 
 重启 Claude Code / opencode / Reasonix（让新配置生效），然后：
 
-| 工具 | 高质量开发 | 交付制品 | 调单个角色 |
-|------|-----------|----------|-----------|
-| Claude Code | `/goal-d 用 Python 做个 Todo CLI` | `/goal-o 做个 API 服务并打包 Docker 镜像` | 系统自动路由 |
-| opencode | 同上 | 同上 | `@code-planner` 等 |
-| Reasonix | 同上 | 同上 | `/code-planner <任务>` |
+| 工具 | 高质量开发 | 方案评审 | 交付制品 |
+|------|-----------|----------|----------|
+| Claude Code | `/goal-d 用 Python 做个 Todo CLI` | `/goal-review <需求>` | `/goal-o 做个 API 服务并打包 Docker 镜像` |
+| opencode | 同上 | 同上 | 同上 |
+| Reasonix | 同上 | 同上 | 同上 |
+
+> 流程衔接：`/goal-r`（调研，复杂需求）→ `/goal-review`（四方评审门控）→ `/goal-d`（开发）→ `/goal-o`（交付）。评审会议由原型设计者/PM/架构师/你（可选）参与，防空转机制保证收敛，通过后自动衔接开发。
 
 > 命令加 `goal-` 前缀是为了避免与工具自带命令冲突（如各工具的 `/init`、zcode 的 `@goal` 目标模式）。
 > 若不希望 `.claude/` 带嵌套 `.git`：`git clone ... .claude && rm -rf .claude/.git`
@@ -85,8 +87,8 @@ python .claude/tools/sync-compat.py deploy . # 重新部署到项目根（或再
 | 目录 | 内容 |
 |------|------|
 | `agents/` | 19 个 subagent（PM / 架构师 / 前后端 Dev / 五维 Tester / 运维 / 原型构建师 / 导出专家 / code-sage） |
-| `commands/` | `/goal-init`（部署适配层到项目根）、`/goal-d`（研发质量编排）、`/goal-o`（交付编排）、`/goal-tl`（任务列表查看）、`/goal-tr`（五维测试结果）入口 |
-| `orchestrators/` | 两个编排器定义 + 完整文档 + demo |
+| `commands/` | `/goal-init`（部署适配层到项目根）、`/goal-d`（研发质量编排）、`/goal-review`（方案评审）、`/goal-r`（技术调研）、`/goal-o`（交付编排）、`/goal-tl`（任务列表查看）、`/goal-tr`（五维测试结果）入口 |
+| `orchestrators/` | 三个编排器定义（研发质量 / 方案评审 / 交付）+ 调研编排器 + 完整文档 + demo |
 | `skills/coding-standards/` | 编码规范 + 自进化规则库（code-sage 自动追加） |
 | `skills/design-systems/` | 设计系统知识库（71 套：12 套详细令牌 + 59 套扩展索引 + 5 视觉方向 + 品牌提取协议） |
 | `skills/prototype-templates/` | 9 种原型模板结构（原型构建的页面骨架） |

@@ -54,6 +54,7 @@ git -C {测试目录} rev-parse --git-dir | grep worktrees
 
 ### 2. 必读文件（按顺序）
 
+0. **五维验收标准** `coding-standards/references/test-acceptance-standards.md` — 共享契约：**E 维度的执行基准（场景逐条执行/时序图链路核查/外部依赖独立环境）与 FAIL 阈值是本文件判定标准的基准**，与 Dev 看同一张卷子
 1. **docs/prd.md** — 完整用户故事（E2E 验证的是"用户要的做到了吗"，必读）
 2. **feature-spec.md** 的「测试契约」段 — **E 场景是执行基准**（直接执行，不再自行提取）
 3. **docs/design.md**（或 architecture.md，若存在）— **时序图是链路依据**：E 场景 ↔ 时序图调用链映射，逐环节断言；错误分支指导失败场景构造

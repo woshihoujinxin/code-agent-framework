@@ -12,7 +12,7 @@
                                           → [code-researcher] 分析
                                              ├─→ docs/requirement-{RSTAMP}.md（精简表格，→ 产品经理）
                                              └─→ docs/research-tech-{RSTAMP}.md（图为主：架构/实体/状态/时序图，→ 架构师）
-                                          → 调研完自动衔接 /goal-d（产出作开发基线，跳过其 0a）
+                                          → 调研完自动衔接 /goal-review（评审通过后 → /goal-d）
 ```
 
 ---
@@ -100,25 +100,26 @@ Agent(
 - 参考项目数：{N}（{全部 clone 成功 / 部分降级 / NETWORK_FAIL}）
 ```
 
-> ⚠️ 返回后**不退出**——继续执行 Step 7（自动衔接开发），除非用户在 `/goal-r` 时声明「只调研」。
+> ⚠️ 返回后**不退出**——继续执行 Step 7（自动衔接评审），除非用户在 `/goal-r` 时声明「只调研」。
 
-### Step 7: 自动衔接开发阶段（auto → /goal-d）
+### Step 7: 自动衔接评审会议（auto → /goal-review）
 
-调研产出落盘后，**默认自动进入开发**（无需用户再敲 `/goal-d`）——把刚产出的调研结论作为开发基线，直接续跑研发质量编排：
+调研产出落盘后，**默认先自动进入方案评审**（无需用户再敲 `/goal-review`）——把刚产出的调研结论作为评审素材，**过评审门控后再进开发**：
 
 ```
-1. 读取 `.claude/orchestrators/dev-quality-orchestrator.md`，转为【研发质量编排器】身份，
-   从其 Phase 0b（产品需求分析）开始执行。
-2. 跳过 dev-quality Phase 0a（调研子流水线）——调研刚做完不重复，直接注入基线：
+1. 读取 `.claude/orchestrators/review-orchestrator.md`，转为【方案评审编排器】身份，
+   从其 Step 0（会议启动）开始执行。
+2. 注入评审素材（调研产出作评审基准，评审会议据此评审方向对不对）：
    - 需求调研基准 REQ_RESEARCH_PATH = {REPO_DIR}/docs/requirement-{RSTAMP}.md
-   - 技术调研基准 TECH_RESEARCH_PATH = {REPO_DIR}/docs/research-tech-{RSTAMP}.md（架构/实体/状态/时序图，Planner 可直接引用入 design.md）
-3. 开发需求 = 本次调研目标 {调研目标}（视为「参照调研结论实现一个同类系统」）；代码仓库 = {REPO_DIR}。
-4. 向用户报告「调研完成，自动进入开发」，再按 dev-quality 流程推进（PM → Planner → 开发循环）。
+   - 技术调研基准 TECH_RESEARCH_PATH = {REPO_DIR}/docs/research-tech-{RSTAMP}.md（架构/实体/状态/时序图）
+   - 评审对象 = 本次调研目标 {调研目标}
+3. 评审通过后，评审编排器自动衔接 /goal-d（注入评审基线进入开发，跳过其 0a 调研段）。
 ```
 
-日志：`- {yymmdd hhmm} 🚀 调研完成，自动衔接开发（/goal-d）`
+日志：`- {yymmdd hhmm} 🚀 调研完成，自动衔接评审（/goal-review）`
 
-> **只要调研**：用户在 `/goal-r` 声明「只调研」时，跳过本 Step，调研完即止、不进入开发。
+> **只要调研**：用户在 `/goal-r` 声明「只调研」时，跳过本 Step，调研完即止、不进入评审/开发。
+> **跳过评审**：用户声明「跳过评审」时，跳过评审直接进开发（走旧衔接，见 dev-quality Phase 0b）。
 
 ---
 
