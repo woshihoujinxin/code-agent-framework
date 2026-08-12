@@ -17,6 +17,7 @@ This is a **multi-agent autonomous development framework** (无人值守多智�
 | `/goal-init` | Deploy compatibility layer to project root | Copies `.opencode/` and `.reasonix/` to root |
 | `/goal-tl [TASK_ID]` | View task list | Shows `docs/dev-plan.md` task table (with detail if TASK_ID provided) |
 | `/goal-tr [TASK_ID]` | View 5-dimensional test results | Shows `tests/reports/results.json` summary (with detail if TASK_ID provided) |
+| `/goal-resume [继续]` | Resume from breakpoint | Scans `docs/main-log.md` CHECKPOINT + `docs/dev-plan.md` states, reports save point (empty arg) or resumes precisely per task state (`继续`) |
 | `/goal-r <repo_urls>` | Research sub-pipeline (complex needs) | Clone repos → code-researcher → technical docs → auto-continue to `/goal-d` |
 
 > Use `/goal-d` for development with 5-dimensional quality gates (functionality/quality/robustness/security/E2E). Use `/goal-o` for delivery with review→build→validation pipeline.
