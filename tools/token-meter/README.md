@@ -64,10 +64,39 @@ orchestrator 21000+ tok 看着大，但 20 轮对话的历史可能 50000+ tok�
 
 层 A 证明"提示词瘦了"，要知"账单省多少"需真实采集：
 
+**✅ 已实现：`trace.py`（解析已落盘的 session usage）**
+
+Claude Code 每次 LLM 调用的 usage（input/output/cache_read/cache_write）**已自动记录**在 session jsonl 里：
+```
+~/.claude/projects/<项目编码名>/<uuid>.jsonl
+```
+subagent（Agent 工具派的角色）的 usage 也在同一个主 session 文件里，无需聚合子文件。
+
+`trace.py` 解析这些已记录的 usage，按计费倍率汇总，支持两 session A/B 对比：
+
+```bash
+# 单 session 分析（看真实 token 分布 + 缓存命中率）
+python tools/token-meter/trace.py ~/.claude/projects/<项目>/<uuid>.jsonl
+
+# 前后对比（核心：优化前 session vs 优化后 session）
+python tools/token-meter/trace.py --before <旧session>.jsonl --after <新session>.jsonl --report tools/token-meter/reports/trace-report.md
+```
+
+**找 session 文件**：`ls -t ~/.claude/projects/<项目>/*.jsonl | head -1`（按时间取最新）
+
+**计费倍率**（可在 `--rate-output` 覆盖）：input×1.0 / output×5.0 / cache_write×1.25 / cache_read×0.1
+
+**怎么造可比的两个 session**（用户操作）：
+1. 项目 A：`.claude` 切旧版（`git -C .claude checkout <旧tag>`），跑 `/goal-d <需求>` 到完成 → session A
+2. 项目 B：`.claude` 用新版，跑 `/goal-d <同一需求>` 到完成 → session B
+3. `trace.py --before A --after B` → 对比报告
+4. ⚠️ 可比前提：**同一需求/同模型**；LLM 非确定，两次 turn 数会不同，报告含"每轮均 token"供归一化参考
+
+> Claude Code 是交互式 CLI，跑完整 agent 流程需手动驱动（不能脚本全自动）。若只测单 agent 人设 token，可让单个 agent 处理同一小任务（如"让 code-planner 分析这段需求"），turn 少、噪音小。
+
+**其他方法（参考）**：
+
 **方法 1：Claude Code 会话级**
-- 跑优化前后各一次**同需求**完整流程（如同一句 `/goal-d`）
-- 用 `/cost` 命令或会话结束的 usage 汇总对比总账
-- 控制变量：同需求/同模型/同分支起点；流程非 deterministic（agent 派发次数会变），需多次取均值
 
 **方法 2：API 级（最准）**
 - 用 Anthropic API 直接调（绕过 Claude Code），读 `response.usage`：
