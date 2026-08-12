@@ -224,6 +224,10 @@ def gen_report(before: dict, after: dict, cmp: dict, out_path: str):
     w(f"> 对比：`{cmp['before_ref']}`（优化前）→ `{cmp['after_ref']}`（优化后）")
     w(f"> 分词器：tiktoken cl100k_base（与 Claude 实际 token 有偏差，**相对优化比例可信**，绝对值仅供参考）")
     w(f"> 生成方式：`python tools/token-meter/scan.py --before {cmp['before_ref']} --after {cmp['after_ref']}`")
+    w(">")
+    w("> ⚠️ **本报告是「层 A 结构效率」**：测框架文件 token 瘦身，**≠ 真实计费 token**。")
+    w("> 真实账单受 prompt cache（命中部分按 0.1× 计）、对话历史、工具定义影响——orchestrator 等常驻内容")
+    w("> 多数命中缓存，实际每轮省的约为本报告数字的 0.1 倍。详见 `tools/token-meter/README.md`「测算层次与边界」。")
     w("")
 
     w("## 一、主对话常驻（每轮对话都花）")
@@ -281,11 +285,12 @@ def gen_report(before: dict, after: dict, cmp: dict, out_path: str):
     w("")
     # 自动结论
     mr_delta = mr["before"] - mr["after"]
-    w(f"- **主对话每轮省 ~{mr_delta} tok**（orchestrator 常驻），对话越长省越多")
+    w(f"- **主对话每轮省 ~{mr_delta} tok（结构层）**（orchestrator 常驻）。⚠️ 若命中 prompt cache，实际计费省 ~{mr_delta // 10} tok（0.1×）。")
     best = min(cmp["scenarios"].items(), key=lambda x: x[1]["after"] - x[1]["before"])
     bd = best[1]["before"] - best[1]["after"]
     w(f"- **{best[0]}** 场景省最多：必然加载 {best[1]['before']} → {best[1]['after']}（**省 {bd} tok**）")
     w(f"- 外置 {total_ond} tok 从「每轮常驻」挪到「按需触发」，低频分支平时 0 开销")
+    w(f"- **要知真实账单省多少，需用层 B 实测**（真实 API usage），见 README「层 B」节")
     w("")
 
     Path(out_path).write_text("\n".join(lines), encoding="utf-8")

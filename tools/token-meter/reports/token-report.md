@@ -3,6 +3,10 @@
 > 对比：`feat/review-gate-and-shared-acceptance`（优化前）→ `HEAD`（优化后）
 > 分词器：tiktoken cl100k_base（与 Claude 实际 token 有偏差，**相对优化比例可信**，绝对值仅供参考）
 > 生成方式：`python tools/token-meter/scan.py --before feat/review-gate-and-shared-acceptance --after HEAD`
+>
+> ⚠️ **本报告是「层 A 结构效率」**：测框架文件 token 瘦身，**≠ 真实计费 token**。
+> 真实账单受 prompt cache（命中部分按 0.1× 计）、对话历史、工具定义影响——orchestrator 等常驻内容
+> 多数命中缓存，实际每轮省的约为本报告数字的 0.1 倍。详见 `tools/token-meter/README.md`「测算层次与边界」。
 
 ## 一、主对话常驻（每轮对话都花）
 
@@ -59,6 +63,7 @@
 
 ## 五、结论
 
-- **主对话每轮省 ~2771 tok**（orchestrator 常驻），对话越长省越多
+- **主对话每轮省 ~2771 tok（结构层）**（orchestrator 常驻）。⚠️ 若命中 prompt cache，实际计费省 ~277 tok（0.1×）。
 - **全栈Web（标准SOP+DDD）** 场景省最多：必然加载 99767 → 91206（**省 8561 tok**）
 - 外置 5677 tok 从「每轮常驻」挪到「按需触发」，低频分支平时 0 开销
+- **要知真实账单省多少，需用层 B 实测**（真实 API usage），见 README「层 B」节
