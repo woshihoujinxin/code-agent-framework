@@ -96,6 +96,13 @@ python tools/token-meter/trace.py --before <旧session>.jsonl --after <新sessio
 
 **其他方法（参考）**：
 
+> **动态 A/B 的坑（重要）**：用 `run-ab.sh`（claude -p）自动跑前后对比技术上可行，但对"框架文件级"小优化**不可靠**：
+> - **缓存污染**：A/B 连续跑，第二次命中第一次的缓存（5min TTL），cache_read 测不准。要等缓存过期（5min+）或隔离 session。
+> - **LLM 非确定性**：同 prompt 两次 output 长度不同（×5 计费放大成噪音），淹没小差异。
+> - **prompt 必须触发框架加载**：中性 prompt（如"描述项目"）不派 agent/不加载 skill，测不到框架差异。
+>
+> **结论**：测"框架文件 token 优化"用 `scan.py`（静态，无噪音）；`trace.py`+`run-ab.sh` 测真实流程的 token 分布与端到端差异（大流程差异才信）。
+
 **方法 1：Claude Code 会话级**
 
 **方法 2：API 级（最准）**
