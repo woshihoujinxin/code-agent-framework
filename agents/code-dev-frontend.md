@@ -65,7 +65,7 @@ skills:
 6. **design-systems skill**（自动挂载，12 套设计系统令牌 + 5 视觉方向 + 品牌提取协议）
 7. **docs/prototype/DESIGN.md**（A3 视觉基准——**若存在必须读取**，UI 实现对齐其设计令牌：配色/字体/组件签名/间距；这是原型构建师的视觉基准，实现是"对齐基准"而非随意发挥）
 8. **smoke-checks.md**（本任务冒烟 + 单测命令）
-9. **coding-standards skill**（含 code-sage 自进化规则；DDD 模式含 §3b 战术模式约束）
+9. **契约文件**（只读 Dev 该读的，不背 Tester 的）：`coding-standards/references/contract-shared.md`（契约与灵活 + 自进化规则）+ `coding-rules.md`（命名/结构/模式/测试约定；`方法论：DDD` 时加读 `ddd-tactics.md`）
 
 ### 2. 开发实现
 - 创建组件结构、实现交互逻辑、调用后端 API、处理响应式布局

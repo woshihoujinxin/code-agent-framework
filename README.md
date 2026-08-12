@@ -87,9 +87,9 @@ python .claude/tools/sync-compat.py deploy . # 重新部署到项目根（或再
 | 目录 | 内容 |
 |------|------|
 | `agents/` | 19 个 subagent（PM / 架构师 / 前后端 Dev / 五维 Tester / 运维 / 原型构建师 / 导出专家 / code-sage） |
-| `commands/` | `/goal-init`（部署适配层到项目根）、`/goal-d`（研发质量编排）、`/goal-review`（方案评审）、`/goal-r`（技术调研）、`/goal-o`（交付编排）、`/goal-tl`（任务列表查看）、`/goal-tr`（五维测试结果）入口 |
+| `commands/` | `/goal-init`（部署适配层到项目根）、`/goal-d`（研发质量编排）、`/goal-review`（方案评审）、`/goal-r`（技术调研）、`/goal-o`（交付编排）、`/goal-tl`（任务列表查看）、`/goal-tr`（五维测试结果）、`/goal-resume`（断点扫描/续跑）入口 |
 | `orchestrators/` | 三个编排器定义（研发质量 / 方案评审 / 交付）+ 调研编排器 + 完整文档 + demo |
-| `skills/coding-standards/` | 编码规范 + 自进化规则库（code-sage 自动追加） |
+| `skills/coding-standards/` | 契约与规范库（SKILL.md 导航 + references 按受众分：contract-shared/coding-rules/test-acceptance/report-schema/ddd-tactics）|
 | `skills/design-systems/` | 设计系统知识库（71 套：12 套详细令牌 + 59 套扩展索引 + 5 视觉方向 + 品牌提取协议） |
 | `skills/prototype-templates/` | 9 种原型模板结构（原型构建的页面骨架） |
 | `.opencode/` | opencode 适配层（生成物，勿手改） |

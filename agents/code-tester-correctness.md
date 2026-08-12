@@ -69,7 +69,7 @@ git -C {测试目录} rev-parse --git-dir | grep worktrees
 
 ### 2. 必读文件（按顺序）
 
-0. **五维验收标准** `coding-standards/references/test-acceptance-standards.md` — 共享契约：F 维度的验收基准（判卷标准），与 Dev 看同一张卷子
+0. **共享契约** `coding-standards/references/contract-shared.md`（契约与灵活 + 自进化规则，全员）+ **五维验收标准** `test-acceptance-standards.md` — F 维度的验收基准（判卷标准），与 Dev 看同一张卷子。**Tester 不读 `coding-rules.md`**（那是 Dev 写码的规范）
 1. **docs/prd.md** 相关用户故事（US-N）— 理解用户要什么，不只看规格
 2. **feature-spec.md** 目标任务的「测试契约」段 — **F 功能用例是验证基准**（每条标 US 来源）
 3. **Dev 自检报告** `{输出目录}/{TASK_ID}-selfcheck-*.md` 的 F 段 — 看 Dev 声称哪些已覆盖

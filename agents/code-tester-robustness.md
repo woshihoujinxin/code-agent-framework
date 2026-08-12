@@ -53,7 +53,7 @@ git -C {测试目录} rev-parse --git-dir | grep worktrees
 
 ### 2. 必读文件（按顺序）
 
-0. **五维验收标准** `coding-standards/references/test-acceptance-standards.md` — 共享契约：**B 维度的验收维度表（空值/边界/异常/资源/输入验证）与 FAIL 阈值是本文件 §3 补充扫描的基准**，与 Dev 看同一张卷子
+0. **共享契约** `coding-standards/references/contract-shared.md`（契约与灵活 + 自进化，全员）+ **五维验收标准** `test-acceptance-standards.md` — **B 维度（空值/边界/异常/资源/输入验证）与 FAIL 阈值是本文件 §3 补充扫描的基准**，与 Dev 看同一张卷子。**Tester 不读 `coding-rules.md`**
 1. **feature-spec.md** 目标任务的「测试契约」段 — **B 健壮用例是验证基准**
 2. **Dev 自检报告** `{输出目录}/{TASK_ID}-selfcheck-*.md` 的 B 段 — 看 Dev 声称哪些已覆盖
 3. **Dev 修改的代码 + 单测** — Glob 变更文件，完整阅读；读 tests/unit/

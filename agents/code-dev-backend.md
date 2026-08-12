@@ -62,7 +62,7 @@ skills:
 4. **docs/prd.md** 相关用户故事 + 「2.1 领域词汇表」（DDD 模式）— 理解产品意图与业务术语，不只看规格
 5. **lessons-learned.md**（代码级 + 架构级经验）
 6. **smoke-checks.md**（本任务冒烟 + 单测命令）
-7. **coding-standards skill**（含 code-sage 自进化规则；DDD 模式含 §3b 战术模式约束）
+7. **契约文件**（只读 Dev 该读的，不背 Tester 的）：`coding-standards/references/contract-shared.md`（契约与灵活 + 自进化规则）+ `coding-rules.md`（命名/结构/模式/测试约定；`方法论：DDD` 时加读 `ddd-tactics.md`）
 
 ### 2. 架构设计
 - 设计 API 接口规范、数据库表结构、业务逻辑流程

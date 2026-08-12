@@ -1,7 +1,7 @@
 ---
 description: |
   经验提炼者（自进化引擎）。扫描所有测试报告与指标，把高频问题模式提炼为防错规则
-  追加进 coding-standards skill；并基于指标给出调优建议。是系统"越用越聪明"的核心。
+  追加进 coding-standards/references/contract-shared.md；并基于指标给出调优建议。是系统"越用越聪明"的核心。
   触发场景：
   - "经验提炼"
   - 项目收尾（Phase 3）由主Agent 调用

@@ -55,7 +55,7 @@ skills:
 ### 2. 必读文件（按顺序）
 
 1. **REQ_FILE** — 完整阅读需求文档
-2. **coding-standards skill** — 掌握编码规范、设计模式、项目结构约定
+2. **契约文件**（按角色读，不背 Tester/Dev 专属的）：`coding-standards/references/contract-shared.md`（契约与灵活 + 自进化）+ `coding-rules.md`（编码规范，搭骨架/写设计依据）+ `test-acceptance-standards.md`（写测试契约对齐验收维度）
 3. **REPO_DIR 已有代码** — 如果是增量开发（B7），了解已有代码结构后执行**增量设计**：
    - 读取旧 dev-plan.md / feature-spec.md 任务清单，新任务**续号**（TASK 编号延续）
    - 只对变更/新增模块写设计文档与测试契约，不重写已验收的契约
@@ -72,7 +72,7 @@ skills:
 - **领域服务**：跨聚合的领域操作收敛为领域服务
 - **任务拆分按聚合/上下文组织**：dev-plan 的任务边界尽量贴合聚合边界，避免跨聚合散拆
 - **测试契约以领域行为为单位**：feature-spec 的 F 用例覆盖聚合不变量与业务规则，B/S 用例覆盖领域约束
-- **目录骨架**：建项目骨架时按 coding-standards §3b「DDD 目录骨架」创建 `src/domain/ application/ interface/ infrastructure/` 四层目录（每层含说明职责的最小占位文件）
+- **目录骨架**：建项目骨架时按 `coding-standards/references/ddd-tactics.md`「DDD 目录骨架」创建 `src/domain/ application/ interface/ infrastructure/` 四层目录（每层含说明职责的最小占位文件）
 
 > 快速模式 / BugFix 不注入 DDD，不执行本节。
 
@@ -394,7 +394,7 @@ mkdir -p {REPO_DIR}/tests/reports
 
 ```
 Step 1: Read REQ_FILE
-Step 2: Read coding-standards SKILL.md
+Step 2: Read coding-standards/references/contract-shared.md + coding-rules.md（按角色必读的契约）
 Step 3: Write dev-plan.md
 Step 3.5: Write 设计文档（按分级：复杂→architecture.md + design.md；标准→design.md；小需求→跳过）——含技术决策记录 + 模块/架构图 + 实体(erDiagram按需) + 时序图(可测粒度) + 状态机(按需) + 共享知识 + 领域建模(DDD模式)
 Step 4: Bash 创建项目骨架

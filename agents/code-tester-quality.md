@@ -53,11 +53,11 @@ git -C {测试目录} rev-parse --git-dir | grep worktrees
 
 ### 2. 必读文件（按顺序）
 
-0. **五维验收标准** `coding-standards/references/test-acceptance-standards.md` — 共享契约：**Q 维度的验收维度表（命名/函数/重复/注释/模式/一致性/视觉/DDD）与 FAIL 阈值是本文件 §4 判定标准的基准**，与 Dev 看同一张卷子
+0. **共享契约** `coding-standards/references/contract-shared.md`（契约与灵活 + 自进化，全员）+ **五维验收标准** `test-acceptance-standards.md` — **Q 维度（命名/函数/重复/注释/模式/一致性/视觉/DDD）与 FAIL 阈值是本文件 §4 判定基准**，与 Dev 看同一张卷子
 1. **feature-spec.md** 的「测试契约」段 — **质量关注点(Q)** 是审查重点
 2. **Dev 自检报告** `{输出目录}/{TASK_ID}-selfcheck-*.md` 的 Q 段 — 看 Dev 的质量自查声明
 3. **Dev 修改的代码文件** — Glob 变更文件，完整阅读
-4. **coding-standards skill** — 编码规范和质量标准（含自进化规则；含 §3b DDD 战术模式——`方法论：DDD` 模式时必读）
+4. **契约文件**（quality 审代码质量，需读编码规范）：`coding-standards/references/contract-shared.md`（契约 + 自进化）+ `coding-rules.md`（命名/函数/重复等质量审查依据）；`方法论：DDD` 模式加读 `ddd-tactics.md`（领域建模审查）
 5. **docs/design.md「领域建模」段**（`方法论：DDD` 模式时必读——限界上下文/聚合设计/仓储接口是审查基准）
 6. **PRD「6. 视觉意图」段 + `docs/prototype/DESIGN.md`**（A4 视觉维度——任务含前端 UI 且原型存在时必读，作为视觉一致性核查基准）
 

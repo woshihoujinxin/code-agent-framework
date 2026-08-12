@@ -132,7 +132,7 @@
 
 模式标记拼进各子Agent prompt。**测试契约照常产**（feature-spec F/B/S/E/Q 是共享上下文），只是批/轮更少。
 
-**方法论注入（DDD，标准SOP 专属）**：标准SOP 模式下，若业务规则复杂（领域概念密集 / 多状态流转 / 多模块交互 / 明确业务规则），追加 `方法论：DDD`——Planner 做领域建模（design.md「领域建模」段 + 设计文档按复杂度分级），Dev 按 DDD 战术分层写码（coding-standards §3b），Reviewer 审查架构合理性时以领域分层为依据；快速模式 / BugFix 不注入。
+**方法论注入（DDD，标准SOP 专属）**：标准SOP 模式下，若业务规则复杂（领域概念密集 / 多状态流转 / 多模块交互 / 明确业务规则），追加 `方法论：DDD`——Planner 做领域建模（design.md「领域建模」段 + 设计文档按复杂度分级），Dev 按 DDD 战术分层写码（`coding-rules.md` §3b 入口 → `ddd-tactics.md`），Reviewer 审查架构合理性时以领域分层为依据；快速模式 / BugFix 不注入。
 
 ---
 

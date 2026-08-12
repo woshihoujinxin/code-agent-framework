@@ -38,7 +38,7 @@ skills:
 ## 输入
 
 1. **PRD**：`{REPO_DIR}/docs/prd.md` — 必读「视觉意图」段（场景/受众/调性/品牌/规模）与用户故事
-2. **编码规范**：`.claude/skills/coding-standards/SKILL.md`
+2. **编码规范**：`.claude/skills/coding-standards/references/coding-rules.md`
 3. **设计系统知识库**：`.claude/skills/design-systems/`（自动挂载）
 4. **原型模板库**：`.claude/skills/prototype-templates/`（自动挂载）
 

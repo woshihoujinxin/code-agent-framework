@@ -141,7 +141,7 @@ git clone https://github.com/woshihoujinxin/code-agent-framework.git .claude
 
 clone 后 `.claude/` 自动包含 19 个 subagent、`/goal-d` `/goal-o` `/goal-init` `/goal-tl` `/goal-tr` 命令、两个编排器、3 个 skills（coding-standards / design-systems / prototype-templates）——**无需手动复制任何文件**。
 
-**按项目调整编码规范**（可选）：编辑 `.claude/skills/coding-standards/SKILL.md` 的 §1–§4（命名/结构/模式/测试）。末段「自进化规则」由 code-sage 自动追加，不要手改。
+**按项目调整编码规范**（可选）：编辑 `.claude/skills/coding-standards/references/coding-rules.md` 的 §1–§4（命名/结构/模式/测试）。`contract-shared.md` 的「自进化规则」段由 code-sage 自动追加，不要手改。
 
 ---
 
@@ -355,7 +355,7 @@ clone 后 `.claude/` 自动包含 19 个 subagent、`/goal-d` `/goal-o` `/goal-i
 
 ### 适配不同技术栈
 
-1. 创建 `.claude/skills/coding-standards/SKILL.md`，写入实际规范
+1. 创建 `.claude/skills/coding-standards/references/coding-rules.md`，写入实际规范
 2. 四个 Tester 的检查项会自动引用该 skill
 
 主Agent（`dev-quality-orchestrator.md`）在任何场景下不需要修改——它是纯编排层。
