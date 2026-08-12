@@ -59,26 +59,9 @@ description: |
 - **显式优于隐式**：复杂逻辑加注释；公共接口加文档串
 - **早返回**：用 guard clause 减少嵌套（避免超 3 层缩进）
 
-### 3b. DDD 战术模式（仅 `方法论：DDD` 模式注入时生效）
+### 3b. DDD 战术模式（仅 `方法论：DDD` 模式注入时读手册）
 
-主Agent 注入 `方法论：DDD`（标准SOP + 业务规则复杂）时，`src/` 按领域分层组织，遵循以下战术模式：
-
-- **分层**：Domain（实体/值对象/聚合/仓储接口/领域服务）→ Application（应用服务/用例编排）→ Interface（API/CLI）→ Infrastructure（仓储实现/外部依赖）；依赖方向只允许外层指向内层，**Domain 层零外部依赖**
-- **目录骨架（强制，建项目骨架时照此创建）**：`src/` 按四层固定目录组织——
-  ```
-  src/
-  ├─ domain/          # 实体/值对象/聚合/仓储接口/领域服务（Domain 层，零外部依赖）
-  ├─ application/     # 应用服务/用例编排（依赖 domain，被 interface 依赖）
-  ├─ interface/       # API/CLI/控制器/路由（依赖 application/domain）
-  └─ infrastructure/  # 仓储实现/DB/外部客户端（实现 domain 的仓储接口）
-  ```
-  依赖方向：`interface → application → domain`；`infrastructure` 实现 `domain` 的接口。**禁止** domain 引用其他任何层符号。
-- **实体（Entity）**：有唯一标识与生命周期，状态变化必须通过领域方法表达（不暴露 setter 裸改）
-- **值对象（Value Object）**：无标识、不可变，通过值相等比较；优先建模为值对象而非基本类型（金额/地址/时间区间）
-- **聚合（Aggregate）**：聚合根是外部访问的唯一入口，聚合边界内强一致；跨聚合的修改经应用服务协调，不直接穿透对象图
-- **仓储（Repository）**：接口定义在 Domain 层，实现在 Infrastructure 层；调用方只依赖接口不依赖具体实现
-- **禁止反模式**：贫血模型（实体只有 getter/setter 无行为）、Infrastructure 类型泄漏进 Domain、聚合根直接操作其他聚合的内部对象
-- **命名**：聚合根/实体用业务术语（与 PRD 领域词汇表一致），禁止技术化命名（如 `DataModel`、`Manager`）
+> **何时读手册**：主Agent 注入 `方法论：DDD`（标准SOP + 业务规则复杂）时，**读 `references/ddd-tactics.md`** 按其四层目录骨架（domain/application/interface/infrastructure，Domain 零外部依赖）+ 战术构件（实体/值对象/聚合/仓储）+ 禁止反模式执行。快速模式 / BugFix / 存量模式 / 简单项目**不读**（多数项目用不到，避免死重 token）。
 
 ## 4. 测试约定
 
