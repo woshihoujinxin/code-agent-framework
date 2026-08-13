@@ -41,6 +41,8 @@
 
 **理念**：契约是不可违反的**底线**（质量/版本/判定的最低保证），不是**牢笼**——契约规定"必须有/必须过"，不规定"怎么做"；契约之外的，AI 审时度势自行规划（同 `contract-shared.md`）。
 
+**角色间契约全景**：`skills/coding-standards/references/role-contracts.md`（12 组角色对：谁对谁有什么契约/载体/违反后果/已知缺口）——master **派活前与收尾时核对**；Planner 写契约前核对。
+
 ### 硬契约（必须满足，master 机器校验，缺即止步）
 
 | 契约 | 要求 | 校验点 |
@@ -796,6 +798,16 @@ Agent(
 ```
 
 日志：`- {yymmdd hhmm} 🧠 经验提炼完成：新增{N}条规则，调优建议{M}条`
+
+**Step B2 — 调优建议路由（sage 建议落地通道）**：
+
+读 `docs/metrics.md`「调优建议」段 → 按每条标注的执行者路由：
+- `→ Planner`：契约缺类 → 派 code-planner 补 feature-spec 用例（登记为下版本/新 ⏳）
+- `→ PM`：需求模糊 → 记入 prd.md 待确认问题，下轮需求澄清
+- `→ Dev`：自查纪律/技术债 → 记入 lessons-learned.md，下一批开发注入 Dev prompt
+- `→ 框架维护者`：流程/人设改进 → 记入 main-log.md 收尾报告，随框架版本迭代
+
+日志：`- {yymmdd hhmm} 🧠 调优建议路由：{N} 条已派发`
 
 3. **不退出循环**，进入等待状态，检查是否有新需求追加到 `docs/prd.md`
 

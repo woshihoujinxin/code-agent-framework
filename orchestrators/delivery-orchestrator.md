@@ -59,6 +59,8 @@
 
 同 `dev-quality-orchestrator.md`「契约层」（详见）：**硬契约**（测试契约 F/B/S/E/Q + Dev 产出含 git commit + 冒烟跑全部单测回归 + 各环节报告含 `### 判定`+`### 失败分类`+commit hash）必须满足、master 机器校验、缺即止步；**契约外 AI 审时度势自行规划**（灵活条款，避免死板），事后记 lessons-learned 供 code-sage 沉淀。交付链各环节（审查/构建/校验/E2E）同样遵守。
 
+**角色间契约全景**：`skills/coding-standards/references/role-contracts.md`（交付链契约见 #8 行：审查→构建→校验→E2E 串行、下游依赖上游）——master 派活/收尾核对。
+
 ---
 
 ## 日志写入规范（主日志 docs/main-log.md）
@@ -335,6 +337,9 @@ while round < 3:
 
   round += 1
 
+  # 按报告 `### 失败分类` 行路由修复者（无分类行 → 保守 resume Dev 全量修）：
+  #   实现Bug → resume 对应 Dev；构建Bug → resume Builder；校验Bug → resume Validator；
+  #   环境Bug → resume Ops 修环境；测试Bug → resume 对应环节复核；契约Bug → resume Planner 改契约再 Dev
   # resume Dev，前后端各自修正（一次性修所有问题）
   if 前端有FAIL:
     Agent(

@@ -25,17 +25,19 @@
 | 11 | code-sage → coding-rules | 扫描报告标签达阈值（单标签 ≥3 次或占 FAIL ≥20%）提炼防错规则，追加 contract-shared「自进化规则」段（**禁止人工编辑**）；调优建议写 metrics.md | contract-shared.md 自进化段、docs/metrics.md | code-sage「目录/提炼原则/负面围栏」；contract-shared 段声明 | 无（建议性，宁缺毋滥） | 内容 |
 | 12 | master ↔ PM/Planner | 需求变更 → 更新 prd.md → Planner 提取新任务追加 dev-plan/feature-spec；评审纪要 REVIEW_MEETING → Planner 逐条落实「方案变更记录」 | docs/prd.md、docs/main-log.md | DQO 需求变更段；review-orchestrator Step 7 | 契约与需求/评审决议脱节 | 流程 |
 
-## 已知缺口（登记不修复，待专项）
+## 缺口修复记录（G1-G7 已全量修复，2026-08-13）
 
-| # | 缺口 | 影响 | 建议修复方向 |
-|---|------|------|-------------|
-| G1 | 交付链三角色报告无 `### 失败分类`（delivery-orchestrator L60 声称有，实际没有） | 修正循环只能"下游全重跑"，无法按类分流 | 补 reviewer/build/validator 机器契约的失败分类段 |
-| G2 | 原型链修复无轮次上限与升级路径（"≤2 轮"仅 README 有） | FAIL 可无限循环 | builder 人设加轮次状态机 + 2 轮升级路径 |
-| G3 | Ops 与 E2E 的 Docker 容器环境职责重叠未界定 | 环境准备重复或落空 | e2e-external-deps 归属明确到 Ops 或 E2E 单方 |
-| G4 | 五维边界无单点权威（健壮↔安全↔正确靠人设交叉声明） | 边界争议无仲裁依据 | 本表或 acceptance 增补边界矩阵 |
-| G5 | code-sage 调优建议无落地通道（写进 metrics.md 即止） | 建议不闭环 | 定义"建议 → Planner 行动"转换者 |
-| G6 | Reviewer「必读输入」漏 design.md（人设与 delivery 链不一致） | 架构合理性审查缺依据 | reviewer 必读输入补 design.md |
-| G7 | 评审决议 → PM/Planner 修订无专用契约 | 依赖 master 手动派单，易漏 | PM/Planner 加"按评审纪要修订"条款 |
+| # | 缺口 | 状态 | 修复 |
+|---|------|------|------|
+| G1 | 交付链三角色报告无 `### 失败分类` | ✅ | reviewer/build-builder/artifact-validator 机器契约补失败分类 + delivery-orchestrator 修正循环按类路由（实现Bug→Dev、构建Bug→Builder、校验Bug→Validator、环境Bug→Ops、测试Bug→复核、契约Bug→Planner） |
+| G2 | 原型链修复轮次 agent 侧无状态机 | ✅ | code-prototype-builder 加「轮次状态」（≤2 轮修复，第 3 轮仍 FAIL 标注残留放行；DQO 原型子流水线 L324 原有循环保留） |
+| G3 | Ops 与 E2E 容器环境职责重叠 | ✅ | code-ops 负面围栏补"不备应用级容器依赖"边界；e2e-external-deps 开头声明 E2E 自备/自启/自清 |
+| G4 | 五维边界无单点权威 | ✅ | test-acceptance-standards 增「五维边界矩阵」段（各维管什么/不查什么/重叠判定/争议裁决） |
+| G5 | code-sage 调优建议无落地通道 | ✅ | sage 建议每条标注执行者（→Planner/PM/Dev/框架维护者）+ DQO 增 Step B2 路由步骤 |
+| G6 | Reviewer 必读输入漏 design.md | ✅ | code-reviewer 必读输入补 `docs/design.md`（架构合理性审查依据） |
+| G7 | 评审决议→PM/Planner 修订无专用契约 | ✅ | PM 增 §3b 按评审纪要修订条款；review-orchestrator Step 7 派单契约明确（需求→PM、设计/契约→Planner、原型→Builder） |
+
+> **维护规则**：改契约同步三处（本表 + agent 人设 + contract-shared）；**新缺口**按原格式登记回本表，专项修复后移入上表。
 
 ## 维护规则
 

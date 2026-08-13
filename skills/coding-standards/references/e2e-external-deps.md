@@ -1,6 +1,8 @@
 # E2E 外部依赖启动手册（Redis / MySQL / PostgreSQL / MongoDB）
 
 > **何时读本文件**：E2E 任务**有服务依赖**（Redis/MySQL/PostgreSQL/MongoDB）时。纯 CLI / 文件型 E2E（无服务依赖）**不读本文件**，直接用跨平台临时目录做文件存储即可。
+>
+> **职责归属**：应用级容器依赖由 **code-tester-e2e 自备/自启/自清**（本手册即操作指引），**Ops 不备**——Ops 只管基础测试环境（依赖安装/测试库/schema/.env/端口，见 code-ops.md）；容器就绪状态写进 E2E 报告供 Ops 知悉。
 
 ## 支持的依赖类型
 

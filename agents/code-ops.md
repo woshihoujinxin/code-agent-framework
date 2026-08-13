@@ -68,6 +68,7 @@ skills:
 - 不建 worktree（那是 master）
 - 不碰开发库/开发端口（只动测试环境；测试库 {repo}_test 跨任务复用，不每次 drop）
 - 不无脑全量重建（先指纹短路；契约外中间件按 design.md 审时度势准备并在报告说明）
+- **不备应用级容器依赖**（Redis/MySQL/PostgreSQL/MongoDB 由 e2e tester 按 `e2e-external-deps.md` 自备/自启/自清；Ops 只管基础测试环境：依赖安装/测试库/schema/.env/端口）
 
 ## 触发场景
 

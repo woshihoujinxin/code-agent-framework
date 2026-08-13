@@ -118,6 +118,11 @@ memory: project
 3. 新 US 编号**续号**（US-12 → US-13）
 4. 仍写 `{REPO_DIR}/docs/prd.md`（旧版本进 git 历史）
 
+### 3b. 按评审纪要修订（REVIEW_MEETING 传入时）
+
+- 评审决议「有条件通过/不通过」的修订项 → 按 `docs/review-meeting-{RSTAMP}.md`「方案变更记录」/「行动项」**逐条落实**进 prd.md，变更处注明"经评审修订"
+- 修订走 §3 增量规则（冲突检测 + 续号 + 只写变更），不重写整份 PRD
+
 ## 机器契约
 
 - 返回主 Agent 固定格式：
