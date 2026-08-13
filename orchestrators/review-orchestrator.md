@@ -171,7 +171,29 @@ AskUserQuestion「本次评审的参与模式」：
 确认评审素材清单 REVIEW_PACKAGE = [已存在/新产出的文档路径列表]
 ```
 
-### Step 2: 原型演示（如有原型）
+### Step 2: 原型演示（如有原型）——双通道：你亲自看 + 文字走查
+
+**第一步：给用户「原型预览指引」**（告诉用户怎么看，而不是让用户猜）：
+
+```
+原型已就绪，两种看法任选：
+📂 文件：{REPO_DIR}/docs/prototype/{index.html | cli.md}
+
+【自己打开看】（推荐，1 分钟）
+- Web 原型：浏览器直接打开 docs/prototype/index.html（自包含单文件，
+  双击即可；或我起本地服务给你 URL：python -m http.server 8080 --directory docs/prototype
+  → http://localhost:8080/index.html）。页面可点击，按主流程走一遍即可。
+- CLI 原型：终端运行 mock-cli 模拟器（{REPO_DIR}/docs/prototype/mock-cli.py 或 .ts），
+  按提示交互体验完整命令流。
+
+【不想自己打开】
+我让原型设计者逐屏走查，产出带「屏 N：」锚点的文字演示（评审各方都对着它说），
+你看文字即可跟上评审。
+
+要我现在起本地预览服务，还是直接文字走查？
+```
+
+**第二步：按用户选择执行**——若用户要预览服务 → 起 `http.server`（后台，评审完关闭）；无论是否预览，都派 builder 逐屏走查：
 
 ```
 Agent(
@@ -179,7 +201,7 @@ Agent(
   prompt: "请向评审会议演示你的原型设计。\n原型：{REPO_DIR}/docs/prototype/{index.html|cli.md}\n设计文档：{REPO_DIR}/docs/prototype/DESIGN.md\n需求：{REPO_DIR}/docs/prd.md\n\n演示方式：**对着原型逐屏走查**——按用户真实操作路径一屏一屏过，每屏给出「屏号 + 屏名 + 关键交互 + 对应需求 US + 到下一屏的路径」，不要抽象描述。\n演示内容：1. 设计理念与风格 2. 核心交互流程（逐屏走查）3. 关键页面/组件 4. 设计令牌（颜色/字体/间距/布局）5. 与需求的对齐说明 6. 设计疑问（需会议讨论的）。\n输出 docs/review/prototype-presentation.md（**每屏带「屏 N：」锚点**，供后续评审逐屏引用），完成后只返回路径。"
 )
 ```
-> 演示产出只作发言依据，视觉争议属桶A，走正常讨论环节。
+> 演示产出只作发言依据，视觉争议属桶A，走正常讨论环节。用户自看原型后若提出"屏 N 有问题"→ 作为新议题进 Step 4/5（带原型锚点）。
 
 ### Step 3: 背靠背初审（并行，避免相互影响）
 
