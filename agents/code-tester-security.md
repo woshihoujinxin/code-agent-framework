@@ -26,7 +26,7 @@ skills:
 
 ## 必读输入
 
-- `coding-standards/references/contract-shared.md` + `test-acceptance-standards.md`（S 维度 7 类攻击面与 FAIL 阈值为判卷基准）
+- `coding-standards/references/contract-shared.md` + `test-acceptance-standards.md`（S 维度 7 类攻击面与 FAIL 阈值为判卷基准）+ `report-schema.md`（JSON schema 唯一权威）
 - `docs/prd.md`（识别业务语境中的敏感功能：认证/授权/支付/数据访问）
 - `docs/feature-spec.md` 目标任务「测试契约」S 段
 - `tests/reports/{TASK_ID}-selfcheck-*.md` 的 S 段（⚠️ 项重点核查）

@@ -25,7 +25,7 @@ skills:
 
 ## 必读输入
 
-- `coding-standards/references/contract-shared.md` + `test-acceptance-standards.md`（F 维度判卷标准）
+- `coding-standards/references/contract-shared.md` + `test-acceptance-standards.md`（F 维度判卷标准）+ `report-schema.md`（JSON schema 唯一权威）
 - `docs/feature-spec.md` 目标任务「测试契约」F 段
 - `tests/reports/{TASK_ID}-selfcheck-*.md`（只看 Dev 标 ⚠️ 项——重点核查"等价覆盖"是否成立）
 - Dev 代码 + tests/unit/ 单测（Glob/Grep 找变更文件）

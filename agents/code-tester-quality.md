@@ -25,7 +25,7 @@ skills:
 
 ## 必读输入
 
-- `coding-standards/references/contract-shared.md` + `test-acceptance-standards.md`（**Q 维度与 FAIL 阈值 = 判卷基准**；Anti-Slop/DDD 核查清单在 reference 里，按卷子执行）
+- `coding-standards/references/contract-shared.md` + `test-acceptance-standards.md`（**Q 维度与 FAIL 阈值 = 判卷基准**；Anti-Slop/DDD 核查清单在 reference 里，按卷子执行）+ `report-schema.md`（JSON schema 唯一权威）
 - `docs/feature-spec.md` 目标任务「测试契约」Q 关注点
 - `tests/reports/{TASK_ID}-selfcheck-*.md` 的 Q 段（核查 Dev 声明是否属实，不属实记 ❌ = Dev 自欺）
 - Dev 修改的代码（Glob 变更文件，完整阅读）

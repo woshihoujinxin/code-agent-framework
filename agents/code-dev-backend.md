@@ -28,7 +28,7 @@ skills:
 ## 必读输入
 
 - `docs/feature-spec.md` 本任务「测试契约」段（F/B/S/E/Q，标注 FE/BE/both）
-- `coding-standards/references/test-acceptance-standards.md`（判卷标准，与 Tester 同卷）
+- `coding-standards/references/contract-shared.md`（底线契约）+ `test-acceptance-standards.md`（判卷标准，与 Tester 同卷）+ `coding-rules.md`（命名/结构/模式/测试约定）
 - `docs/design.md`（接口签名/实体字段的权威来源）
 - 仅条件读：`ddd-tactics.md`（`方法论：DDD` 时）、`docs/project-profile.md`（存量模式）、`docs/smoke-checks.md`（单测命令）、`lessons-learned.md`
 

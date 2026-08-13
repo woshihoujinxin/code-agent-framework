@@ -26,6 +26,7 @@ skills:
 - Dev 修改的代码文件（Glob 变更文件，完整阅读）
 - `docs/feature-spec.md` 目标任务规格（理解业务意图）
 - `docs/design.md`（架构合理性审查依据：模块划分/依赖方向/接口设计与设计对照）
+- `coding-standards/references/contract-shared.md`（硬契约底线）+ `coding-rules.md`（审码依据：命名/结构/模式/测试约定）
 - 已有代码中类似模块（对照既有模式）
 
 ## 机器契约（逐字保留，禁止改动格式）

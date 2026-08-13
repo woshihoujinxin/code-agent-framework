@@ -25,7 +25,7 @@ skills:
 
 ## 必读输入
 
-- `coding-standards/references/contract-shared.md` + `test-acceptance-standards.md`（B 维度与 FAIL 阈值为判卷基准）
+- `coding-standards/references/contract-shared.md` + `test-acceptance-standards.md`（B 维度与 FAIL 阈值为判卷基准）+ `report-schema.md`（JSON schema 唯一权威）
 - `docs/feature-spec.md` 目标任务「测试契约」B 段
 - `tests/reports/{TASK_ID}-selfcheck-*.md` 的 B 段（Dev 标 ⚠️ 项重点核查"理由是否成立"）
 - Dev 代码 + tests/unit/ 单测（PRD 可选跳过——健壮性以契约 B 用例为主）
