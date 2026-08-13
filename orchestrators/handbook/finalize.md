@@ -101,15 +101,9 @@ Agent(
 
 ## Step C 版本归档（时间维度渐进加载——运行时文档只留当前版本）
 
-**验收即归档**：Tester/Dev 不再需要已验收的旧任务上下文，运行时文档剪裁为仅当前版本，旧内容归档到 `docs/archive/v{version}/`：
-
-1. `docs/feature-spec.md`：剪裁为仅当前版本任务契约（旧任务段 → `docs/archive/v{version}/feature-spec.md`）
-2. `docs/dev-plan.md`：剪裁为仅当前版本任务（已完成旧任务 → `docs/archive/v{version}/dev-plan.md`）
-3. `tests/reports/results.json`：旧版本任务条目 → `docs/archive/v{version}/results.json`（保留当前版本条目）
-4. 归档清单记入 main-log：`- {yymmdd hhmm} 📦 版本归档 → docs/archive/v{version}/（feature-spec/dev-plan/results.json）`
-
-> **不归档**：`lessons-learned.md`（经验库，跨版本累积是特性——防错规则传承）、`prd.md`（需求池，外层循环持续消费）、`metrics.md`（指标累积用于 code-sage 提炼）。
-> **原则**：归档 = 磁盘移入 archive/ 目录（git 历史仍完整可回溯），不删除任何信息。
+> **归档机制**：按 `orchestrators/handbook/archive.md` 执行——验收即归档，`feature-spec` / `dev-plan` / `design`（ADR 保留）/ `results.json` / 已消费的旧调研批次剪裁入 `docs/archive/v{version}/`，文件头留**续号锚点**（上次 TASK 编号，新版本从此续号），运行时文件只留当前版本。
+> **不归档**：`lessons-learned.md`（经验库）/ `prd.md`（需求池）/ `metrics.md`（指标）/ `env-state.md`（环境当前态）。
+> 日志：`- {yymmdd hhmm} 📦 版本归档 → docs/archive/v{version}/（feature-spec/dev-plan/design/results.json/调研批次）`
 
 ## Step 4 不退出循环
 
