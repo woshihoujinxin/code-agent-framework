@@ -222,39 +222,8 @@
 ### 0a. 调研子流水线（A4，按需判断，先于 PM）
 
 > **ROLES 判断**：调研属增强角色。**精简模式跳过本步**（直接进 Phase 0）；**全能模式执行**。
-> **衔接判断**：若本流程由 `/goal-r` 调研后自动衔接进入（存在 `research-tech-*.md`/`requirement-*.md`），**跳过本步**——取时间后缀最大者（最新批次）作 REQ_RESEARCH_PATH / TECH_RESEARCH_PATH 注入 0b 与 Phase 1，不重复调研。
+> **触发时读手册**：满足任一触发条件（复杂技术栈/新领域、用户传 `参考仓库：{git 链接}`、需求含"技术调研"）→ 读 `orchestrators/handbook/research-pipeline.md` 执行（产出 research-tech-*/requirement-* 注入 0b 与 Phase 1）；由 `/goal-r` 衔接进入则跳过（取最新批次，不重复调研）。
 
-**目的**：复杂/新领域需求开发前，以**真实开源代码**为外部基准，产出**以图为主的技术方案参考**（架构图+实体关系图+状态图+时序图）+ 精简需求文档，让 PM 与架构师各自加载上下文后产最终 PRD 与 design.md——解决"纯 AI 记忆开发、方案质量无外部基准"的短板。
-
-**触发条件**（满足任一即触发）：
-- 需求涉及**复杂技术栈 / 新领域**（如 agent 框架、分布式系统、AI 应用）——编排器根据需求描述判断，拿不准走调研
-- 用户传入 `参考仓库：{git 链接列表}` 参数（显式要求调研某类项目）
-- 需求文档含"技术调研"要求
-
-**流程**（复用 `orchestrators/research-orchestrator.md` 的编排逻辑）：
-
-```
-1. 建 {REPO_DIR}/references/ 目录 + .gitignore 追加（第三方代码不入库）
-2. 维护 {REPO_DIR}/docs/repolist.md（可恢复 repo 清单，入库，跨批次累积）
-3. 逐个 git clone --depth 1（短路复用：目录已存在则跳过；失败 → WebFetch 降级标注）
-   + 定本批次时间戳 RSTAMP = `date +%Y%m%d-%H%M`（本批次两文档共用，多次调研按后缀累积）
-4. 派 code-researcher：
-   Agent(
-     subagent_type: "code-researcher",
-     prompt: "调研目标：{需求摘要}\n参考仓库（git 链接，逗号分隔）：{URLS}\n代码仓库：{REPO_DIR}\n调研批次戳：{RSTAMP}\n\n请分析 references/ 下的代码库，产出 docs/research-tech-{RSTAMP}.md（图为主：必含项目架构图 flowchart + 关键实体关系图 erDiagram + 主要功能状态图 stateDiagram-v2 + 关键流程时序图 sequenceDiagram，禁贴代码/禁大段文字）+ docs/requirement-{RSTAMP}.md（精简表格）两份文档。"
-   )
-5. 用 Glob 确认两份文档产出（本批次戳）：
-   - docs/requirement-{RSTAMP}.md → 记录 REQ_RESEARCH_PATH
-   - docs/research-tech-{RSTAMP}.md → 记录 TECH_RESEARCH_PATH
-```
-
-**消费注入**（关键——调研结论强制进 PM/Planner 上下文）：
-- **PM**（Phase 0 prompt）：注入 `需求调研基准：{REQ_RESEARCH_PATH}，PRD 需求池/用户故事须对齐调研提炼的需求成分，可补充自身产品判断，偏离须说明理由`
-- **Planner**（Phase 1 prompt）：注入 `技术调研基准：{TECH_RESEARCH_PATH}（图为主：架构图/实体关系/状态/时序图），design.md 技术选型/ADR 须对齐推荐方案，架构/实体/状态/时序图可直接参考调研图，或明确写"偏离理由"`
-
-**恢复机制**：换机器/换会话时读 `docs/repolist.md` 获取 URL → 重新 clone 到 references/ → 派 code-researcher 重新产出，不丢调研上下文。
-
-日志：`- {yymmdd hhmm} 🔍 调研子流水线（批次 {RSTAMP}）：{N} 个参考仓库 → research-tech-{RSTAMP}.md + requirement-{RSTAMP}.md`
 
 ### 0b. 产品需求分析
 
@@ -293,52 +262,8 @@ Agent(
 ## 原型子流水线段：原型子流水线（A3，自动判断）
 
 > **ROLES 判断**：原型属增强角色。**精简模式跳过本步**（直接进 Phase 1）；**全能模式执行**。
-> **评审复用**：若评审门控已确认 `docs/prototype/` 存在（经 `/goal-review` 评审产出）→ **跳过本段**，直接用评审通过的原型作 PROTO_PATH，不重复构建。
-
-PRD 写完后、计划开始前，**自动判断是否需要原型**，走「需求发现 → 原型构建 → 独立审查 →（可选）导出」链路：
-
-**Step 0 界面判断**：由 code-prototype-builder 读 PRD「视觉意图」段自行判断（编排器不读需求内容）；Web/移动端 → HTML 原型，交互式 CLI/TUI（Agent/终端产品）→ cli-prototype，仅纯算法/无交互 → SKIP。
-
-**Step 1 需求发现**（先于构建——先问清再动手）：
-```
-Agent(
-  subagent_type: "code-discovery-analyst",
-  prompt: "PRD：{REPO_DIR}/docs/prd.md\n代码仓库：{REPO_DIR}\n\n请读 PRD「视觉意图」段 + 用户故事，产出 5 维设计需求摘要 docs/prototype/discovery.md（场景/受众/调性/品牌/规模）+ 推荐方向。返回摘要路径 + 5 维结论 + 需确认项（无则写"无"）。"
-)
-```
-- 若返回「需用户确认」非空 → 把确认问题展示给用户，确认/修正后再进 Step 2（调性/品牌是主观项，值得一问）
-
-**Step 2 原型构建**：
-```
-Agent(
-  subagent_type: "code-prototype-builder",
-  prompt: "需求/PRD：{REPO_DIR}/docs/prd.md\n需求摘要：{REPO_DIR}/docs/prototype/discovery.md（若有：5 维结论 + 推荐方向，据此选系统/模板）\n代码仓库：{REPO_DIR}\n\n读 PRD「视觉意图」段 + 需求摘要：若场景含前端/Web（网页/SaaS/仪表盘/移动端/文档页/多端）→ 从 71 套设计系统选型，生成 docs/prototype/index.html + DESIGN.md + README.md；若为交互式 CLI/TUI（Agent/终端产品）→ 生成 docs/prototype/cli.md（命令树 + --help + 交互流程 + 终端样式）+ DESIGN.md；仅纯算法/无交互 → 返回「原型：SKIP」不写文件。完成后只返回路径或 SKIP。"
-)
-```
-
-**Step 3 独立质量审查**（构建后必经——自审不算数）：
-```
-Agent(
-  subagent_type: "code-prototype-critic",
-  prompt: "审查原型：{REPO_DIR}/docs/prototype/index.html\n令牌基准：{REPO_DIR}/docs/prototype/DESIGN.md\n代码仓库：{REPO_DIR}\n\n请 5 维评分 + Anti-Slop P0/P1/P2 门控，写 docs/prototype/critique.md，返回 PASS/FAIL + 5 维评分 + 修复建议。"
-)
-```
-- **PASS** → 原型可用，记 PROTO_PATH
-- **FAIL** → resume code-prototype-builder 按 `docs/prototype/critique.md` 修复 → 重审，**最多 2 轮**（第 3 轮仍 FAIL → 标注残留问题后放行，不阻塞开发）
-
-**Step 4 导出**（可选，用户要求时）：
-```
-Agent(
-  subagent_type: "code-export-specialist",
-  prompt: "导出审查通过的原型（{REPO_DIR}/docs/prototype/index.html 或 cli.md，按实际形态）到 {REPO_DIR}/exports/（默认 HTML/单文件；用户要求 PDF/PPTX/ZIP 则按需）。完成后返回导出文件路径。"
-)
-```
-
-**确认产出**（用 Glob 检查 `{REPO_DIR}/docs/prototype/index.html` 是否存在）：
-- 存在 → 记录 `PROTO_PATH={REPO_DIR}/docs/prototype/DESIGN.md`，后续注入 Step1 FE Dev + Step2 quality tester 的 prompt（"视觉基准：{PROTO_PATH}，UI 对齐其设计令牌；quality 以它核查视觉一致性"）
-- 不存在 / SKIP → 无原型，正常走计划
-
-日志：`- {yymmdd hhmm} 🎨 原型子流水线：{产出 / SKIP}（发现→构建→审查{PASS/FAIL}→导出）`
+> **评审复用**：若评审门控已确认 `docs/prototype/` 存在（经 `/goal-review` 评审产出）→ 跳过本段，直接用评审通过的原型作 PROTO_PATH。
+> **有 UI 需求时读手册**：PRD 写完后按 `orchestrators/handbook/prototype-pipeline.md` 执行「发现→构建→审查→导出」链路（Step 0 界面判断由 code-prototype-builder 自行判断）。
 
 ---
 
@@ -424,12 +349,12 @@ Agent(
 Agent(
   subagent_type: "code-dev-frontend",
   run_in_background: true,
-  prompt: "前端开发任务：{TASK_IDx} ({标题x})\ndev-plan: {REPO_DIR}/docs/dev-plan.md\nfeature-spec: {REPO_DIR}/docs/feature-spec.md（含测试契约）\n五维验收标准（开发前必读，对齐质量/健壮/安全判卷标准）：{REPO_DIR}/.claude/skills/coding-standards/references/test-acceptance-standards.md\nprd: {REPO_DIR}/docs/prd.md\nlessons-learned: {REPO_DIR}/docs/lessons-learned.md\nsmoke-checks: {REPO_DIR}/docs/smoke-checks.md\n视觉基准（如存在）：{PROTO_PATH}\n\n按测试契约 F/B/S 用例写单测到 tests/unit/，覆盖归属 FE 的用例，产出 tests/reports/{TASK_IDx}-selfcheck-fe.md 自检报告。"
+  prompt: "前端开发任务：{TASK_IDx} ({标题x})\ndev-plan: {REPO_DIR}/docs/dev-plan.md\nfeature-spec: {REPO_DIR}/docs/feature-spec.md（含测试契约）\n五维验收标准（开发前必读，对齐质量/健壮/安全判卷标准）：{REPO_DIR}/.claude/skills/coding-standards/references/test-acceptance-standards.md\nprd: {REPO_DIR}/docs/prd.md\nlessons-learned: {REPO_DIR}/docs/lessons-learned.md（Grep 定位与本任务 TASK_IDx 相关的条目，禁止整读全文）\nsmoke-checks: {REPO_DIR}/docs/smoke-checks.md\n视觉基准（如存在）：{PROTO_PATH}\n\n按测试契约 F/B/S 用例写单测到 tests/unit/，覆盖归属 FE 的用例，产出 tests/reports/{TASK_IDx}-selfcheck-fe.md 自检报告。"
 )
 Agent(
   subagent_type: "code-dev-backend",
   run_in_background: true,
-  prompt: "后端开发任务：{TASK_IDx} ({标题x})\ndev-plan: {REPO_DIR}/docs/dev-plan.md\nfeature-spec: {REPO_DIR}/docs/feature-spec.md（含测试契约）\n五维验收标准（开发前必读，对齐质量/健壮/安全判卷标准）：{REPO_DIR}/.claude/skills/coding-standards/references/test-acceptance-standards.md\nprd: {REPO_DIR}/docs/prd.md\nlessons-learned: {REPO_DIR}/docs/lessons-learned.md\nsmoke-checks: {REPO_DIR}/docs/smoke-checks.md\n\n按测试契约 F/B/S 用例写单测到 tests/unit/，覆盖归属 BE 的用例，产出 tests/reports/{TASK_IDx}-selfcheck-be.md 自检报告。"
+  prompt: "后端开发任务：{TASK_IDx} ({标题x})\ndev-plan: {REPO_DIR}/docs/dev-plan.md\nfeature-spec: {REPO_DIR}/docs/feature-spec.md（含测试契约）\n五维验收标准（开发前必读，对齐质量/健壮/安全判卷标准）：{REPO_DIR}/.claude/skills/coding-standards/references/test-acceptance-standards.md\nprd: {REPO_DIR}/docs/prd.md\nlessons-learned: {REPO_DIR}/docs/lessons-learned.md（Grep 定位与本任务 TASK_IDx 相关的条目，禁止整读全文）\nsmoke-checks: {REPO_DIR}/docs/smoke-checks.md\n\n按测试契约 F/B/S 用例写单测到 tests/unit/，覆盖归属 BE 的用例，产出 tests/reports/{TASK_IDx}-selfcheck-be.md 自检报告。"
 )
 # 本批所有任务的 FE/BE 全部并行启动（一条消息发多个 Agent 调用）
 ```
@@ -708,108 +633,8 @@ while round < max_auto_rounds:
 
 ## Phase 4：收尾
 
-> **ROLES 判断**：导出(export) + code-sage 属增强角色。**精简模式跳过 指标与经验提炼段（code-sage 自进化）**，只做基本统计 + 运行指南；**全能模式全执行**。
-
-全部任务完成后：
-
-1. 先追加 ⑥ 段头（仅一次）：
-```
-## ⑥ 项目收尾
-```
-2. **产出测试汇总报告**（人直接看这份——必做，否则 10+ 份过程报告没人看）：
-   - 从 `tests/reports/results.json` 读每个任务的各维度判定 + 一句话结论（机器真源，最快最可靠）；无 results.json（旧项目）才回退 Grep 各 `tests/reports/{TASK_ID}-{dimension}.md` 的「一句话结论」行与判定行
-   - 汇总写 `tests/reports/SUMMARY-{version}.md`（1 份，覆盖写）：
-     ```markdown
-     # {version} 测试汇总
-
-     ## 总体结论
-     {全部任务是否通过、系统能不能用——一句话人话结论}
-
-     ## 各任务测试结果
-     | 任务 | 一句话结论 | 功能 | 质量 | 健壮 | 安全 | E2E |
-     |------|-----------|------|------|------|------|-----|
-     | TASK01 | {该任务一句话结论} | ✅/❌ | ... | ... | ... | ... |
-     | ... | | | | | | |
-
-     ## 失败项（若有）
-     - {TASK_ID} {维度}: {一句话问题 + 报告路径}
-     ```
-   - 判定列取各报告 `### 判定`（PASS→✅，FAIL→❌）
-   - 日志：`- {yymmdd hhmm} 📄 测试汇总 → tests/reports/SUMMARY-{version}.md`
-3. 统计各任务迭代情况
-4. 写入最终统计到 main-log.md
-
-```
-- {yymmdd hhmm} 🏁 ════ 项目完成 ════
-- {yymmdd hhmm} 🏁 全部 {N} 个任务完成
-- {yymmdd hhmm} 📊 迭代统计：
-  - 1次通过：{X} 个
-  - 2次通过：{Y} 个
-  - 3次通过：{Z} 个
-  - 强制通过：{W} 个
-```
-
-4. **产出运行指南**（让用户拿到就能跑——收尾必做，否则交付不完整）：
-   - 读项目配置提取**真实**运行命令（master 读，不派 agent、不编造）：
-     - Node：Read `package.json` 的 `scripts`（dev/start/build/test）
-     - Python：Read `pyproject.toml` / `requirements.txt`（安装 + 运行命令）
-     - 通用：Read `docs/smoke-checks.md`（已有冒烟/单测命令，最可靠）
-   - 写/更新 `{REPO_DIR}/README.md` 的「快速开始」段：环境要求 + 安装 + 运行 + 测试 + 构建（命令从配置提取）
-   - **最终用户报告附「怎么运行」一段**（可复制粘贴的命令序列 + 访问地址/端口）
-
-```
-- {yymmdd hhmm} 📖 运行指南 → README.md（快速开始）
-```
-
-### 指标与经验提炼段：指标落盘 + 经验提炼（自进化闭环）
-
-**Step A — 主Agent 写 metrics.md 结构部分**（从自己的 main-log.md 统计，不读报告内容，不违反上下文规则）：
-
-Grep main-log.md 中 `功能{P/F} / 质量{P/F} / 健壮{P/F} / 安全{P/F} / E2E{P/F}` 形式的行，按维度累计 P/F 计数，写入 `{REPO_DIR}/docs/metrics.md`（覆盖写）：
-
-```markdown
-# 质量指标
-
-## 汇总
-- 任务总数: {N}
-- 平均迭代轮次: {avg}
-- 一次通过率: {1次通过数/N}
-
-## 维度失败率
-| 维度 | 测试次数 | FAIL 次数 | 失败率 |
-|------|---------|----------|--------|
-| 功能正确性 | {x} | {y} | {%} |
-| 代码质量 | | | |
-| 健壮性 | | | |
-| 安全性 | | | |
-| 端到端 | | | |
-
-## 升级任务
-- 3 轮未通过: {N} 个 ({TASK_ID 列表})
-```
-
-**Step B — 调用 code-sage 提炼规则（闭环①②③的核心）**：
-
-```
-Agent(
-  subagent_type: "code-sage",
-  prompt: "经验提炼。\n仓库：{REPO_DIR}\n报告目录：{REPO_DIR}/tests/reports/\n指标文件：{REPO_DIR}/docs/metrics.md\n编码规范 skill：coding-standards\n\n请扫描所有测试报告，提炼高频问题标签为防错规则追加到 coding-standards skill；基于 metrics.md 给出失败模式 Top-5 和调优建议追加到 metrics.md 调优段。完成后只返回新增规则数 + 调优建议摘要。"
-)
-```
-
-日志：`- {yymmdd hhmm} 🧠 经验提炼完成：新增{N}条规则，调优建议{M}条`
-
-**Step B2 — 调优建议路由（sage 建议落地通道）**：
-
-读 `docs/metrics.md`「调优建议」段 → 按每条标注的执行者路由：
-- `→ Planner`：契约缺类 → 派 code-planner 补 feature-spec 用例（登记为下版本/新 ⏳）
-- `→ PM`：需求模糊 → 记入 prd.md 待确认问题，下轮需求澄清
-- `→ Dev`：自查纪律/技术债 → 记入 lessons-learned.md，下一批开发注入 Dev prompt
-- `→ 框架维护者`：流程/人设改进 → 记入 main-log.md 收尾报告，随框架版本迭代
-
-日志：`- {yymmdd hhmm} 🧠 调优建议路由：{N} 条已派发`
-
-3. **不退出循环**，进入等待状态，检查是否有新需求追加到 `docs/prd.md`
+> **ROLES 判断**：导出(export) + code-sage 属增强角色。**精简模式跳过「指标与经验提炼段」**（只做基本统计 + 运行指南）；**全能模式全执行**。
+> **收尾时读手册**：全部任务完成后 → 读 `orchestrators/handbook/finalize.md` 按步骤执行：测试汇总 SUMMARY → 运行指南 → metrics 落盘 + code-sage 提炼 + 调优建议路由 → **版本归档**（feature-spec/dev-plan/results.json 旧版本入 docs/archive/v{version}/，运行时文档只留当前版本）→ 等待新需求。
 
 ---
 

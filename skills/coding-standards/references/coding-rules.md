@@ -38,6 +38,14 @@
 - 单元测试 mock 外部依赖；E2E 测试用独立环境
 - **单元测试强制**：位置 `tests/unit/test_{TASK_ID}_{name}.{ext}`；命名 `test_{用例编号}_{场景}`；**必须覆盖测试契约的 F/B/S 用例**（每条对应一个单测函数）；未覆盖的须在自检报告 `tests/reports/{TASK_ID}-selfcheck-*.md` 声明理由
 
+## 5. 大文件分段读取（硬规则——渐进式加载）
+
+> **何时生效**：任何文档/报告 > 10KB 时。防止全量读入把大文件（跨版本累积的 feature-spec/lessons-learned/dev-plan/报告）整体塞进 context。
+
+- **先 Grep 定位，再分段 Read**：`Grep` 锚点（如 `^## TASK-`、`测试契约`、`TASK_IDx`）找到目标行号 → `Read` 用 offset/limit 只取目标范围，**禁止整读全文**
+- **只读自己需要的段**：Dev/Tester 只读本任务的契约段/自检段，不读整版本；lessons-learned 只 Grep 与本任务 TASK_ID 相关的条目
+- **收尾归档**：已验收的旧版本内容在 `docs/archive/v{version}/`，运行时文件只留当前版本——发现运行时文件仍有旧版本残留时提示归档
+
 ---
 
 > 通用模板说明：若本文件留空/未按项目填充，Agent 会使用通用最佳实践。
