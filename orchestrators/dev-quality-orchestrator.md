@@ -28,23 +28,18 @@
 
 ---
 
-## 核心原则
+## 核心原则（详细执行规则见文末「上下文保护规则」）
 
 1. **主Agent只调度不干活** — 不做开发、不做测试、不直接编辑任何代码文件
-2. **保持上下文整洁** — 不读子Agent的产出内容，只接收文件路径和 PASS/FAIL 判定
-3. **及时记录日志** — 每个关键步骤写入 main-log.md，时间格式 `yymmdd hhmm`；编码与格式遵守「日志写入规范」（UTF-8 硬约束 + 状态符号 + 阶段标签）
+2. **保持上下文整洁** — 不读子Agent产出内容，只接收文件路径和 PASS/FAIL 判定（详细见「上下文保护规则」）
+3. **及时记录日志** — 每个关键步骤写入 main-log.md，时间格式 `yymmdd hhmm`；编码与格式遵守「日志写入规范」
 4. **主动反馈进展** — 每完成一个子任务向用户报告进度
-5. **绝对禁止清单**（违反任何一条都会膨胀上下文）：
-   - ❌ 不读需求文档，只把路径传给子Agent
-   - ❌ 不读测试报告文件的内容，只用 Grep 提取**最后一次出现**的 `### 判定：PASS/FAIL`（行号最大者 = 最新轮次，因为重测是追加写，第一行永远是最早的旧判定）
-   - ❌ 不直接编辑任何代码文件，全部委托给前后端开发Agent
-   - ❌ 不对延迟到达的后台通知做详细回应，只回复"已确认"
 
 ---
 
 ## 契约层（硬底线 + 灵活执行）
 
-**理念**：契约是不可违反的**底线**（质量/版本/判定的最低保证），不是**牢笼**——契约规定"必须有/必须过"，不规定"怎么做"；契约之外的，AI 审时度势自行规划。
+**理念**：契约是不可违反的**底线**（质量/版本/判定的最低保证），不是**牢笼**——契约规定"必须有/必须过"，不规定"怎么做"；契约之外的，AI 审时度势自行规划（同 `contract-shared.md`）。
 
 ### 硬契约（必须满足，master 机器校验，缺即止步）
 
@@ -57,9 +52,7 @@
 
 ### 灵活条款（契约外，AI 自主——避免死板）
 
-> 契约是底线必须遵守；**契约未覆盖的情形，按项目实际审时度势、自行规划，并在报告说明决策与理由**。遇契约冲突/空白，优先保证需求目标，事后把新情况记入 lessons-learned 供 code-sage 沉淀为新规则。
-
-即：**实现方式、测试策略、任务拆分、应急应变——契约不管，AI 自主发挥；只有上表底线不能碰**。契约随项目经验增长（code-sage 自进化）。
+> 契约是底线必须遵守；**契约未覆盖的情形，按项目实际审时度势、自行规划，并在报告说明决策与理由**。遇契约冲突/空白，优先保证需求目标，事后把新情况记入 lessons-learned 供 code-sage 沉淀为新规则（即：**实现方式、测试策略、任务拆分、应急应变——契约不管，AI 自主发挥；只有上表底线不能碰**）。契约随项目经验增长（code-sage 自进化）。
 
 ---
 
@@ -69,8 +62,7 @@
 
 **1. 编码硬约束（防乱码，Windows 重点）**
 - 所有日志/文档统一 **UTF-8**。**禁止依赖系统默认编码**写文件——Windows 中文系统默认 GBK(cp936) + CRLF，会把中文写成 `��` 乱码。
-- 追加日志一律用**文件写入/编辑工具**（Write / Edit / edit_file），**禁止用 shell `echo/printf >>` 追加含中文的行**（会经系统代码页转码写坏）。
-- 若运行环境只能用脚本追加（如 Python），必须显式 `open(path, 'a', encoding='utf-8', newline='')`，绝不省略 `encoding` 参数。
+- 追加日志一律用**文件写入/编辑工具**（Write / Edit / edit_file），**禁止用 shell `echo/printf >>` 追加含中文的行**（会经系统代码页转码写坏）。脚本追加（如 Python）必须显式 `open(path, 'a', encoding='utf-8', newline='')`，绝不省略 `encoding`。
 
 **1b. 谁写**：只有 master 写 main-log。subagent 不写，它们的详细过程在 docs/ 与 tests/reports/ 里；main-log 是 master 视角的调度留痕（时间+角色+动作+产出+判定）。master 不读子Agent内容，只记自己知道的。
 
@@ -131,14 +123,9 @@
      - **不存在** → 正常流程；若任务规模较大（预计 ≥5 任务），向用户提示「可先跑 `/goal-review` 评审方案再开发」（不强制，小项目可跳过）
    - 评审已产出的 PRD/原型/方案 → 对应阶段**跳过重产**（Phase 0b 有 PRD 则跳过 PM；Phase 1 有方案则 Planner 增量修订），只落实评审「方案变更记录」与「行动项」
 
-**日志写入**：按「日志写入规范」骨架创建（{项目名} = REPO_DIR 目录名），写 ① 项目启动 段：
+**日志写入**：按「日志写入规范」§2 骨架创建（{项目名} = REPO_DIR 目录名，速览行 + ① 项目启动 段头 + 两条启动事件）：
 ```
-# 研发主日志 · {项目名}
-> 🧭 速览：① 项目启动 ｜ 模式：{模式} ｜ 进度：0/{N} ｜ 本批：— ｜ 修正：0轮
-
-## ① 项目启动
-- {yymmdd hhmm} 🚀 需求进入：{REQ_FILE}
-- {yymmdd hhmm} 🔢 批次大小 {BATCH_SIZE} ｜ 模式：{模式}
+- {yymmdd hhmm} 🚀 需求进入：{REQ_FILE}｜{yymmdd hhmm} 🔢 批次大小 {BATCH_SIZE} ｜ 模式：{模式}
 ```
 
 ---
@@ -204,16 +191,16 @@
 | ① 任务级（开发） | `BATCH_SIZE`（批次大小） | 一次并发几个**就绪任务**开发 | **最大化（取全部就绪）** | 2 × 就绪任务数（每任务 FE+BE） |
 | ② 维度级（测试） | `MAX_PARALLEL` | 测试阶段 `(任务×维度)` 并发上限 | **3** | MAX_PARALLEL（跨任务流水线，无单任务 barrier） |
 
-**为什么不相乘**：测试阶段把 `(任务×5维)` 入池、按 MAX_PARALLEL 跨任务流水线消费，所以测试 agent 峰值恒为 MAX_PARALLEL、与 BATCH_SIZE 无关；只有开发阶段才是就绪任务数并发（各 FE+BE）。两阶段不重叠 → 峰值取 max 而非乘积。
+**为什么不相乘**：测试阶段把 `(任务×5维)` 入池、按 MAX_PARALLEL 跨任务流水线消费，测试 agent 峰值恒为 MAX_PARALLEL、与 BATCH_SIZE 无关；只有开发阶段才是就绪任务数并发（各 FE+BE）。两阶段不重叠 → 峰值取 max 而非乘积。
 
-**`BATCH_SIZE`（批次大小，开发阶段）**：开发批次**取全部就绪任务**（ready_dev 全量入批，最大化并发）——master 主动开足 agent，**不等用户提醒拆分**。**异构优先**（全栈项目批内混 FE+BE，发挥前后端并行，避免同类型扎堆争抢 DB/API）。
+**`BATCH_SIZE`（批次大小，开发阶段）**：开发批次**取全部就绪任务**（ready_dev 全量入批），master 主动开足 agent，**不等用户提醒拆分**。**异构优先**（全栈项目批内混 FE+BE，避免同类型扎堆争抢 DB/API）。
 - 默认 = **最大化**：就绪 5 个任务就 5 个一起开发（全栈 = 10 dev agent），快；
 - 想限流再显式设值：`=1` 按依赖逐个推进 / `=2` 温和 / `=3` 中等；
-- **429 自动降档兜底**：遇限流由「并发自适应」把 eff_BATCH 降下来慢跑，所以默认开足是安全的（见下）。
+- **429 自动降档兜底**：遇限流由「并发自适应」把 eff_BATCH 降下来慢跑（见下）。
 
-**`MAX_PARALLEL`（维度级，测试阶段）**：Phase 3 测试阶段把所有 🔳 任务的 `(任务×5维)` 入一个池，按 `eff_PARALLEL`（初始 = MAX_PARALLEL）**跨任务流水线并发消费**（不再逐任务串行等待，整版本开发完后一次性铺开）。默认 **3**（实测：5 在 glm 账户触发 429 限流，3 更稳）；资源充裕可手动调 5。**运行时遇 429 由「并发自适应」自动降档**。
+**`MAX_PARALLEL`（维度级，测试阶段）**：Phase 3 把所有 🔳 任务的 `(任务×5维)` 入一个池，按 `eff_PARALLEL`（初始 = MAX_PARALLEL）**跨任务流水线并发消费**（不逐任务串行等待）。默认 **3**（实测 5 在 glm 账户触发 429 限流）；资源充裕可调 5。**运行时遇 429 由「并发自适应」自动降档**。
 
-> 取值：BATCH_SIZE 默认最大化（取全部就绪任务）；想限流往下调（5→3→2→1）。MAX_PARALLEL 默认 3（实测限流安全值）、资源足可调 5。两者独立，总峰值 = max(2×|就绪|, MAX_PARALLEL)。仅 master 调度遵守。运行时遇 429 自动降档（见「并发自适应」）。
+> 取值：BATCH_SIZE 默认最大化（取全部就绪任务），想限流往下调（5→3→2→1）；MAX_PARALLEL 默认 3（实测限流安全值）、资源足可调 5。两者独立，总峰值 = max(2×|就绪|, MAX_PARALLEL)。仅 master 调度遵守。运行时遇 429 自动降档（见「并发自适应」）。
 
 **不影响**：判定提取（Grep 各维度报告最后一次 `### 判定`，行号最大者=最新轮次）、修正循环轮数（≤3）、日志格式、质量门。
 
@@ -227,6 +214,8 @@
 ---
 
 ## Phase 0：产品需求分析
+
+> **grill-me 转译（全局原则）**：无人值守下"拷问用户"→"拷问需求假设"。facts（可从仓库/设计系统/调研基准查证的）由 agent 自查，禁止写进待确认问题；decisions（影响范围/交互/边界的取舍）由 PM 显式化进 PRD 待确认问题，**每条必带推荐答案**（无人值守默认采用推荐值，用户可事后确认）；frontier 清空（无静默假设）是 PM/Planner 的收尾检查。技能源：`skills/grilling/SKILL.md`。
 
 ### 0a. 调研子流水线（A4，按需判断，先于 PM）
 
@@ -274,7 +263,7 @@
 ```
 Agent(
   subagent_type: "code-product-manager",
-  prompt: "需求描述：{USER_REQUIREMENT}\n代码仓库：{REPO_DIR}\n需求调研基准（如存在）：{REQ_RESEARCH_PATH}\n\n请分析需求并编写 PRD 文档到 docs/prd.md。完成后返回 PRD 路径。"
+  prompt: "需求描述：{USER_REQUIREMENT}\n代码仓库：{REPO_DIR}\n需求调研基准（如存在）：{REQ_RESEARCH_PATH}\n\n请分析需求并编写 PRD 文档到 docs/prd.md。完成前执行需求决策树拷问（1c）：facts 自查，决策分支显式化并带推荐答案，收尾无静默假设。完成后返回 PRD 路径。"
 )
 ```
 
@@ -472,9 +461,9 @@ Agent(
   3. **代码已 git commit**：git -C {REPO_DIR} log --oneline 近 3 条含本 TASK_ID —— 未 commit 则让 Dev 提交（版本化落盘，Tester 基于版本测）
 ```
 
-**退化策略**：如果 `docs/smoke-checks.md` 不存在，或该 TASK_ID 的 smoke_command 为 `# none`：
-- **存量项目** → 优先用项目已有测试命令（`package.json scripts.test` / `pytest` 等）跑全量 + 新增单测；项目无测试 → 用项目自身构建/启动验证（`npm run build` / `python -m compileall` / 起服务），**不全凭"文件存在"**
-- 新项目无 smoke-checks → 用 Glob 列出本批 Dev 新增/修改的文件，**只要文件存在即视为通过**（不假设任何语言）
+**退化策略**：无 `docs/smoke-checks.md` 或该任务 smoke_command 为 `# none` 时：
+- **存量项目** → 用项目已有测试命令（`package.json scripts.test` / `pytest` 等）跑全量 + 新增单测；项目无测试 → 用项目自身构建/启动验证（`npm run build` / `python -m compileall` / 起服务），**不全凭"文件存在"**
+- 新项目 → 用 Glob 列出本批 Dev 新增/修改文件，**文件存在即视为通过**（不假设语言）
 
 **判定**：
 - 冒烟命令满足 pass_criteria（或退化策略通过）→ ✅ 该任务标 🔳（开发完成，待 Phase 3 统一提测）；本批 Step 4 状态更新后回 DAG 入口取下一批；无 ⏳ 时开发完成 → 进入 Phase 3
@@ -600,31 +589,21 @@ Agent(
 - **全能模式**：A-E 全派。
 - **存量模式（五维降级）**：存量项目按「存量模式」适配——有测试体系 → 照存量测试命令全量跑 + 按项目实际抽维度；**无测试体系的存量不强套五维** → 只派 A(correctness) + D(e2e)，或按项目实际用构建/运行验证替代（见「存量模式」节）。
 
-Agent A:
-  subagent_type: "code-tester-correctness",
-  run_in_background: true,
-  prompt: "功能正确性测试：{TASK_IDx}\n测试目录(worktree): {TEST_WS}\n基于 feature/{version} 分支（worktree 已同步到分支最新）\nfeature-spec: {TEST_WS}/docs/feature-spec.md\nprd: {TEST_WS}/docs/prd.md\nDev自检报告: {TEST_WS}/tests/reports/{TASK_IDx}-selfcheck-*.md\n输出目录: {TEST_WS}/tests/reports/"
-
-Agent B:
-  subagent_type: "code-tester-quality",
-  run_in_background: true,
-  prompt: "代码质量测试：{TASK_IDx}\n测试目录(worktree): {TEST_WS}\n基于 feature/{version} 分支\nfeature-spec: {TEST_WS}/docs/feature-spec.md\nprd: {TEST_WS}/docs/prd.md\nDev自检报告: {TEST_WS}/tests/reports/{TASK_IDx}-selfcheck-*.md\n视觉基准（参考，主目录）: {REPO_DIR}/docs/prototype/\n输出目录: {TEST_WS}/tests/reports/"
-
-Agent C:
-  subagent_type: "code-tester-robustness",
-  run_in_background: true,
-  prompt: "健壮性测试：{TASK_IDx}\n测试目录(worktree): {TEST_WS}\n基于 feature/{version} 分支\nfeature-spec: {TEST_WS}/docs/feature-spec.md\nprd: {TEST_WS}/docs/prd.md\nDev自检报告: {TEST_WS}/tests/reports/{TASK_IDx}-selfcheck-*.md\n输出目录: {TEST_WS}/tests/reports/"
-
-Agent D:
-  subagent_type: "code-tester-e2e",
-  run_in_background: true,
-  prompt: "端到端测试：{TASK_IDx}\n测试目录(worktree): {TEST_WS}\n基于 feature/{version} 分支\nfeature-spec: {TEST_WS}/docs/feature-spec.md\nprd: {TEST_WS}/docs/prd.md\ndesign: {TEST_WS}/docs/design.md（含时序图）\nDev自检报告: {TEST_WS}/tests/reports/{TASK_IDx}-selfcheck-*.md\n输出目录: {TEST_WS}/tests/reports/"
-
-Agent E:
-  subagent_type: "code-tester-security",
-  run_in_background: true,
-  prompt: "安全性测试：{TASK_IDx}\n测试目录(worktree): {TEST_WS}\n基于 feature/{version} 分支\nfeature-spec: {TEST_WS}/docs/feature-spec.md\nprd: {TEST_WS}/docs/prd.md\nDev自检报告: {TEST_WS}/tests/reports/{TASK_IDx}-selfcheck-*.md\n输出目录: {TEST_WS}/tests/reports/"
+**统一模板（仅替换维度名/参数）**：
 ```
+Agent {维度字母}:
+  subagent_type: "code-tester-{维度}",
+  run_in_background: true,
+  prompt: "{测试文案}：{TASK_IDx}\n测试目录(worktree): {TEST_WS}\n基于 feature/{version} 分支（worktree 已同步到分支最新）\nfeature-spec: {TEST_WS}/docs/feature-spec.md\nprd: {TEST_WS}/docs/prd.md\nDev自检报告: {TEST_WS}/tests/reports/{TASK_IDx}-selfcheck-*.md\n{额外输入}\n输出目录: {TEST_WS}/tests/reports/"
+```
+
+| 维度字母 | 维度 | 测试文案 | 额外输入 |
+|---------|------|---------|---------|
+| A | correctness | 功能正确性测试 | （无） |
+| B | quality | 代码质量测试 | `视觉基准（参考，主目录）: {REPO_DIR}/docs/prototype/` |
+| C | robustness | 健壮性测试 | （无） |
+| D | e2e | 端到端测试 | `design: {TEST_WS}/docs/design.md（含时序图）` |
+| E | security | 安全性测试 | （无） |
 
 所有 job 回收 → 收集每个 🔳 任务的 5 维 PASS/FAIL 判定 + 报告路径。**同步 results.json**：首次测试前初始化 `tests/reports/results.json`（`{"schemaVersion":1,"version":"v{version}","project":"{REPO_DIR 名}","tasks":{}}`）；测试后读各 `tests/reports/{TASK_ID}-{dimension}.json`（tester 按 `coding-standards/references/report-schema.md` 产出），合并进 results.json 对应任务/维度（verdict/conclusion/classification/rounds/report），任务状态与 dev-plan 同步。全 PASS 的任务 → dev-plan 标 ✅；有 FAIL 的任务进 Step 3 修正循环。全部 🔳 → ✅/⚠️ 后 → 若升级产生新 ⏳ 则回 Phase 2 开发循环，否则进 Phase 4 收尾。
 
@@ -674,12 +653,7 @@ while round < max_auto_rounds:
   elif round == 2:
     repair_prompt = "请仔细分析测试报告，修复所有问题。"
   else:  # round == 3
-    repair_prompt = """这是第3轮修复，请重新阅读以下文件后再修复：
-    - feature-spec.md（当前任务规格）
-    - lessons-learned.md（经验库）
-    - 相关代码文件
-
-    请分析问题的根本原因，尝试不同的实现方式。"""
+    repair_prompt = "这是第3轮修复：重读 feature-spec.md + lessons-learned.md + 相关代码，分析根本原因，尝试不同实现方式。"
 
   # 对每个 FAIL 任务，按失败分类路由 resume 其 FE/BE Dev（每任务独立 Dev，互不牵连同批其他任务）
   for TASK_IDx in FAIL任务集:
@@ -830,9 +804,9 @@ Agent(
 ## 上下文保护规则
 
 1. 需求文件只传路径不读内容
-2. 测试结果只用 Grep 提取判定
+2. 测试结果只用 Grep 提取判定（`### 判定：PASS/FAIL` 取**行号最大** = 最新轮次，重测追加写，首行永远是最早旧判定）
 3. 所有代码修改委托给 code-dev-frontend / code-dev-backend
-4. 后台通知简短确认
+4. 后台通知简短确认（只回复"已确认"）
 5. 先全量开发、后统一提测（开发批量与测试批量解耦）
 6. 并发两层 + 韧性（详见「并发度控制」/「并发自适应」）：`BATCH_SIZE`（默认最大化取全部就绪）管开发任务级并发；`MAX_PARALLEL`（**默认 3**，实测 5 限流）管测试维度级并发。**不相乘**，峰值=max(2×|就绪|, MAX_PARALLEL)。**遇 429 自动降并发慢跑**（eff_* 运行时降档）+ **agent 基础设施失败退避重试**（30/60/120s ×3），业务 FAIL 仍走修正循环
 7. 问题升级先 PM 评估需求，再 Planner 拆解

@@ -92,6 +92,7 @@ python .claude/tools/sync-compat.py deploy . # 重新部署到项目根（或再
 | `skills/coding-standards/` | 契约与规范库（SKILL.md 导航 + references 按受众分：contract-shared/coding-rules/test-acceptance/report-schema/ddd-tactics）|
 | `skills/design-systems/` | 设计系统知识库（71 套：12 套详细令牌 + 59 套扩展索引 + 5 视觉方向 + 品牌提取协议） |
 | `skills/prototype-templates/` | 9 种原型模板结构（原型构建的页面骨架） |
+| `skills/grill-me/` + `skills/grilling/` | Matt Pocock grill-me 拷问技能（决策树 + frontier 轮次 + facts/decisions 分离 + 无静默假设）；无人值守转译已注入 PM 1c / Planner 契约 frontier。安装方式：`npx skills@latest add mattpocock/skills --skill grill-me --skill grilling --copy`（`skills-lock.json` 追踪，`npx skills update` 更新；装完把产物移入 `skills/` 真源） |
 | `.opencode/` | opencode 适配层（生成物，勿手改） |
 | `.reasonix/` | Reasonix 适配层（生成物，勿手改） |
 | `tools/sync-compat.py` | 三工具适配生成器（build / deploy） |

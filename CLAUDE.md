@@ -28,7 +28,7 @@ This is a **multi-agent autonomous development framework** (无人值守多智�
 |-----------|---------|---------------|
 | `agents/` | 19 subagent definitions (PM/Planner/Dev/Tester/Ops/etc.) | **Source of truth**, edit directly |
 | `commands/` | Slash commands (`/goal-d`, `/goal-o`, etc.) | **Source of truth**, edit directly |
-| `skills/` | Knowledge base (coding standards, design systems, prototype templates) | **Source of truth**, edit directly |
+| `skills/` | Knowledge base (coding standards, design systems, prototype templates, grill-me) | **Source of truth**, edit directly |
 | `orchestrators/` | Orchestrator definitions (dev-quality, delivery, demo) | **Source of truth**, edit directly |
 | `.opencode/` | opencode compatibility layer (generated, **do not edit**) | `tools/sync-compat.py build` |
 | `.reasonix/` | Reasonix compatibility layer (generated, **do not edit**) | `tools/sync-compat.py build` |

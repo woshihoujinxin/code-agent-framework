@@ -14,6 +14,7 @@ description: |
 | 契约文件 | 受众 | 内容 |
 |---------|------|------|
 | `references/contract-shared.md` | **全员** | 契约与灵活（硬契约/灵活条款）+ 测试版本锚点 + 自进化规则 |
+| `references/glossary.md` | **全员**（人设术语遇歧义时）| 项目术语权威定义：广义契约/五维/版本分支/worktree/语义清单等 |
 | `references/coding-rules.md` | **Dev / Reviewer**（写码、审码）| 命名/结构/设计模式/测试约定 + DDD 入口 |
 | `references/test-acceptance-standards.md` | **Dev（开发前）/ Tester（判卷）/ Planner（写契约）** | 五维验收标准：每个维度查什么、什么算 FAIL |
 | `references/report-schema.md` | **Tester** | 结构化报告 JSON schema |
