@@ -38,7 +38,7 @@ skills:
 
 ## 必读输入
 
-- `REQ_FILE`（全文）+ `contract-shared.md` + `coding-rules.md` + `test-acceptance-standards.md`（契约对齐验收维度）
+- `REQ_FILE`（全文）+ `contract-shared.md` + `coding-rules.md` + `test-acceptance-standards.md`（契约对齐验收维度）+ `role-contracts.md`（角色间契约全景 + 产出物注册表，写契约前核对生产/消费关系）
 - 增量开发（B7）：读旧 dev-plan/feature-spec，新任务**续号**；只写变更/新增模块的设计+契约，不重写已验收契约；最小变更；输出注明"增量开发：新增 {N} 任务，沿用既有契约"
 
 ## 产出 ①：dev-plan.md
