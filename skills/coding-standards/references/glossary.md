@@ -7,7 +7,7 @@
 
 | 术语 | 定义（本项目语境） |
 |------|--------------------|
-| 契约（广义） | 角色间交互的**底线约定**，违反＝协作失效。三类：① 测试契约（feature-spec 的 F/B/S/E/Q 用例表）② 机器契约（角色须逐字遵守的输出格式，如 Tester 的 `### 判定`、Dev 的 `IS_PASS`、JSON schema）③ 流程契约（worktree 门禁、版本分支提测等）。详见 `contract-shared.md` |
+| 契约（广义） | 角色间交互的**底线约定**，违反＝协作失效。三类：① 测试契约（feature-spec 的 F/B/S/E/Q 用例表）② 机器契约（角色须逐字遵守的输出格式，如 Tester 的 `### 判定`、Dev 的 `IS_PASS`、JSON schema）③ 流程契约（worktree 门禁、版本分支提测等）。详见 `contract-shared.md`；**角色间契约全景（谁对谁有什么契约）见 `role-contracts.md`** |
 | 测试契约 | feature-spec 中每任务的 F/B/S/E/Q 用例表；Dev 单测覆盖源、Tester 判卷基准；**仅 Planner 可改** |
 | 五维 | 五个测试维度：correctness（功能）/ quality（质量）/ robustness（健壮）/ security（安全）/ E2E（端到端） |
 | 用例四要素 | 每个 F/B/S/E 用例必含：US 来源、角色（FE/BE/both）、输入、预期输出 |

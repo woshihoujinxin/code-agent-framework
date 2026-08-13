@@ -13,6 +13,7 @@ description: |
 
 | 契约文件 | 受众 | 内容 |
 |---------|------|------|
+| `references/role-contracts.md` | **master / Planner**（派活、写契约前核对）；全员（协作边界争议时查） | **角色间契约总表**：12 组角色对谁对谁有什么契约、载体、约束出处、违反后果、已知缺口 |
 | `references/contract-shared.md` | **全员** | 契约与灵活（硬契约/灵活条款）+ 测试版本锚点 + 自进化规则 |
 | `references/glossary.md` | **全员**（人设术语遇歧义时）| 项目术语权威定义：广义契约/五维/版本分支/worktree/语义清单等 |
 | `references/coding-rules.md` | **Dev / Reviewer**（写码、审码）| 命名/结构/设计模式/测试约定 + DDD 入口 |
