@@ -25,6 +25,27 @@
 | 11 | code-sage → coding-rules | 扫描报告标签达阈值（单标签 ≥3 次或占 FAIL ≥20%）提炼防错规则，追加 contract-shared「自进化规则」段（**禁止人工编辑**）；调优建议写 metrics.md | contract-shared.md 自进化段、docs/metrics.md | code-sage「目录/提炼原则/负面围栏」；contract-shared 段声明 | 无（建议性，宁缺毋滥） | 内容 |
 | 12 | master ↔ PM/Planner | 需求变更 → 更新 prd.md → Planner 提取新任务追加 dev-plan/feature-spec；评审纪要 REVIEW_MEETING → Planner 逐条落实「方案变更记录」 | docs/prd.md、docs/main-log.md | DQO 需求变更段；review-orchestrator Step 7 | 契约与需求/评审决议脱节 | 流程 |
 
+## 产出物注册表（生产→消费对照，防两侧漂移）
+
+> **作用**：每个产出物的**单一权威登记**——生产者交付物 vs 消费者「必读输入」互相对照本表。**生产侧改了交付物或消费侧改了必读输入 → 必须同步本表**，否则即漂移（如 G6：reviewer 曾漏读 design.md）。
+
+| 产出者 | 产出物（路径） | 消费者（谁读/谁 Grep） | master 校验点 |
+|--------|---------------|----------------------|--------------|
+| PM | `docs/prd.md` | Planner（写契约前读 US）、review 门控 | REQ_FILE 注入前确认存在 |
+| Planner | `docs/feature-spec.md` + `docs/dev-plan.md` + `docs/design.md` + `docs/smoke-checks.md` | Dev（单测覆盖/翻译实现/冒烟命令）、Tester×5（判卷）、Ops（端口库规划）、master（DAG 调度） | Phase 1 后 Glob 四文件；冒烟关卡读 smoke-checks |
+| Researcher | `docs/research-tech-{RSTAMP}.md` + `docs/requirement-{RSTAMP}.md` | Planner（ADR 基准）、PM（PRD 基准） | 调研后确认两文档再进评审 |
+| Prototype-Builder | `docs/prototype/{index.html\|cli.md}` + `DESIGN.md` + `README.md` | Critic（审查）、FE Dev（视觉基准）、quality tester（视觉核查） | Glob 查 index.html 存在；PROTO_PATH 注入 |
+| Prototype-Critic | `docs/prototype/critique.md` | master（结论）、Builder（修复依据） | 读 `**结论：PASS / FAIL**` |
+| FE/BE Dev | 代码 + `tests/unit/test_{TASK_ID}_*` + `tests/reports/{TASK_ID}-selfcheck-{fe,be}.md` + git commit | master（冒烟）、Tester（核查 ⚠️ 项） | 冒烟关卡：selfcheck 存在 + `IS_PASS` + commit |
+| Ops | `docs/env-state.md` + `tests/reports/{TASK}-env-prepare.md` | Tester（环境信息）、master（就绪核验） | 派 Tester 前读 env-state（就绪核验 3 项） |
+| Tester×5 | `tests/reports/{TASK_ID}-{dimension}.{md,json}` | master（判定/JSON 合并）、code-sage（Grep 标签）、`/goal-tr` | Grep `^### 判定`（行号最大=最新轮）；JSON 按 report-schema |
+| Reviewer | `tests/reports/{TASK_ID}-review.md` | master（判定/失败分类） | Grep `### 判定` + `### 失败分类` |
+| Builder | `tests/reports/{TASK_ID}-build.md` + 制品 | Validator（制品路径）、master | Grep `### 判定`；制品存在非空 |
+| Validator | `tests/reports/{TASK_ID}-artifact.md` | master | Grep `### 判定` |
+| Export-Specialist | `exports/`（导出物） | 用户、master | 记录导出路径 |
+| code-sage | contract-shared「自进化规则」段 + `docs/metrics.md` 调优段 | 全员（规则）、master（Step B2 路由） | 记录新增/更新规则数 |
+| master | `docs/main-log.md` + `tests/reports/results.json` + `docs/metrics.md` + `SUMMARY-{version}.md` + README 快速开始 | 用户、压缩恢复、`/goal-tl` `/goal-tr` | checkpoint 留痕；收尾统计 |
+
 ## 缺口修复记录（G1-G7 已全量修复，2026-08-13）
 
 | # | 缺口 | 状态 | 修复 |
@@ -42,5 +63,6 @@
 ## 维护规则
 
 - **改契约 = 同步三处**：本表（索引/边界）+ 对应 agent 人设（细节）+ `contract-shared.md`（硬契约清单）；只改一处 = 不一致。
+- **产出物同步**：生产者改交付物或消费者改「必读输入」→ **必须同步「产出物注册表」**；注册表是生产/消费两侧的对照基准，防 G6 式漂移。
 - **测试契约（feature-spec F/B/S/E/Q）修改权仅 Planner**，Dev/Tester 不得改（见各人设负面围栏）。
-- **缺口登记**：新发现的不一致先入「已知缺口」表（影响 + 建议方向），专项修复时删除。
+- **缺口登记**：新发现的不一致先登记（影响 + 建议方向），专项修复后移入「缺口修复记录」表。
