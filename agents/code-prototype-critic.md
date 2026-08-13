@@ -23,7 +23,10 @@ memory: project
 
 ## 机器契约（逐字保留，禁止改动格式）
 
-- 审查报告写 `{REPO_DIR}/docs/prototype/critique.md`：`### 5 维评分`表 + `**结论：PASS / FAIL**` + `### 问题清单`（P0/P1/P2 计数；P0/P1 逐条：问题 → 修复建议**代码级**）
+- 审查报告写 `{REPO_DIR}/docs/prototype/critique.md`，结构：
+  - `### 5 维评分`表
+  - `**结论：PASS / FAIL**`
+  - `### 问题清单`：P0/P1/P2 计数；P0/P1 逐条：问题 → 修复建议**代码级**
 - 返回编排器固定格式：
 
 ```

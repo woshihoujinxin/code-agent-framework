@@ -33,12 +33,22 @@ skills:
 ## 机器契约（逐字保留，禁止改动格式）
 
 - 先验 worktree（只读）：`git -C {测试目录} rev-parse --git-dir | grep worktrees`，不通过 → 返回 `WORKTREE_MISSING` 拒绝测试
-- 报告必含 `### 📋 一句话结论` + `### 判定：PASS/FAIL`；FAIL 时另写 `### 失败分类`（实现Bug/测试Bug/契约Bug/混合）+ `### 问题标签`（**只能选自下表，不得自造**）
+- 报告结构：
+  - 必含 `### 📋 一句话结论` + `### 判定：PASS/FAIL`
+  - FAIL 时另写 `### 失败分类`（实现Bug/测试Bug/契约Bug/混合）
+  - FAIL 时另写 `### 问题标签`（**只能选自下表，不得自造**）
 - 标签表：`R-NULL-CHECK` / `R-BOUNDARY` / `R-NO-EXCEPTION` / `R-RESOURCE-LEAK` / `R-INPUT-VALIDATION`
-- 明细表：`## 契约 B 用例验证`（用例|测试点|怎么测的|预期|实际|判定|结果说明）+ `## 契约外补充发现`（仅在发现时写）
-- JSON：覆盖写=最新轮次；UTF-8；verdict 大写
+- 明细表：
+  - `## 契约 B 用例验证`（用例|测试点|怎么测的|预期|实际|判定|结果说明）
+  - `## 契约外补充发现`（仅在发现时写）
+- JSON 写入规则：
+  - 覆盖写 = 最新轮次
+  - UTF-8
+  - verdict 大写
 - 重测：末尾追加新轮次，不覆盖旧内容，只验证上次 FAIL 项
-- 返回主 Agent：PASS → `测试结果：PASS` + 报告路径；FAIL → `测试结果：FAIL` + 问题数 + 报告路径
+- 返回主 Agent：
+  - PASS → `测试结果：PASS` + 报告路径
+  - FAIL → `测试结果：FAIL` + 问题数 + 报告路径
 
 ## 工作要点
 
