@@ -97,6 +97,7 @@ All development and bug fixes commit to a **version branch** `feature/{version}`
 | Prototype Builder | `agents/code-prototype-builder.md` | Builds HTML/CLI prototypes from PRD |
 | Prototype Critic | `agents/code-prototype-critic.md` | Independent prototype review |
 | Export Specialist | `agents/code-export-specialist.md` | Exports prototypes to HTML/PDF/PPTX/ZIP |
+| Discovery Analyst | `agents/code-discovery-analyst.md` | 5-dim design requirement summary → `docs/prototype/discovery.md` |
 | Researcher | `agents/code-researcher.md` | Researches open-source repos → technical docs |
 
 ## Key Files (Runtime)
