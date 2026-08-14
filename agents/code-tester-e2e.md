@@ -32,7 +32,7 @@ skills:
 - `coding-standards/references/contract-shared.md` + `test-acceptance-standards.md`（E 维度判卷基准）+ `report-schema.md`（JSON schema 唯一权威）
 - `docs/prd.md`（完整用户故事，必读）+ `docs/feature-spec.md`「测试契约」E 段（**直接执行，不再自行提取**）
 - `docs/design.md`（时序图 = 链路依据，存在时必做链路核查）
-- `tests/reports/{TASK_ID}-selfcheck-*.md` 的 E 段 + 入口文件（CLI 入口/API 端点）
+- `tests/reports/{TASK_ID}-selfcheck-*.md`（Dev 不自检 E 维度，仅参考其概要/commit）+ 入口文件（CLI 入口/API 端点）
 - 仅条件读：`coding-standards/references/ui-verification.md`（前端 Web/CLI/TUI 任务的渲染呈现验证方法）
 
 ## 机器契约

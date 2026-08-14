@@ -1,7 +1,7 @@
-# 测试角色通用契约（5 tester + reviewer 共遵）
+# 测试角色通用契约（5 tester 共遵；reviewer 仅共遵 §2）
 
-> **受众**：`code-tester-{correctness,quality,robustness,security,e2e}` + `code-reviewer`。
-> 这些是测试角色**共用的机器契约**，各 tester 人设不再重复，按本文件执行。角色专属内容（标签表/判定阈值/明细表/工作方法）留在各 tester 人设。
+> **受众**：`code-tester-{correctness,quality,robustness,security,e2e}` 共遵全文；`code-reviewer` **仅共遵 §2 只读约定**（reviewer 在交付流，失败分类含构建/环境Bug，与 tester 不同，其机器契约保留专属内联）。
+> 各 tester 人设不再重复通用机器契约，按本文件执行；角色专属内容（标签表/判定阈值/明细表/工作方法）留在各 tester 人设。
 
 ## 1. worktree 环境核验（开工前必做，先于一切）
 

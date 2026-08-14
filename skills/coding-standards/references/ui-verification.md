@@ -117,6 +117,5 @@ p.expect("预期响应文本")      # 断言每步状态
 
 ## FAIL 判定（供 e2e 写报告）
 
-- `E-VISUAL-MISMATCH`：实际呈现偏离原型/DESIGN.md 令牌（颜色/字体/布局错位），或视觉模型判严重偏离
-- `E-LAYOUT-BROKEN`：元素溢出/重叠/不可见/不可点（确定性断言失败）
-- 交互不可达（Playwright/pexpect 跑不通核心流）→ 归 `E-CMD-FAIL`（已有）
+- `E-VISUAL-MISMATCH`：实际呈现偏离原型/DESIGN.md 令牌——颜色/字体/布局错位、元素溢出/重叠/不可见，或视觉模型判严重偏离
+- 交互不可达（不可点 / Playwright / pexpect 跑不通核心流）→ 归 `E-CMD-FAIL`（已有）

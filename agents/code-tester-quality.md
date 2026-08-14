@@ -30,7 +30,7 @@ skills:
 
 - `coding-standards/references/contract-shared.md` + `test-acceptance-standards.md`（**Q 维度与 FAIL 阈值 = 判卷基准**；Anti-Slop/DDD 核查清单在 reference 里，按卷子执行）+ `report-schema.md`（JSON schema 唯一权威）
 - `docs/feature-spec.md` 目标任务「测试契约」Q 关注点
-- `tests/reports/{TASK_ID}-selfcheck-*.md` 的 Q 段（核查 Dev 声明是否属实，不属实记 ❌ = Dev 自欺）
+- `tests/reports/{TASK_ID}-selfcheck-*.md` 的契约用例覆盖段（Dev 不自检 Q 维度，本项通常跳过；quality 独立审查代码质量）
 - Dev 修改的代码（Glob 变更文件，完整阅读）
 - 仅条件读：`coding-rules.md`（命名/重复等审查依据）、`ddd-tactics.md` + design.md 领域建模段（`方法论：DDD` 时）、PRD「6. 视觉意图」+ `docs/prototype/DESIGN.md`（前端 UI 任务，视觉核查基准）
 
