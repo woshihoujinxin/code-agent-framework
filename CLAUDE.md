@@ -126,7 +126,7 @@ All development and bug fixes commit to a **version branch** `feature/{version}`
 | Mode | Trigger | Characteristics |
 |------|---------|-----------------|
 | **Standard SOP** | Multi-module/multi-end/complex state | Full process with 5-dimensional quality gates |
-| **Quick Mode** | ≤10 source files/single-module/no complex state | Compressed loop (≤3 tasks, 1 test round, ≤2 fix rounds), **test contracts still produced** |
+| **Quick Mode** | ≤10 source files/single-module/no complex state | Compressed loop (≤3 tasks, 1 test round, ≤2 fix rounds), **test contracts still produced**. **成果优先硬化**: correctness+e2e 通过后强制 checkpoint 暂停交付用户确认方向；修正 ≤2 轮(第2轮FAIL升级)；全程不触发 code-sage(交付前才精化) |
 | **BugFix** | Explicit bug description | Resume relevant Dev + retest affected dimensions only, skip PM/Planner |
 | **Stock Mode** (存量模式) | Existing project with source + git history | **Follow existing patterns** (architecture/testing/naming), don't force DDD/5-dim/full design docs; use project's own test commands for verification |
 

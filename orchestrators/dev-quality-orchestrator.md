@@ -109,6 +109,10 @@
    - **精简模式**（快速出 MVP）：核心 7 角色——PM / Planner / Dev / 冒烟 / correctness / e2e / **ops**（E2E 需 worktree 环境）。增强关闭（quality/robustness/security/prototype/export/code-sage 跳过）。
    - **全能模式**（默认，全量质量门）：全开（核心 7 + quality + robustness + security + prototype + export + code-sage）。**与现有行为一致**。
    - 用户指定模式 or 自定义开关（如"精简+security"）；默认**全能**。记录到速览行。
+   - **精简模式三硬化（成果优先，硬门控，非建议）**：
+     ① **成果 checkpoint**：correctness + e2e 全过 → **必须暂停**，向用户报告"阶段成果可运行 + 路径"，等用户确认方向才继续下一批/切全能精化。跳过 = 违规（同冒烟关卡 IS_PASS）。
+     ② **修正收紧**：精简模式修正 **≤2 轮**；第 2 轮仍 FAIL → **强制升级**（生成 upgrade-issue 问"需求/设计对吗"，不进第 3 轮）。
+     ③ **sage 后置**：精简模式全程不触发 code-sage（含每 5 批 checkpoint），留到切全能/交付前。
 7. **确认大循环版本号 `{version}`**（本次开发 = 一个版本，完成后打 tag）：
    - `git -C {REPO_DIR} tag` 取最新 tag（如 v0.0.1）→ 递增 `v0.0.2`；无 tag → `v0.0.1`
    - **广播版本分支 `feature/{version}`** 给所有 agent（PM/Planner/Dev/运维/测试）：全部开发 + bug 修复 commit 到该分支，测试基于该分支
@@ -565,7 +569,7 @@ Grep(pattern="^### 判定", path="{REPO_DIR}/tests/reports/{TASK_ID}-{dimension}
 
 ```
 round = 0
-max_auto_rounds = 3
+max_auto_rounds = 2 if ROLES == 精简模式 else 3   # 精简模式收紧：≤2 轮，第2轮仍FAIL强制升级
 
 while round < max_auto_rounds:
   FAIL任务集 = 所有 🔳 任务中任一维度未 PASS 的任务
@@ -618,6 +622,25 @@ while round < max_auto_rounds:
 **循环结束判定**：
 - 任务全PASS → dev-plan.md 标记 ✅
 - 任务第3轮仍FAIL → **触发问题升级流程**
+
+### 成果 checkpoint（精简模式硬节点——成果优先，跳过=违规）
+
+**ROLES = 精简模式**时，循环结束（全PASS）后**必须暂停**向用户交付阶段性成果：
+
+```
+1. 暂停：向用户报告（非后台继续，等用户回复才继续）：
+   "阶段成果就绪，你可以直接验证：
+    - 运行方式：{真实命令，从 smoke-checks.md 读}
+    - 入口路径：{可运行入口/文件}
+    - 已通过：correctness + e2e（功能正确 + 端到端跑通）
+    确认方向对不对？(确认继续 / 要改 / 切全能精化)"
+
+2. 用户确认方向 → 继续下一批 / 切全能精化 → 才继续
+3. 用户要改 → 调整（此刻改方向成本最低，避免测到底才发现方向错）
+4. 记录到 main-log：`- {yymmdd hhmm} 🎯 成果checkpoint：{TASK列表} 交付用户确认 → {确认/要改/精化}`
+```
+
+> **目的**：开发阶段先让用户尽早看到"能跑的东西"并确认方向，而非一路五维测到底才见成果。全能模式不强制（全量质量门已充分验证，直接进收尾）。
 
 ### 问题升级（仅当 3 轮修正仍 FAIL 时读手册）
 
