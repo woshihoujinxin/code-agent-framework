@@ -304,26 +304,71 @@ Agent C  code-prototype-builder（如有原型）：
 4. 向用户报告结论摘要
 ```
 
-### Step 8: 自动衔接开发（auto → /goal-develop）
+### Step 8: 真正自动衔接开发（评审通过时，直接执行 dev-quality-orchestrator）
 
 ```
 if 决议 ∈ {通过, 有条件通过}:
-  1. 读取 .claude/orchestrators/dev-quality-orchestrator.md，转为【研发质量编排器】身份
-  2. 注入评审基线：
-     - VERSION = {version}
-     - 评审素材目录 = docs/reviews/{version}/
-     - REQ_FILE = docs/prd.md（评审通过的）
-     - REVIEW_MEETING = docs/reviews/{version}/review-meeting.md（Planner 必须遵守其「方案变更记录」与「行动项」）
-     - DESIGN_DRAFT = docs/reviews/{version}/research.md（调研技术方案兼任草案，Planner 据此定稿正式 design.md；若产了可选 design-draft.md 则一并注入）
-     - PROTO_PATH = docs/reviews/{version}/prototype/（如有原型）
-     - 调研基准 = docs/reviews/{version}/{research,requirement}.md
-     - 已在评审中产出 PRD/原型/草案 → 跳过对应重产，Planner 增量修订
-  3. 向用户报告「评审通过，自动进入开发」，再按 dev-quality 流程推进
+  向用户输出自动衔接通知，然后在当前会话中**直接继续执行开发流程**：
+
+  ────────────────────────────
+  ✅ 评审通过（版本 {version}）
+
+  【评审结果】
+  - 结论：{通过 / 有条件通过}
+  - 关键问题：{3-5 条摘要}
+  - 核心风险：{主要风险}
+
+  【自动进入开发阶段】
+  正在基于评审基线启动开发流程...
+  ────────────────────────────
+
+  【执行步骤】立即在当前会话中继续执行 dev-quality-orchestrator 的完整流程：
+
+  #### 初始化开发环境
+  ```
+  REPO_DIR = {REPO_DIR}
+  VERSION = {version}
+  REVIEW_MEETING = {REPO_DIR}/docs/reviews/{version}/review-meeting.md
+  PRD_PATH = {REPO_DIR}/docs/reviews/{version}/prd.md
+  PROTO_PATH = {REPO_DIR}/docs/reviews/{version}/prototype/
+  RESEARCH_PATH = {REPO_DIR}/docs/reviews/{version}/research.md
+  REQUIREMENT_PATH = {REPO_DIR}/docs/reviews/{version}/requirement.md
+  ```
+
+  #### Phase 0：产品需求分析
+  - 跳过 PM（已在调研阶段完成，PRD 已存在）
+  - 直接使用评审通过的 PRD：{PRD_PATH}
+
+  #### Phase 1：计划
+  - 启动 code-planner
+  - 注入评审基线参数（REVIEW_MEETING + 原始需求）
+  - 生成 dev-plan.md + feature-spec.md + 项目骨架
+  - **验证**：检查 dev-plan.md 是否包含"依赖结构分析"和并行度评估
+
+  #### Phase 2：开发阶段（DAG 全量开发 + 冒烟）
+  - 按星型依赖结构并发执行（TASK01 → TASK02,TASK03,TASK04,TASK05）
+  - 每批就绪任务：显示"本批就绪任务：{TASK_IDs}（共 {N} 个）"
+  - **验证**：首批应该有多个任务并行（≥ 2 个）
+
+  #### Phase 3：测试阶段（整版本提测）
+  - 5 维测试：correctness/quality/robustness/security/e2e
+  - 修正循环（≤3 轮）
+
+  #### Phase 4：收尾
+  - 测试汇总 + 经验提炼
+
+  【关键】：不需要用户手动执行 `/goal-develop` 命令，orchestrator 自动继续执行。
+
+  日志：`- {yymmdd hhmm} 📋 评审完成（版本 {version}）：{通过/有条件} → 自动衔接 /goal-develop`
+
 if 决议 == 不通过:
   向用户报告失败原因 + 建议（重新调研 / 调整需求 / 补充信息），不进入开发
-  若用户选择重做 → **覆盖 docs/reviews/{version}/ 原文件**（research/requirement/prototype/初审稿/review-meeting 及可选 design-draft 同名覆盖，不新增、不追加后缀、不另建目录，不留中间过程；review-meeting 覆盖时记「第 N 轮，上一轮不通过原因」一行）→ 重跑 gate + 评审。规则见 review-material-spec §7
+  若用户选择重做 → **覆盖 docs/reviews/{version}/ 原文件** → 重跑 gate + 评审
+
 「只评审」→ 跳过本步，评审完即止
 ```
+
+> **真正的自动衔接**：评审通过后，orchestrator **立即在当前会话中继续执行 dev-quality-orchestrator 的完整流程**，从 Phase 0 到 Phase 4 全部自动完成，无需用户手动执行任何命令。
 
 ---
 
