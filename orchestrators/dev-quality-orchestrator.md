@@ -48,9 +48,12 @@
 | 契约 | 要求 | 校验点 |
 |------|------|--------|
 | 测试契约 F/B/S/E/Q | Planner 必写、Dev 单测必覆盖 F/B/S、Tester 必逐条验证 | feature-spec 格式 + 冒烟覆盖率 + Tester 报告覆盖矩阵 |
+| **feature-spec.md 独立存在** | **必须独立产出 docs/feature-spec.md（含 F/B/S/E/Q），锚点嵌 dev-plan 不算等效** | Phase 1 Planner 产出后机器校验（Glob 存在 + Grep 含锚点），缺则自动 resume Planner 补 |
 | Dev 产出 | 代码 + 单测 + selfcheck(IS_PASS) + **git commit** | 冒烟关卡核对（selfcheck 存在 + IS_PASS + commit） |
 | 冒烟回归 | master 跑**全部单测**（不只当前任务） | 冒烟关卡（冒烟关卡） |
 | 判定 | Tester 报告含 `### 判定` + `### 失败分类` + **commit hash** | Grep 取 |
+
+> **ponytail 不豁免硬契约**：ponytail 约束「写多少代码」（最短 diff、不造多余抽象），**不豁免硬契约**。feature-spec 的 F/B/S/E/Q、冒烟、IS_PASS 一项不能少——精简模式只是批/轮更少，契约一个不减。禁止用"先跑通再补形式/锚点够用了"跳过 feature-spec 独立产出。
 
 ### 灵活条款（契约外，AI 自主——避免死板）
 
@@ -289,6 +292,17 @@ Agent(
 ```
 
 等待完成 → 记录返回的文件路径。
+
+**feature-spec 机器校验（硬契约，缺即自动补，不问用户）**：
+```
+1. Glob 确认 docs/feature-spec.md 存在
+2. Grep 确认含 F/B/S/E/Q 锚点（F 用例 / B 边界 / S 安全 / E 端到端 / Q 质量检查）
+3. 不满足（文件缺 / 无锚点 / 仅嵌在 dev-plan 未独立产出）→ 自动 resume code-planner：
+   "feature-spec.md {不存在/缺 F/B/S/E/Q 锚点}。这是硬契约——必须独立产出 docs/feature-spec.md（含完整 F/B/S/E/Q 矩阵，锚点嵌 dev-plan 不算等效）。请补全后只返回路径。"
+   补完 → 重跑步骤 1-2 校验；最多 2 轮自动补，仍不满足 → 止步，main-log 记"硬契约违反：feature-spec 缺失，自动补 2 轮未果"，暂停等用户
+4. 满足 → 进日志写入
+```
+> 此校验是二值机器判（有/无），不退化成"锚点够不够用"的主观判断。硬契约缺件由编排器自动补，不抛给用户问"要不要补"——这是无人值守的底线。
 
 **日志写入**：
 ```
