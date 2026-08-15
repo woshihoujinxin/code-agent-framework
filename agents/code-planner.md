@@ -44,7 +44,7 @@ skills:
 - **调研阶段**：`research.md`（图为主技术方案）+ `prd.md`（产品化需求）+ `requirement.md`（精简需求表）
   - design-draft.md 从 research 细化落地（业界方案→项目接口）
   - feature-spec.md 测试契约从 prd 用户故事生成
-- **开发阶段**：`REQ_FILE`（全文，通常为 prd.md）+ `contract-shared.md` + `coding-rules.md` + `test-acceptance-standards.md`（契约对齐验收维度）+ `role-contracts.md`（角色间契约全景 + 产出物注册表，写契约前核对生产/消费关系）
+- **开发阶段**：`REQ_FILE`（全文，通常为 prd.md）+ `contract-shared.md` + `coding-rules.md` + `test-acceptance-standards.md`（契约对齐验收维度）+ `role-contracts.md`（角色间契约全景 + 产出物注册表，写契约前核对生产/消费关系）+ `template-contract.md`（项目模板契约，创建项目骨架时必读）
 - 增量开发（B7）：读旧 dev-plan/feature-spec，**先读文件头「归档锚点」**（`上次 TASK 编号到 TASK-{N}`，见 `orchestrators/handbook/archive.md`）→ 从 TASK-{N+1} 续号；只写变更/新增模块的设计+契约，不重写已验收契约；最小变更；输出注明"增量开发：新增 {N} 任务，沿用既有契约"
 
 ## 产出 ①：dev-plan.md
@@ -55,6 +55,7 @@ skills:
 - 需求文档：{REQ_FILE}
 - **版本号**：v0.0.1（master 提供；下次大循环递增）
 - **项目类型**：纯前端 / 纯后端 / 全栈（见 B2）
+- **使用模板**：{无模板 / DDD经典结构-Python / DDD经典结构-Node / DDD经典结构-Go / DDD经典结构-Java / 鸿蒙官方 / 自定义模板名}
 - 任务总数：{N}｜创建时间：{时间}
 ## 任务依赖图（DAG）
 ```mermaid
@@ -177,19 +178,34 @@ flowchart TD
 
 ## 产出 ④⑤⑥：骨架 + smoke-checks.md + lessons-learned.md
 
-**项目骨架创建**（按技术模式分支）：
+**项目骨架创建**（按模板参数优先级：模板 > DDD 注入 > 默认）：
 
 ```bash
 # 基础目录（始终创建）
 mkdir -p {REPO_DIR}/tests {REPO_DIR}/tests/reports
 
-# 若注入了 `方法论：DDD`，创建四层 DDD 骨架
-if 主Agent注入了"方法论：DDD"; then
+# 优先级 1：若主Agent注入了模板参数，按模板复制
+if 主Agent注入了"模板："参数; then
+  TEMPLATE_PATH=$(主Agent注入的模板路径，如 python-ddd/node-ddd/go-ddd/java-ddd/harmonyos)
+  cp -r {CLAUDE_DIR}/skills/project-templates/${TEMPLATE_PATH}/* {REPO_DIR}/
+  在 dev-plan.md 记录："使用模板：${TEMPLATE_PATH}"
+
+# 优先级 2：若注入了 `方法论：DDD` 但无模板，创建四层 DDD 骨架
+elif 主Agent注入了"方法论：DDD"; then
   mkdir -p {REPO_DIR}/src/{domain,application,interface,infrastructure}
+
+# 优先级 3：默认创建基础骨架
 else
   mkdir -p {REPO_DIR}/src
 fi
 ```
+
+**模板参数格式**（主 Agent 调用时注入）：
+- `模板：DDD经典结构-Python` → 使用 `python-ddd/`
+- `模板：DDD经典结构-Node` → 使用 `node-ddd/`
+- `模板：DDD经典结构-Go` → 使用 `go-ddd/`
+- `模板：DDD经典结构-Java` → 使用 `java-ddd/`
+- `模板：鸿蒙官方` → 使用 `harmonyos/`
 
 smoke-checks.md（按任务实际技术栈声明，不得假设 Python）：
 

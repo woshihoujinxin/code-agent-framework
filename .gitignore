@@ -17,3 +17,9 @@ testproject/
 
 # Agent 运行时记忆（各项目产生，不入框架 repo）
 .claude/agent-memory/
+
+# 项目模板依赖模块（不入框架 repo）
+skills/project-templates/harmonyos/oh_modules/
+skills/project-templates/*/node_modules/
+skills/project-templates/*/__pycache__/
+skills/project-templates/*/oh_modules/

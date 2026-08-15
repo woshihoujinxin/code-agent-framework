@@ -14,7 +14,7 @@ description: |
 | 契约文件 | 受众 | 内容 |
 |---------|------|------|
 | `references/role-contracts.md` | **master / Planner**（派活、写契约前核对）；全员（协作边界争议时查） | **角色间契约总表**：12 组角色对谁对谁有什么契约、载体、约束出处、违反后果、已知缺口 |
-| `references/contract-shared.md` | **全员** | 契约与灵活（硬契约/灵活条款）+ 测试版本锚点 + 自进化规则 |
+| `references/contract-shared.md` | **全员** | 契约与灵活（硬契约/灵活条款）+ 测试版本锚点 + references/ 目录边界 + 自进化规则 |
 | `references/glossary.md` | **全员**（人设术语遇歧义时）| 项目术语权威定义：广义契约/五维/版本分支/worktree/语义清单等 |
 | `references/coding-rules.md` | **Dev / Reviewer**（写码、审码）| 命名/结构/设计模式/测试约定 + DDD 入口 |
 | `references/test-acceptance-standards.md` | **Dev（开发前）/ Tester（判卷）/ Planner（写契约）** | 五维验收标准：每个维度查什么、什么算 FAIL |
@@ -23,14 +23,16 @@ description: |
 | `references/ddd-tactics.md` | **Planner / Dev**（仅 `方法论：DDD` 时）| DDD 四层目录 + 战术构件 |
 | `references/e2e-external-deps.md` | **code-tester-e2e**（有服务依赖时）| docker 测试容器启动 |
 | `references/ui-verification.md` | **code-tester-e2e**（前端/CLI/TUI 测试时）+ **code-dev-frontend**（开发前知怎么验）| 渲染呈现验证：Web 截图/computed style/视觉模型、CLI 输出/ANSI/--help、TUI tmux 抓屏/pexpect/mock-cli 对比 |
+| `../project-templates/template-contract.md` | **Planner / Dev / Tester / Ops** | **项目模板契约**：模板引用规则、模板文件与业务代码边界、各角色模板职责 |
 
 ## 各角色该读什么（精确指向）
 
 ```
 全员（含 Ops/Researcher/Sage）       → contract-shared.md
 code-dev-backend / code-dev-frontend → contract-shared.md + coding-rules.md + test-acceptance-standards.md（前端 + ui-verification.md 知怎么验渲染）
+code-planner                         → contract-shared.md + test-acceptance-standards.md（写契约对齐）+ ddd-tactics.md（DDD 时）+ template-contract.md（创建项目骨架时）
+code-dev-* / code-tester-* / code-ops → template-contract.md（使用模板项目时）
 code-reviewer                        → contract-shared.md + coding-rules.md（审码依据）
-code-planner                         → contract-shared.md + test-acceptance-standards.md（写契约对齐）+ ddd-tactics.md（DDD 时）
 code-tester-correctness/quality/robustness/security → contract-shared.md + test-acceptance-standards.md + report-schema.md
 code-tester-e2e                      → contract-shared.md + test-acceptance-standards.md + report-schema.md + e2e-external-deps.md（有服务依赖时）+ ui-verification.md（前端/CLI/TUI 渲染验证）
 code-sage                            → contract-shared.md（自进化规则段写入目标）+ 扫描所有报告
