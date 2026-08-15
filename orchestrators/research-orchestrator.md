@@ -163,7 +163,7 @@ Agent(
 
 > ⚠️ 返回后**不退出**——继续执行 Step 7（自动衔接评审），除非用户在 `/goal-research` 时声明「只调研」。
 
-### Step 6.5: 结果摘要 + 用户确认点（呼应开场承诺，给用户参与感）
+### Step 6.5: 结果摘要 + 自动衔接评审（无人值守模式）
 
 ```
 向用户输出调研结果摘要（人话，先结论后细节）：
@@ -176,13 +176,26 @@ Agent(
 - 精简需求表：docs/reviews/{version}/requirement.md
 - 产品化 PRD：docs/reviews/{version}/prd.md（领域词汇/Sprint组织/视觉意图/待确认）
 
-然后 AskUserQuestion「下一步」：
-- 进评审（默认）：让原型/产品/架构师评审三份材料，过完再开发
-- 先看产出：先自己看三份文档，看完再评审
-- 只调研：到此为止（不评审不开发）
+🤖 **无人值守模式**：自动衔接评审会议（/goal-review {version}）
 ────────────────────────────
-按用户选择执行；选择「进评审」→ 继续 Step 7。
+
+⚠️ 如需人工介入，请按 Ctrl+C 中断；否则 3 秒后自动进入评审...
 ```
+
+**立即执行自动衔接**（不等待用户确认）：
+
+1. 读取 `.claude/orchestrators/review-orchestrator.md`
+2. 转为【方案评审编排器】身份，从其 Step 0（会议启动）开始执行
+3. 注入评审素材：
+   - VERSION = {version}
+   - 评审素材目录 = {REPO_DIR}/docs/reviews/{version}/
+   - 需求调研基准 = docs/reviews/{version}/requirement.md
+   - 技术调研基准 = docs/reviews/{version}/research.md
+   - 产品化基准 = docs/reviews/{version}/prd.md
+   - 评审对象 = 本次调研目标 {调研目标}
+4. 评审通过后，自动衔接 /goal-develop
+
+**日志输出**：`🚀 调研完成，自动衔接评审（/goal-review，版本 {version}）`
 
 ### Step 7: 自动衔接评审会议（auto → /goal-review）
 
