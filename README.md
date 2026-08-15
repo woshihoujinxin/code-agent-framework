@@ -87,7 +87,7 @@ python .claude/tools/sync-compat.py deploy . # 重新部署到项目根（或再
 | 目录 | 内容 |
 |------|------|
 | `agents/` | 19 个 subagent（PM / 架构师 / 前后端 Dev / 五维 Tester / 运维 / 原型构建师 / 导出专家 / code-sage） |
-| `commands/` | `/goal-init`（部署适配层到项目根）、`/goal-develop`（研发质量编排）、`/goal-review`（方案评审——三件齐备 gate + 四方投票）、`/goal-research`（技术调研）、`/goal-deliver`（交付编排）、`/goal-tasks`（任务列表查看）、`/goal-testresults`（五维测试结果）、`/goal-resume`（断点扫描/续跑）、`/goal-introspect`（框架自省——审设计完善+实现对齐）、`/goal-spec`（规范化文档——散素材按规范归位+格式化进 `docs/reviews/{version}/`）入口 |
+| `commands/` | 命令列表：<br>- `/goal-init` — 部署适配层到项目根<br>- `/goal-develop` — 高质量开发流程（五维测试）<br>- `/goal-review` — 方案评审（gate + 四方投票）<br>- `/goal-research` — 技术调研（复杂需求）<br>- `/goal-deliver` — 交付流程（评审→构建→验证）<br>- `/goal-tasks` — 查看任务列表<br>- `/goal-testresults` — 查看五维测试结果<br>- `/goal-resume` — 断点扫描/续跑<br>- `/goal-introspect` — 框架自省<br>- `/goal-spec` — 规范化文档（散素材归位） |
 | `orchestrators/` | 五个编排器定义（研发质量 / 方案评审 / 交付 / 规范化 spec / 调研 research）+ 完整文档 + demo |
 | `skills/coding-standards/` | 契约与规范库（SKILL.md 导航 + references 按受众分：contract-shared/coding-rules/test-acceptance/report-schema/ddd-tactics）|
 | `skills/design-systems/` | 设计系统知识库（71 套：12 套详细令牌 + 59 套扩展索引 + 5 视觉方向 + 品牌提取协议） |
