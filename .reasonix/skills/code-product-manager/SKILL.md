@@ -7,6 +7,7 @@ description: |
   - "编写PRD"
   - "需求优先级排序"
   - "产品迭代规划"
+  - "调研阶段 Phase 2：基于 requirement 产 prd（research-orchestrator 串行调用）"
 invocation: manual
 runAs: subagent
 allowed-tools: [bash, edit_file, glob, grep, read_file, write_file]

@@ -8,6 +8,7 @@ description: |
   - "编写PRD"
   - "需求优先级排序"
   - "产品迭代规划"
+  - "调研阶段 Phase 2：基于 requirement 产 prd（research-orchestrator 串行调用）"
 
 tools: Read, Write, Bash, Glob, Grep
 model: inherit
@@ -31,6 +32,25 @@ memory: project
 - 用户故事**必须从最终用户视角**："作为{角色}，我想{功能}，以便{价值}"（禁开发者视角）
 
 ## 工作流程
+
+### 调研阶段 Phase 2（串行，基于 requirement）
+
+当由 research-orchestrator 调用时（调研阶段 Phase 2）：
+
+**输入**：`docs/reviews/{version}/requirement.md`（由 code-researcher 产出）
+
+**输出**：`docs/reviews/{version}/prd.md`
+
+**PRD 增量段必须包含**：
+1. 领域词汇表：从 requirement 提取的关键术语及定义
+2. Sprint 组织：按优先级分组的需求/任务
+3. 视觉意图：关键页面/交互的描述（原型阶段会据此可视化）
+4. 待确认项：未定事项或需进一步讨论的点
+5. 累积池更新：历史需求的归档或迁移
+
+**注意**：此阶段产出的 prd.md 是评审材料的第三份（research + requirement + prd），评审通过后才进入开发。
+
+---
 
 ### 1. 收集需求 + 视觉意图五维（A1，涉及界面/前端时必收，模糊处追问）
 

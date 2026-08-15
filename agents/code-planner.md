@@ -41,7 +41,10 @@ skills:
 
 ## 必读输入
 
-- `REQ_FILE`（全文）+ `contract-shared.md` + `coding-rules.md` + `test-acceptance-standards.md`（契约对齐验收维度）+ `role-contracts.md`（角色间契约全景 + 产出物注册表，写契约前核对生产/消费关系）
+- **调研阶段**：`research.md`（图为主技术方案）+ `prd.md`（产品化需求）+ `requirement.md`（精简需求表）
+  - design-draft.md 从 research 细化落地（业界方案→项目接口）
+  - feature-spec.md 测试契约从 prd 用户故事生成
+- **开发阶段**：`REQ_FILE`（全文，通常为 prd.md）+ `contract-shared.md` + `coding-rules.md` + `test-acceptance-standards.md`（契约对齐验收维度）+ `role-contracts.md`（角色间契约全景 + 产出物注册表，写契约前核对生产/消费关系）
 - 增量开发（B7）：读旧 dev-plan/feature-spec，**先读文件头「归档锚点」**（`上次 TASK 编号到 TASK-{N}`，见 `orchestrators/handbook/archive.md`）→ 从 TASK-{N+1} 续号；只写变更/新增模块的设计+契约，不重写已验收契约；最小变更；输出注明"增量开发：新增 {N} 任务，沿用既有契约"
 
 ## 产出 ①：dev-plan.md

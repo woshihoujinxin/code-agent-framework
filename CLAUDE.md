@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working in this
 
 This is a **multi-agent autonomous development framework** (无人值守多智能体编码框架). It orchestrates software development through specialized agents that collaborate via file-based communication, implementing a three-layer loop: outer (continuous requirements), middle (batch development), and inner (bug fixes).
 
-**Core architecture:** Requirements → PM → Planner (with test contracts) → Frontend/Backend Devs (unit tests + self-check) → 5-Dimensional Testing (correctness/quality/robustness/security/E2E) → Fix Loop → code-sage rule extraction.
+**Core architecture:** Requirements → Research（串行：调研→PM产品化） → Planner (with test contracts) → Frontend/Backend Devs (unit tests + self-check) → 5-Dimensional Testing (correctness/quality/robustness/security/E2E) → Fix Loop → code-sage rule extraction.
 
 ## Available Commands
 
@@ -104,22 +104,51 @@ All development and bug fixes commit to a **version branch** `feature/{version}`
 
 ## Key Files (Runtime)
 
+### 评审层（一版一套，进 docs/reviews/{version}/）
+
+| File | Purpose | Written by | Read by |
+|------|---------|------------|---------|
+| `docs/reviews/{version}/research.md` | 技术方案参考（图为主：架构/实体/状态/时序图） | Researcher | 评审、Planner（ADR基准） |
+| `docs/reviews/{version}/requirement.md` | 精简需求表（用户故事/BDD/边界/优先级） | Researcher | 评审、PM（PRD基准）、原型Builder |
+| `docs/reviews/{version}/prd.md` | 产品化PRD（领域词汇/Sprint组织/视觉意图/待确认/累积池） | PM（调研阶段 Phase 2） | 评审、原型Builder、Planner |
+| `docs/reviews/{version}/prototype/` | 高保真原型（可点 HTML/CLI.md + DESIGN.md） | Prototype Builder | 评审、用户、FE Dev（视觉基准） |
+| `docs/reviews/{version}/design-draft.md` | 设计草案（可选，research 需细化时产） | Planner | 评审、Planner（落地基准） |
+| `docs/reviews/{version}/review-meeting.md` | 评审纪要（结论+共识+争议+行动项+方案变更） | Review Orchestrator | Planner（须落实变更） |
+
+### 开发层（活文件，docs/ 根，持续维护）
+
 | File | Purpose | Written by |
 |------|---------|------------|
-| `docs/prd.md` | Product requirements (requirement pool) | PM |
-| `docs/dev-plan.md` | Task status tracking (DAG, emoji states) | Planner (create), Orchestrator (update) |
-| `docs/design.md` | Architecture design (ADR, diagrams, entities) | Planner |
-| `docs/feature-spec.md` | Per-task specs + **test contracts (F/B/S/E/Q)** | Planner |
-| `docs/lessons-learned.md` | Cross-task experience accumulation | Dev (code-level), Planner (architecture-level) |
-| `docs/main-log.md` | Orchestrator's全过程档案 (checkpoint, events) | Orchestrator only |
-| `docs/smoke-checks.md` | Smoke check commands (per task) | Planner/Dev |
-| `docs/env-state.md` | Test environment state (dependencies, DB schema) | Ops |
-| `tests/reports/results.json` | All test results (machine truth source) | Orchestrator aggregates from Tester JSON outputs |
-| `tests/reports/{TASK_ID}-{dimension}.json` | Per-task per-dimension structured verdict | Testers (per `coding-standards/references/report-schema.md`) |
-| `tests/reports/{TASK_ID}-selfcheck-{fe,be}.md` | Dev self-check reports | Devs |
-| `tests/unit/test_{TASK_ID}_*.{ext}` | Unit tests (must cover F/B/S) | Devs |
-| `docs/prototype/` | High-fidelity prototypes + DESIGN.md | Prototype Builder |
-| `exports/` | Exported deliverables | Export Specialist |
+| `docs/prd.md` | 产品需求（跨版本累积，从评审 prd 迁移+增量） | PM |
+| `docs/dev-plan.md` | 任务状态跟踪（DAG, emoji states） | Planner (create), Orchestrator (update) |
+| `docs/design.md` | 架构设计（ADR, diagrams, entities） | Planner |
+| `docs/feature-spec.md` | 每任务规格 + **测试契约 (F/B/S/E/Q)** | Planner |
+| `docs/lessons-learned.md` | 跨任务经验积累 | Dev (code-level), Planner (architecture-level) |
+| `docs/main-log.md` | Orchestrator全过程档案 (checkpoint, events) | Orchestrator only |
+| `docs/smoke-checks.md` | 冒烟检查命令（每任务） | Planner/Dev |
+| `docs/env-state.md` | 测试环境状态（依赖, DB schema） | Ops |
+| `tests/reports/results.json` | 所有测试结果（机器真相源） | Orchestrator aggregates from Tester JSON outputs |
+| `tests/reports/{TASK_ID}-{dimension}.json` | 每任务每维度结构化裁决 | Testers (per `coding-standards/references/report-schema.md`) |
+| `tests/reports/{TASK_ID}-selfcheck-{fe,be}.md` | Dev 自检报告 | Devs |
+| `tests/unit/test_{TASK_ID}_*.{ext}` | 单元测试（必须覆盖 F/B/S） | Devs |
+| `docs/prototype/` | 高保真原型 + DESIGN.md | Prototype Builder |
+| `exports/` | 导出交付物 | Export Specialist |
+
+### 调研流程（串行）
+
+```
+/goal-research
+  ├─ Phase 1: 调研 → research.md + requirement.md
+  ├─ Phase 2: PM 产品化（基于 requirement） → prd.md
+  ├─ Phase 3: 原型（基于 prd） → prototype/
+  ├─ Phase 4: 设计草案（基于 research + prd） → design-draft.md
+  └─ 自动衔接 /goal-review
+
+/goal-review
+  ├─ gate: 检查评审材料齐备（research + requirement + prd + prototype + design-draft可选）
+  ├─ 评审会议: 四方评审 → 投票 → 决议
+  └─ 通过 → /goal-develop
+```
 
 **Task state emojis**: ⏳ pending | 🔄 in progress | 🔳 pending test | ✅ complete | ⚠️ low-quality pass
 
