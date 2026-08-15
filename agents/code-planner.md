@@ -177,8 +177,18 @@ flowchart TD
 
 ## 产出 ④⑤⑥：骨架 + smoke-checks.md + lessons-learned.md
 
+**项目骨架创建**（按技术模式分支）：
+
 ```bash
-mkdir -p {REPO_DIR}/src {REPO_DIR}/tests {REPO_DIR}/tests/reports
+# 基础目录（始终创建）
+mkdir -p {REPO_DIR}/tests {REPO_DIR}/tests/reports
+
+# 若注入了 `方法论：DDD`，创建四层 DDD 骨架
+if 主Agent注入了"方法论：DDD"; then
+  mkdir -p {REPO_DIR}/src/{domain,application,interface,infrastructure}
+else
+  mkdir -p {REPO_DIR}/src
+fi
 ```
 
 smoke-checks.md（按任务实际技术栈声明，不得假设 Python）：
