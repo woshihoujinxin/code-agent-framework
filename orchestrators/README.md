@@ -96,7 +96,7 @@
 
 ### 评审门控（B6）— 开发前四方评审 + 投票
 
-**调研后 / 开发前**（`/goal-r` → `/goal-review` → `/goal-d`），组织**原型设计者 / PM / 架构师 / 你（可选）**四方评审：原型先演示 → 各方背靠背初审 → master 汇总分桶 → 逐项讨论（≤2轮/议题）→ 投票决策（你×2 / 各角色×1，通过线≥3 或你同意）→ 形成决议。
+**调研后 / 开发前**（`/goal-research` → `/goal-review` → `/goal-develop`），组织**原型设计者 / PM / 架构师 / 你（可选）**四方评审：原型先演示 → 各方背靠背初审 → master 汇总分桶 → 逐项讨论（≤2轮/议题）→ 投票决策（你×2 / 各角色×1，通过线≥3 或你同意）→ 形成决议。
 
 **防空转纪律**（保证收敛，防无限讨论）：
 - 议题预处理：只讨论"有信息能拍板"的（桶A），信息不足标「延期」（桶B），影响小默认通过（桶C）
@@ -104,7 +104,7 @@
 - 反对必须出替代方案（缺方案按弃权）；沉默即同意；领域权威者优先（技术→架构师/产品→PM/视觉→原型）
 - 重大事项（换技术栈/成本+50%/砍核心功能/架构变更/安全风险）**直接升级你**，即使委托模式
 
-产出 `docs/review-meeting-{RSTAMP}.md`（决议：通过/有条件通过/不通过）。**通过后自动衔接 `/goal-d`**，其 dev-plan/feature-spec 须落实会议纪要的「方案变更记录」与「行动项」。
+产出 `docs/reviews/{version}/review-meeting.md`（决议：通过/有条件通过/不通过）。**通过后自动衔接 `/goal-develop`**，其 dev-plan/feature-spec 须落实会议纪要的「方案变更记录」与「行动项」。
 
 ### 原型子流水线（A3）— Web / CLI-TUI 需求自动出原型（团队链路）
 
@@ -118,11 +118,11 @@ PRD 写完后自动判断：场景含前端/Web → HTML 原型；**交互式 CL
 
 ### 调研子流水线（A4）— 复杂需求先调研业界开源再开发
 
-复杂/新领域需求（agent 框架、分布式、AI 应用）开发前，`code-researcher` 下载用户提供的开源仓库（git 链接）到 `references/` 作为真实上下文，提炼**两份文档**（按批次时间戳 `{RSTAMP}`=YYYYMMDD-HHMM 命名，多次调研各批次独立累积）：
-- `docs/research-tech-{RSTAMP}.md` — **以图为主**的技术方案参考（项目架构图 + 关键实体关系图 + 主要功能状态图 + 关键流程时序图，Mermaid；禁贴代码/禁大段文字）→ 喂给架构师写 design.md
-- `docs/requirement-{RSTAMP}.md` — 精简需求文档（表格：功能清单/借鉴点）→ 喂给产品经理写 PRD
+复杂/新领域需求（agent 框架、分布式、AI 应用）开发前，`code-researcher` 下载用户提供的开源仓库（git 链接）到 `references/` 作为真实上下文，提炼**两份文档**落进版本目录 `docs/reviews/{version}/`（多次调研各版本独立目录；遵循 `skills/review-material-spec`）：
+- `docs/reviews/{version}/research.md` — **以图为主**的技术方案参考（项目架构图 + 关键实体关系图 + 主要功能状态图 + 关键流程时序图，Mermaid；禁贴代码/禁大段文字）→ 喂给架构师写 design.md
+- `docs/reviews/{version}/requirement.md` — 精简需求文档（表格：功能清单/借鉴点）→ 喂给产品经理写 PRD
 
-`docs/repolist.md` 记录 repo 清单（入库，跨批次累积），换机器/换会话可按 URL 重新 clone 恢复调研。`/goal-r` 命令触发调研，**调研完成后自动衔接 `/goal-d` 进入开发**（产出作开发基线，跳过其 0a 调研段；只要调研请声明「只调研」）；goal-d 标准 SOP 对复杂需求自动插入本段（A4）。
+`docs/repolist.md` 记录 repo 清单（入库，跨版本累积），换机器/换会话可按 URL 重新 clone 恢复调研。`/goal-research` 命令触发调研，**调研完成后自动衔接 `/goal-develop` 进入开发**（产出作开发基线，跳过其 0a 调研段；只要调研请声明「只调研」）；goal-develop 标准 SOP 对复杂需求自动插入本段（A4）。
 
 ---
 
@@ -139,7 +139,7 @@ git clone https://github.com/woshihoujinxin/code-agent-framework.git .claude
 > 不想 `.claude/` 带嵌套 `.git`：clone 后 `rm -rf .claude/.git`
 > **更新框架**：`cd my-project/.claude && git pull`（再重启 Claude Code）
 
-clone 后 `.claude/` 自动包含 19 个 subagent、`/goal-d` `/goal-o` `/goal-init` `/goal-tl` `/goal-tr` 命令、两个编排器、3 个 skills（coding-standards / design-systems / prototype-templates）——**无需手动复制任何文件**。
+clone 后 `.claude/` 自动包含 19 个 subagent、`/goal-develop` `/goal-deliver` `/goal-init` `/goal-tasks` `/goal-testresults` 命令、两个编排器、3 个 skills（coding-standards / design-systems / prototype-templates）——**无需手动复制任何文件**。
 
 **按项目调整编码规范**（可选）：编辑 `.claude/skills/coding-standards/references/coding-rules.md` 的 §1–§4（命名/结构/模式/测试）。`contract-shared.md` 的「自进化规则」段由 code-sage 自动追加，不要手改。
 
@@ -152,15 +152,15 @@ clone 后 `.claude/` 自动包含 19 个 subagent、`/goal-d` `/goal-o` `/goal-i
 在项目里开 Claude Code，用 slash 命令，斜杠后跟需求：
 
 ```
-/goal-d 用 Python 做个 Todo CLI，支持创建/查询/删除/标记完成    # 研发质量编排 → 高质量代码
-/goal-tl                                          # 查看任务列表（带 TASK03 看单任务细节）
-/goal-tr                                          # 查看五维测试结果（带 TASK03 看单任务五维详情）
-/goal-o 做个 FastAPI 服务并打包成 Docker 镜像                  # 交付编排 → 可部署制品
+/goal-develop 用 Python 做个 Todo CLI，支持创建/查询/删除/标记完成    # 研发质量编排 → 高质量代码
+/goal-tasks                                          # 查看任务列表（带 TASK03 看单任务细节）
+/goal-testresults                                          # 查看五维测试结果（带 TASK03 看单任务五维详情）
+/goal-deliver 做个 FastAPI 服务并打包成 Docker 镜像                  # 交付编排 → 可部署制品
 ```
 
 也可以不写命令，直接描述需求，PM 会自动生成 PRD 再进入开发。
 
-> `/goal-d` 走五维质量门（功能/质量/健壮/安全/E2E）产出代码；`/goal-o` 走审查→构建→校验链产出制品。两者区别见 `dev-quality-orchestrator.md` / `delivery-orchestrator.md` 开头。
+> `/goal-develop` 走五维质量门（功能/质量/健壮/安全/E2E）产出代码；`/goal-deliver` 走审查→构建→校验链产出制品。两者区别见 `dev-quality-orchestrator.md` / `delivery-orchestrator.md` 开头。
 
 ### 执行流程
 
@@ -267,8 +267,8 @@ clone 后 `.claude/` 自动包含 19 个 subagent、`/goal-d` `/goal-o` `/goal-i
 | `docs/architecture.md` | 全局架构设计（复杂项目拆分：上下文划分+模块图） | 架构师 |
 | `docs/feature-spec.md` | 每个任务的功能规格+测试契约 | 架构师 |
 | `docs/lessons-learned.md` | 跨任务经验积累 | Dev（修正后更新） |
-| `docs/requirement-{RSTAMP}.md` | 调研提炼的需求文档（精简表格，按批次时间戳命名，A4） | 调研工程师（复杂需求） |
-| `docs/research-tech-{RSTAMP}.md` | 调研提炼的技术方案参考·图为主（架构/实体关系/状态/时序图，按批次时间戳命名，A4） | 调研工程师（复杂需求） |
+| `docs/reviews/{version}/requirement.md` | 调研提炼的需求文档（精简表格，按批次时间戳命名，A4） | 调研工程师（复杂需求） |
+| `docs/reviews/{version}/research.md` | 调研提炼的技术方案参考·图为主（架构/实体关系/状态/时序图，按批次时间戳命名，A4） | 调研工程师（复杂需求） |
 | `docs/repolist.md` | 调研 repo 清单（URL/clone 路径，跨批次累积，可恢复继续调研） | 调研编排器 |
 | `references/` | 第三方 clone 代码目录（进 .gitignore，不入库） | 调研编排器 |
 | `docs/prototype/` | 高保真原型 + DESIGN.md（视觉/UX 基准，A3） | 原型构建师（Web/CLI项目） |

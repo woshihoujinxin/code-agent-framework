@@ -12,24 +12,26 @@ This is a **multi-agent autonomous development framework** (无人值守多智�
 
 | Command | Purpose | Flow |
 |---------|---------|------|
-| `/goal-d <requirement>` | R&D quality orchestration → high-quality code | PM → Planner → Dev×2 → 5-Dim Tester → Fix Loop |
-| `/goal-o <requirement>` | Delivery orchestration → deployable artifacts | Planner → Dev×2 → Reviewer → Builder → Validator |
+| `/goal-develop <requirement>` | R&D quality orchestration → high-quality code | PM → Planner → Dev×2 → 5-Dim Tester → Fix Loop |
+| `/goal-deliver <requirement>` | Delivery orchestration → deployable artifacts | Planner → Dev×2 → Reviewer → Builder → Validator |
 | `/goal-init` | Deploy compatibility layer to project root | Copies `.opencode/` and `.reasonix/` to root |
-| `/goal-tl [TASK_ID]` | View task list | Shows `docs/dev-plan.md` task table (with detail if TASK_ID provided) |
-| `/goal-tr [TASK_ID]` | View 5-dimensional test results | Shows `tests/reports/results.json` summary (with detail if TASK_ID provided) |
+| `/goal-tasks [TASK_ID]` | View task list | Shows `docs/dev-plan.md` task table (with detail if TASK_ID provided) |
+| `/goal-testresults [TASK_ID]` | View 5-dimensional test results | Shows `tests/reports/results.json` summary (with detail if TASK_ID provided) |
 | `/goal-resume [继续]` | Resume from breakpoint | Scans `docs/main-log.md` CHECKPOINT + `docs/dev-plan.md` states, reports save point (empty arg) or resumes precisely per task state (`继续`) |
-| `/goal-r <repo_urls>` | Research sub-pipeline (complex needs) | Clone repos → code-researcher → technical docs → auto-continue to `/goal-d` |
+| `/goal-research <repo_urls>` | Research sub-pipeline (complex needs) | Clone repos → code-researcher → technical docs → auto-continue to `/goal-review` |
+| `/goal-review <version>` | Design review gate (4-artifact gate + 4-party vote) | research/requirement/design-draft/prototype ready → gate → review meeting → resolution → `/goal-develop` |
+| `/goal-spec <version>` | Normalize docs (scatter → version dir + format) | Scan scattered artifacts → git mv into `docs/reviews/{version}/` → add frontmatter → gate report |
 
-> Use `/goal-d` for development with 5-dimensional quality gates (functionality/quality/robustness/security/E2E). Use `/goal-o` for delivery with review→build→validation pipeline.
+> Use `/goal-develop` for development with 5-dimensional quality gates (functionality/quality/robustness/security/E2E). Use `/goal-deliver` for delivery with review→build→validation pipeline.
 
 ## Project Structure
 
 | Directory | Purpose | Maintained by |
 |-----------|---------|---------------|
 | `agents/` | 19 subagent definitions (PM/Planner/Dev/Tester/Ops/etc.) | **Source of truth**, edit directly |
-| `commands/` | Slash commands (`/goal-d`, `/goal-o`, etc.) | **Source of truth**, edit directly |
+| `commands/` | Slash commands (`/goal-develop`, `/goal-deliver`, etc.) | **Source of truth**, edit directly |
 | `skills/` | Knowledge base (coding standards, design systems, prototype templates, grill-me) | **Source of truth**, edit directly |
-| `orchestrators/` | Orchestrator definitions (dev-quality, delivery, demo) | **Source of truth**, edit directly |
+| `orchestrators/` | Orchestrator definitions (dev-quality, delivery, research, review, spec, demo) | **Source of truth**, edit directly |
 | `.opencode/` | opencode compatibility layer (generated, **do not edit**) | `tools/sync-compat.py build` |
 | `.reasonix/` | Reasonix compatibility layer (generated, **do not edit**) | `tools/sync-compat.py build` |
 | `tools/sync-compat.py` | Compatibility layer generator | Edit generation logic only |

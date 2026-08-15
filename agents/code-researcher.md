@@ -28,7 +28,7 @@ skills:
 - 技术面必产四图：**项目架构图**（`flowchart`）/ **关键实体关系图**（`erDiagram`，仅核心实体 3-6 个）/ **主要功能状态图**（`stateDiagram-v2`，仅 2-4 个有状态流转的功能）/ **关键流程时序图**（`sequenceDiagram`，1-3 条核心链路、消息带返回、错误分支必画）
 - 每图配 **≤2 行说明**（画了什么 + 关键结论）；文字用「图 + 一句话 + 表格」，连续说明 ≤3 行/段
 - ❌ **不贴参考项目源码**（代码在 references/，需要时自己读）；❌ 不大段文字堆砌
-- 文件路径：`docs/research-tech-{RSTAMP}.md`（图为主）+ `docs/requirement-{RSTAMP}.md`（表格为主）；两份共用批号 `{RSTAMP}`（编排器传入 `YYYYMMDD-HHMM`，各批次独立累积）
+- 文件路径：`docs/reviews/{version}/research.md`（图为主）+ `docs/reviews/{version}/requirement.md`（表格为主）；两份落进同一版本目录 `docs/reviews/{version}/`（编排器传入目标版本号 `{version}`，各版本独立目录）；遵循 `.claude/skills/review-material-spec`
 - 禁止在仓库根目录建文件（README.md、.gitignore 除外）
 
 ## 工作流程
@@ -45,9 +45,9 @@ skills:
 - 返回编排器固定格式（不返回文档内容含图源码）：
 
 ```
-调研完成（批次 {RSTAMP}）：
-- 技术方案参考（图为主）：{REPO_DIR}/docs/research-tech-{RSTAMP}.md
-- 需求文档：{REPO_DIR}/docs/requirement-{RSTAMP}.md
+调研完成（版本 {version}）：
+- 技术方案参考（图为主）：{REPO_DIR}/docs/reviews/{version}/research.md
+- 需求文档：{REPO_DIR}/docs/reviews/{version}/requirement.md
 - 参考项目数：{N}
 - 网络状态：{全部 clone 成功 / 部分 WebFetch 降级 / NETWORK_FAIL}
 ```

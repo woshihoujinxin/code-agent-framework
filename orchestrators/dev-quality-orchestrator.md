@@ -226,7 +226,7 @@
 ### 0a. 调研子流水线（A4，按需判断，先于 PM）
 
 > **ROLES 判断**：调研属增强角色。**精简模式跳过本步**（直接进 Phase 0）；**全能模式执行**。
-> **触发时读手册**：满足任一触发条件（复杂技术栈/新领域、用户传 `参考仓库：{git 链接}`、需求含"技术调研"）→ 读 `orchestrators/handbook/research-pipeline.md` 执行（产出 research-tech-*/requirement-* 注入 0b 与 Phase 1）；由 `/goal-r` 衔接进入则跳过（取最新批次，不重复调研）。
+> **触发时读手册**：满足任一触发条件（复杂技术栈/新领域、用户传 `参考仓库：{git 链接}`、需求含"技术调研"）→ 读 `orchestrators/handbook/research-pipeline.md` 执行（产出 docs/reviews/{version}/research.md / docs/reviews/{version}/requirement.md 注入 0b 与 Phase 1）；由 `/goal-research` 衔接进入则跳过（取最新批次，不重复调研）。
 
 
 ### 0b. 产品需求分析

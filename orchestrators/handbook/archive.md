@@ -11,7 +11,7 @@
 | `docs/dev-plan.md` | 剪掉已完成（✅/⚠️）且属于旧版本的任务行（保留当前版本 ⏳/🔄/🔳） | `docs/archive/v{version}/dev-plan.md` |
 | `docs/design.md` | 剪掉旧版本的实体/时序/模块设计主体；**ADR 决策记录保留在运行时文件**（历史决策 = 后续设计上下文，剪掉会丢"为什么"） | `docs/archive/v{version}/design.md`（主体） |
 | `tests/reports/results.json` | 移除旧版本任务条目（保留当前版本条目） | `docs/archive/v{version}/results.json` |
-| `docs/research-tech-*.md` / `requirement-*.md` | 本就是批次独立文件（不累积）；设计/开发已消费完的旧批次 → 归档；**`docs/repolist.md` 保留**（按 URL 可恢复） | `docs/archive/v{version}/research-tech-{RSTAMP}.md` 等 |
+| `docs/reviews/{version}/research.md` / `requirement-*.md` | 本就是批次独立文件（不累积）；设计/开发已消费完的旧批次 → 归档；**`docs/repolist.md` 保留**（按 URL 可恢复） | `docs/archive/v{version}/docs/reviews/{version}/research.md` 等 |
 
 > **不归档**：`lessons-learned.md`（经验库，跨版本传承是特性）、`prd.md`（需求池，外层循环持续消费）、`metrics.md`（指标累积供 code-sage 提炼）、`env-state.md`（环境当前态）。
 

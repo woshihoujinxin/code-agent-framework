@@ -21,7 +21,7 @@
 | 7 | Ops ↔ master/Tester | Ops 备测试环境（依赖/测试库 {repo}_test/schema 同步/.env 测试端口），env-state.md 指纹短路 + 就绪报告；Tester 读 env-state.md，不重复派 ops | docs/env-state.md | code-ops「机器契约」；DQO L551-554 | 环境不一致 → 测试跑错库/错端口 | 流程 |
 | 8 | Reviewer → Builder → Validator | 串行链（审查→构建→校验），下游依赖上游通过；Reviewer 四维审查报告含 `### 判定`；Builder 构建制品（exit 0 + 制品存在非空，不改 src/）；Validator 四维校验（完整性/可安装性/冒烟/元数据）含 `### 判定` | tests/reports/{TASK}-{review,build,artifact}.md + 制品 | 三角色「机器契约」；delivery-orchestrator L58-60、L255-372 | 下游跑在上游 FAIL 上 → 无效交付 | 机器 + 流程 |
 | 9 | Prototype-Builder ↔ Prototype-Critic | Builder 产原型 + DESIGN.md（9 段令牌，WCAG AA）；Critic 独立评审（Web 5 维 + Anti-Slop + 功能可达性 P0 + 需求覆盖），critique.md 含 `**结论：PASS/FAIL**` + P0/P1/P2 问题清单（代码级建议）；FAIL → 返回 Builder 修 | docs/prototype/{index.html,cli.md,DESIGN.md,critique.md} | Builder/Critic「机器契约/负面围栏」 | 未审就进开发 → 视觉基准带病 | 内容 + 机器 |
-| 10 | Researcher → Planner/PM | research-tech-{RSTAMP}.md（架构/实体/状态/时序四图 → design.md ADR 依据）+ requirement-{RSTAMP}.md（→ PRD 依据）；不产最终 PRD/design | docs/research-tech-*.md、docs/requirement-*.md | code-researcher「产出物硬约束/负面围栏」 | 设计脱离真实开源实践 → ADR 拍脑袋 | 内容 |
+| 10 | Researcher → Planner/PM | docs/reviews/{version}/research.md（架构/实体/状态/时序四图 → design.md ADR 依据）+ docs/reviews/{version}/requirement.md（→ PRD 依据）；不产最终 PRD/design | docs/reviews/{version}/research.md、docs/reviews/{version}/requirement.md | code-researcher「产出物硬约束/负面围栏」 | 设计脱离真实开源实践 → ADR 拍脑袋 | 内容 |
 | 11 | code-sage → coding-rules | 扫描报告标签达阈值（单标签 ≥3 次或占 FAIL ≥20%）提炼防错规则，追加 contract-shared「自进化规则」段（**禁止人工编辑**）；调优建议写 metrics.md | contract-shared.md 自进化段、docs/metrics.md | code-sage「目录/提炼原则/负面围栏」；contract-shared 段声明 | 无（建议性，宁缺毋滥） | 内容 |
 | 12 | master ↔ PM/Planner | 需求变更 → 更新 prd.md → Planner 提取新任务追加 dev-plan/feature-spec；评审纪要 REVIEW_MEETING → Planner 逐条落实「方案变更记录」 | docs/prd.md、docs/main-log.md | DQO 需求变更段；review-orchestrator Step 7 | 契约与需求/评审决议脱节 | 流程 |
 
@@ -33,18 +33,18 @@
 |--------|---------------|----------------------|--------------|
 | PM | `docs/prd.md` | Planner（写契约前读 US）、review 门控 | REQ_FILE 注入前确认存在 |
 | Planner | `docs/feature-spec.md` + `docs/dev-plan.md` + `docs/design.md` + `docs/smoke-checks.md` | Dev（单测覆盖/翻译实现/冒烟命令）、Tester×5（判卷）、Ops（端口库规划）、master（DAG 调度） | Phase 1 后 Glob 四文件；冒烟关卡读 smoke-checks |
-| Researcher | `docs/research-tech-{RSTAMP}.md` + `docs/requirement-{RSTAMP}.md` | Planner（ADR 基准）、PM（PRD 基准） | 调研后确认两文档再进评审 |
+| Researcher | `docs/reviews/{version}/research.md` + `docs/reviews/{version}/requirement.md` | Planner（ADR 基准）、PM（PRD 基准） | 调研后确认两文档再进评审 |
 | Prototype-Builder | `docs/prototype/{index.html\|cli.md}` + `DESIGN.md` + `README.md` | Critic（审查）、FE Dev（视觉基准）、quality tester（视觉核查） | Glob 查 index.html 存在；PROTO_PATH 注入 |
 | Prototype-Critic | `docs/prototype/critique.md` | master（结论）、Builder（修复依据） | 读 `**结论：PASS / FAIL**` |
 | FE/BE Dev | 代码 + `tests/unit/test_{TASK_ID}_*` + `tests/reports/{TASK_ID}-selfcheck-{fe,be}.md` + git commit | master（冒烟）、Tester（核查 ⚠️ 项） | 冒烟关卡：selfcheck 存在 + `IS_PASS` + commit |
 | Ops | `docs/env-state.md` + `tests/reports/{TASK}-env-prepare.md` | Tester（环境信息）、master（就绪核验） | 派 Tester 前读 env-state（就绪核验 3 项） |
-| Tester×5 | `tests/reports/{TASK_ID}-{dimension}.{md,json}` | master（判定/JSON 合并）、code-sage（Grep 标签）、`/goal-tr` | Grep `^### 判定`（行号最大=最新轮）；JSON 按 report-schema |
+| Tester×5 | `tests/reports/{TASK_ID}-{dimension}.{md,json}` | master（判定/JSON 合并）、code-sage（Grep 标签）、`/goal-testresults` | Grep `^### 判定`（行号最大=最新轮）；JSON 按 report-schema |
 | Reviewer | `tests/reports/{TASK_ID}-review.md` | master（判定/失败分类） | Grep `### 判定` + `### 失败分类` |
 | Builder | `tests/reports/{TASK_ID}-build.md` + 制品 | Validator（制品路径）、master | Grep `### 判定`；制品存在非空 |
 | Validator | `tests/reports/{TASK_ID}-artifact.md` | master | Grep `### 判定` |
 | Export-Specialist | `exports/`（导出物） | 用户、master | 记录导出路径 |
 | code-sage | contract-shared「自进化规则」段 + `docs/metrics.md` 调优段 | 全员（规则）、master（Step B2 路由） | 记录新增/更新规则数 |
-| master | `docs/main-log.md` + `tests/reports/results.json` + `docs/metrics.md` + `SUMMARY-{version}.md` + README 快速开始 | 用户、压缩恢复、`/goal-tl` `/goal-tr` | checkpoint 留痕；收尾统计 |
+| master | `docs/main-log.md` + `tests/reports/results.json` + `docs/metrics.md` + `SUMMARY-{version}.md` + README 快速开始 | 用户、压缩恢复、`/goal-tasks` `/goal-testresults` | checkpoint 留痕；收尾统计 |
 
 ## 缺口修复记录（G1-G7 已全量修复，2026-08-13）
 

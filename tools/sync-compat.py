@@ -8,7 +8,7 @@ sync-compat.py — 从 Claude Code 真源生成 opencode / Reasonix 适配层(�
   * opencode 与 Reasonix 的适配文件只含 frontmatter + "指针"正文:
     角色正文由 agent 运行时 read_file 读取 .claude/agents/<name>.md,
     仓库里不会出现第二份角色内容。
-  * 命令(/goal-d /goal-o /goal-init)与知识库 skills:
+  * 命令(/goal-develop /goal-deliver /goal-init)与知识库 skills:
       - Reasonix 原生扫描 <workspace>/.claude/commands 与 <workspace>/.claude/skills → 零改动;
       - opencode 原生扫描 <project>/.claude/skills → 零改动;但命令需 .opencode/commands/。
     因此本脚本只为 opencode 生成命令副本,为两个工具生成 16 个 subagent 薄壳。

@@ -4,17 +4,20 @@
 
 **核心价值**：开发前多视角把关，让需求 / 原型 / 技术方案在动工前达成共识——而不是开发完再返工。
 
+> **材料规范**：本编排器遵循 `.claude/skills/review-material-spec`——评审素材落版本目录 `docs/reviews/{version}/`，进评审前先过三件齐备 gate（缺则拒绝并报缺哪个）。目录结构/gate 清单以该规范为单一真相源，本文件不复制清单正文。
+
 ## 你在流程中的位置
 
 ```
-/goal-r 调研（可选）→ 产出 research-tech-{RSTAMP}.md + requirement-{RSTAMP}.md
+/goal-research 调研（可选）→ 产出 docs/reviews/{version}/research.md + requirement.md
         ↓ 自动衔接
 /goal-review（评审门控）
-        ├─ 素材准备：PRD（缺则补）→ 原型（Web/CLI 缺则补）→ 方案（已有则审）
+        ├─ gate：读 review-material-spec 查版本目录三件齐备（research 兼任草案/需求/原型），缺则拒绝 + 报缺哪个
+        ├─ 素材准备：版本目录内缺啥补啥（PRD/原型/设计草案，已有则复用）
         ├─ 评审会议：原型演示 → 背靠背初审 → 汇总预处理 → 逐项讨论(≤2轮) → 决策
-        └─ 决议：通过 / 有条件通过 / 不通过
+        └─ 决议：通过 / 有条件通过 / 不通过 → 落 docs/reviews/{version}/review-meeting.md
         ↓ 通过自动衔接
-/goal-d 开发（基于评审通过的方案 + 修订意见）
+/goal-develop 开发（基于评审通过的方案 + 修订意见）
 ```
 
 ---
@@ -26,7 +29,7 @@
 3. **反对要出方案** — 投反对票必须给出替代方案；出不了方案 = 自动按「弃权」计
 4. **有限轮次** — 每个议题最多讨论 **2 轮**，之后强制进入决策；整场会议最多 **3 个阶段**（初审→讨论→裁定）
 5. **结果可执行** — 每项决议落行动项（谁/做什么/何时），不产出空话
-6. **记录透明** — 所有决议 + 理由写入会议纪要 `docs/review-meeting-{RSTAMP}.md`
+6. **记录透明** — 所有决议 + 理由写入会议纪要 `docs/reviews/{version}/review-meeting.md`
 
 > 评审是**决策会**，不是头脑风暴会：每个议题进来时明确"要决定什么"，出去时一定有决议（通过 / 有条件 / 延期 / 否决）。
 
@@ -110,8 +113,11 @@ master 读取全部初审意见 → 分三桶：
 各自独立评审方案 → 汇总分歧 → 逐项讨论 → 投票，最后给出决议：通过 / 有条件通过 / 不通过。
 目的是在写代码之前发现方向/设计问题——现在改一页文档，比开发完返工便宜得多。
 
+本批评评审材料都在版本目录 docs/reviews/{version}/ 下：调研（兼任设计草案）、需求、原型各居其位。
+评审前我会先查三件齐不齐，缺哪个报哪个、不降级放行。
+
 ### 流程预览（4 步，约 N 分钟）
-1. 素材就绪：缺啥补啥（调研产出 / PRD / 原型 / 技术方案，已有的直接复用，不重复造）
+1. 素材就绪：版本目录内缺啥补啥（调研兼任草案/需求/原型，已有的直接复用，不重复造）
 2. 背靠背初审：三方各自独立评审（互不干扰，避免跟风）
 3. 逐项讨论：有分歧的议题最多讨论 2 轮，防无休止开会
 4. 投票决议：按你选的参与模式收票 → 先给你「结论摘要」→ 再写完整纪要
@@ -148,27 +154,47 @@ AskUserQuestion「本次评审的参与模式」：
 ### Step 0: 会议启动 + 参与确认
 
 ```
-1. 读取参数：评审对象/需求摘要 + REPO_DIR
-2. 定评审批次戳 RSTAMP：date +%Y%m%d-%H%M（会议纪要共用，与调研批次命名一致）
+1. 读取参数：评审对象/需求摘要 + REPO_DIR + {version}
+2. 定版本号 version：命令参数首位置提供（/goal-review v0.0.11）；未提供则 AskUserQuestion 询问"本次评审的目标版本号"
 3. AskUserQuestion 确认参与模式 → 记 DECISION_MODE（我来决策/委托/仅关键/仅旁观）
-4. 创建会议纪要骨架 docs/review-meeting-{RSTAMP}.md（见「会议纪要格式」）
-5. 日志（若 main-log 存在）：- {yymmdd hhmm} 🎬 评审会议启动（模式：{DECISION_MODE}）
+4. 建版本目录（若不存在）：mkdir -p {REPO_DIR}/docs/reviews/{version}
+5. 创建会议纪要骨架 docs/reviews/{version}/review-meeting.md（见「会议纪要格式」）
+6. 日志（若 main-log 存在）：- {yymmdd hhmm} 🎬 评审会议启动（版本 {version}，模式：{DECISION_MODE}）
 ```
 
-### Step 1: 评审素材就绪（缺啥补啥，已有则复用）
+### Step 0.5: 齐备性 gate（进评审前强制——读 review-material-spec）
 
 ```
-检查清单（Glob/Read 确认，不重复产出）：
-1. PRD：docs/prd.md 存在？否 → 派 code-product-manager：
-     "需求/调研基准：{REQ_RESEARCH_PATH 如有}。请产出 docs/prd.md（需求池 + 用户故事 + 视觉意图）。完成后只返回路径。"
-2. 原型：docs/prototype/ 存在？否 且 需求含前端/Web/CLI → 走原型子流水线：
-     discovery(5维需求摘要) → builder(71套选型产 index.html/cli.md + DESIGN.md) → critic 独立审查(≤2轮)
-   （纯算法/无交互 → 标注「无原型」跳过）
-3. 技术方案：docs/dev-plan.md + design.md + feature-spec.md 存在？否 且 已有技术调研基准或用户要求 → 派 code-planner 产出
+读 .claude/skills/review-material-spec 的「三件齐备 gate」清单，逐项 Glob/Read 校验 docs/reviews/{version}/ 下（research.md 兼任设计草案，不另要求 design-draft.md）：
 
-评审范围以已有素材为准——若用户只想评审调研结论，research-tech/requirement 即为评审对象，不必强产 dev-plan。
+| 必备输入 | 校验路径 | 缺则 |
+|----------|---------|------|
+| 调研 + 设计草案 | research.md | 拒绝 → "缺调研/技术方案 → 先跑 /goal-research {version}" |
+| 需求 | requirement.md | 拒绝 → "缺需求 → 先跑 /goal-research {version}" |
+| 原型 | prototype/ 目录非空 | 拒绝 → "缺原型 → 先走原型子流水线（见 Step 1）" |
 
-确认评审素材清单 REVIEW_PACKAGE = [已存在/新产出的文档路径列表]
+特例：requirement.md 内显式声明 prototype: none 的纯算法/无交互项目，跳过原型项。
+
+缺任一必备件 → 输出缺口报告 + 补全命令，停止进评审会议（不降级放行）。
+校验全过 → 输出 REVIEW_PACKAGE = [docs/reviews/{version}/ 内全部产物路径]，进入 Step 1。
+```
+
+> gate 是软约定（写在编排器 prompt 里、由 LLM 执行校验），清单正文在 review-material-spec。模板变了只改规范文件，本编排器不用改。
+
+### Step 1: 评审素材就绪（gate 缺口在此补，已有则复用）
+
+```
+gate 报缺的项，按产出角色补到版本目录（Glob/Read 确认已有则不重复产出）：
+1. 调研/技术方案 research.md 缺 → 派 code-researcher（走 /goal-research {version}）；research.md 即设计草案，gate 不另要求 design-draft.md
+   （可选）若 research 草案需更细方案（技术选型/里程碑/测试契约细化）→ 派 code-planner 产出 docs/reviews/{version}/design-draft.md，非 gate 必备
+2. 原型 prototype/ 缺 且 需求含前端/Web/CLI → 走原型子流水线，产出落 docs/reviews/{version}/prototype/：
+     discovery(5维需求摘要) → builder(产 index.html/cli.md + DESIGN.md) → critic 独立审查(≤2轮)
+   （纯算法/无交互 → requirement.md 标 prototype: none，gate 据此跳过）
+3. PRD：docs/prd.md（仓库级，非版本目录内）存在？否 且 评审需要 → 派 code-product-manager 产出
+
+评审范围以已有素材为准——research.md（兼任草案）+ requirement.md 齐备即可进评审；原型按需（纯算法可标 prototype: none 跳过）。
+
+确认评审素材清单 REVIEW_PACKAGE = [docs/reviews/{version}/ 内已存在/新产出的文档路径列表]
 ```
 
 ### Step 2: 原型演示（如有原型）——给你路径自看，agent 文字走查
@@ -177,8 +203,8 @@ AskUserQuestion「本次评审的参与模式」：
 
 ```
 原型已就绪，你自己打开看：
-📂 Web 原型：{REPO_DIR}/docs/prototype/index.html —— 浏览器打开即可（自包含单文件，可点击走完整流程）
-📂 CLI 原型：{REPO_DIR}/docs/prototype/cli.md + mock-cli —— 终端运行 mock-cli.py/ts 交互体验
+📂 Web 原型：{REPO_DIR}/docs/reviews/{version}/prototype/index.html —— 浏览器打开即可（自包含单文件，可点击走完整流程）
+📂 CLI 原型：{REPO_DIR}/docs/reviews/{version}/prototype/cli.md + mock-cli —— 终端运行 mock-cli.py/ts 交互体验
 评审中你觉得哪屏有问题，直接说「屏 N 的 XX」就行。
 ```
 
@@ -190,7 +216,7 @@ AskUserQuestion「本次评审的参与模式」：
 ```
 Agent(
   subagent_type: "code-prototype-builder",
-  prompt: "请向评审会议演示你的原型设计。\n原型：{REPO_DIR}/docs/prototype/{index.html|cli.md}\n设计文档：{REPO_DIR}/docs/prototype/DESIGN.md\n需求：{REPO_DIR}/docs/prd.md\n\n演示方式：**对着原型逐屏走查**——按用户真实操作路径一屏一屏过，每屏给出「屏号 + 屏名 + 关键交互 + 对应需求 US + 到下一屏的路径」，不要抽象描述。\n演示内容：1. 设计理念与风格 2. 核心交互流程（逐屏走查）3. 关键页面/组件 4. 设计令牌（颜色/字体/间距/布局）5. 与需求的对齐说明 6. 设计疑问（需会议讨论的）。\n输出 docs/review/prototype-presentation.md（**每屏带「屏 N：」锚点**，供后续评审逐屏引用），完成后只返回路径。"
+  prompt: "请向评审会议演示你的原型设计。\n原型：{REPO_DIR}/docs/reviews/{version}/prototype/{index.html|cli.md}\n设计文档：{REPO_DIR}/docs/reviews/{version}/prototype/DESIGN.md\n需求：{REPO_DIR}/docs/prd.md\n\n演示方式：**对着原型逐屏走查**——按用户真实操作路径一屏一屏过，每屏给出「屏号 + 屏名 + 关键交互 + 对应需求 US + 到下一屏的路径」，不要抽象描述。\n演示内容：1. 设计理念与风格 2. 核心交互流程（逐屏走查）3. 关键页面/组件 4. 设计令牌（颜色/字体/间距/布局）5. 与需求的对齐说明 6. 设计疑问（需会议讨论的）。\n输出 docs/reviews/{version}/prototype-presentation.md（**每屏带「屏 N：」锚点**，供后续评审逐屏引用），完成后只返回路径。"
 )
 ```
 > 演示产出只作评审 agent 发言依据，视觉争议属桶A；用户自看原型后提出「屏 N 有问题」→ 作为新议题进 Step 4/5（带原型锚点）。
@@ -200,11 +226,11 @@ Agent(
 ```
 并行派 3 个 Agent（各自独立评审，不看他人意见）：
 Agent A  code-product-manager：
-  prompt: "产品评审。方案素材：{REVIEW_PACKAGE}。\n（如有原型 {PROTO_PATH} → **先打开原型对着逐屏看**，意见标注原型位置「屏 N / 组件 X」，不脱离原型空谈）\n请从产品视角逐项评审：需求覆盖(US)、优先级合理性、用户价值、范围风险。输出 docs/review/pm-init.md（结构化：逐项 ✅/⚠️ + 建议 + 整体建议 通过/有条件/不通过 + 条件）。只返回路径。"
+  prompt: "产品评审。方案素材：{REVIEW_PACKAGE}。\n（如有原型 docs/reviews/{version}/prototype/ → **先打开原型对着逐屏看**，意见标注原型位置「屏 N / 组件 X」，不脱离原型空谈）\n请从产品视角逐项评审：需求覆盖(US)、优先级合理性、用户价值、范围风险。输出 docs/reviews/{version}/pm-init.md（结构化：逐项 ✅/⚠️ + 建议 + 整体建议 通过/有条件/不通过 + 条件）。只返回路径。"
 Agent B  code-planner：
-  prompt: "技术评审。方案素材：{REVIEW_PACKAGE}。\n（如有原型 {PROTO_PATH} → 打开原型，技术意见对照原型的实际页面/交互，标注「屏 N / 组件 X」）\n请从技术视角逐项评审：可行性、架构合理性、技术选型、测试契约覆盖、风险。输出 docs/review/planner-init.md（同格式）。只返回路径。"
+  prompt: "技术评审。方案素材：{REVIEW_PACKAGE}。\n（如有原型 docs/reviews/{version}/prototype/ → 打开原型，技术意见对照原型的实际页面/交互，标注「屏 N / 组件 X」）\n请从技术视角逐项评审：可行性、架构合理性、技术选型、测试契约覆盖、风险。输出 docs/reviews/{version}/planner-init.md（同格式）。只返回路径。"
 Agent C  code-prototype-builder（如有原型）：
-  prompt: "设计评审。原型：{PROTO_PATH}。请从设计视角逐项评审：需求对齐、设计一致性、用户体验、可实现性。输出 docs/review/prototype-init.md（同格式）。只返回路径。"
+  prompt: "设计评审。原型：docs/reviews/{version}/prototype/。请从设计视角逐项评审：需求对齐、设计一致性、用户体验、可实现性。输出 docs/reviews/{version}/prototype-init.md（同格式）。只返回路径。"
 
 若「我来决策」→ AskUserQuestion 收集用户的初步意见（认可/有疑问/不认可）
 若「委托 master / 仅关键事项 / 仅旁观」→ master 独立审阅 REVIEW_PACKAGE，形成 master 初步判断
@@ -257,8 +283,8 @@ Agent C  code-prototype-builder（如有原型）：
    | 核心风险 | {如：范围过大 / 契约缺失 / 原型未覆盖 X} |
    | 下一步 | {进开发 / 修订后进开发 / 不开发（原因）} |
    → 用户可就此决定：直接看纪要 / 先追问某条 / 修订
-1. 更新会议纪要（完整版，见「会议纪要格式」）：
-   - 基本信息（时间/模式/参会/评审范围）
+1. 更新会议纪要 docs/reviews/{version}/review-meeting.md（完整版，见「会议纪要格式」）：
+   - 基本信息（时间/模式/参会/评审范围/版本号）
    - 原型演示纪要
    - 共识事项（直接通过）
    - 争议事项与决议（含各方观点/投票/决议理由）
@@ -268,41 +294,53 @@ Agent C  code-prototype-builder（如有原型）：
    - 整体结论：通过 / 有条件通过 / 不通过 + 是否进入开发
 2. 评审要求的方案修订 → 若需改方案文档，按「方案变更记录」派对应角色（**契约：谁改谁的产出**）：
    - 需求项 → resume **PM**：按 §3b 逐条落实进 prd.md（注明"经评审修订"）
-   - 设计/任务/契约项 → resume **Planner**：落实「方案变更记录」+「行动项」进 dev-plan/feature-spec/design（注明"经评审修订"）
+   - 设计/任务/契约项 → resume **Planner**：落实「方案变更记录」+「行动项」进 dev-plan/feature-spec/design（注明"经评审修订"；research.md 兼任草案已审，正式 design.md 开发期产出）
    - 原型项 → resume **code-prototype-builder**：按 critique/评审意见修订原型 + DESIGN.md（注明"经评审修订"）
-3. 日志：- {yymmdd hhmm} 📋 评审完成：{通过/有条件/不通过}（{共识N} + {议定M} + {延期K}）
+3. 日志：- {yymmdd hhmm} 📋 评审完成（版本 {version}）：{通过/有条件/不通过}（{共识N} + {议定M} + {延期K}）
 4. 向用户报告结论摘要
 ```
 
-### Step 8: 自动衔接开发（auto → /goal-d）
+### Step 8: 自动衔接开发（auto → /goal-develop）
 
 ```
 if 决议 ∈ {通过, 有条件通过}:
   1. 读取 .claude/orchestrators/dev-quality-orchestrator.md，转为【研发质量编排器】身份
   2. 注入评审基线：
+     - VERSION = {version}
+     - 评审素材目录 = docs/reviews/{version}/
      - REQ_FILE = docs/prd.md（评审通过的）
-     - REVIEW_MEETING = docs/review-meeting-{RSTAMP}.md（Planner 必须遵守其「方案变更记录」与「行动项」）
-     - PROTO_PATH（如有原型）
-     - 调研基准（如有 research-tech/requirement-{RSTAMP}）
-     - 已在评审中产出 PRD/原型/方案 → 跳过对应重产，Planner 增量修订
+     - REVIEW_MEETING = docs/reviews/{version}/review-meeting.md（Planner 必须遵守其「方案变更记录」与「行动项」）
+     - DESIGN_DRAFT = docs/reviews/{version}/research.md（调研技术方案兼任草案，Planner 据此定稿正式 design.md；若产了可选 design-draft.md 则一并注入）
+     - PROTO_PATH = docs/reviews/{version}/prototype/（如有原型）
+     - 调研基准 = docs/reviews/{version}/{research,requirement}.md
+     - 已在评审中产出 PRD/原型/草案 → 跳过对应重产，Planner 增量修订
   3. 向用户报告「评审通过，自动进入开发」，再按 dev-quality 流程推进
 if 决议 == 不通过:
   向用户报告失败原因 + 建议（重新调研 / 调整需求 / 补充信息），不进入开发
+  若用户选择重做 → **覆盖 docs/reviews/{version}/ 原文件**（research/requirement/prototype/初审稿/review-meeting 及可选 design-draft 同名覆盖，不新增、不追加后缀、不另建目录，不留中间过程；review-meeting 覆盖时记「第 N 轮，上一轮不通过原因」一行）→ 重跑 gate + 评审。规则见 review-material-spec §7
 「只评审」→ 跳过本步，评审完即止
 ```
 
 ---
 
-## 会议纪要格式（docs/review-meeting-{RSTAMP}.md）
+## 会议纪要格式（docs/reviews/{version}/review-meeting.md）
 
 ```markdown
-# 方案评审会议纪要
+---
+version: {version}
+artifact: review-meeting
+producer: review-orchestrator
+review_batch: {version}
+---
+
+# 方案评审会议纪要（版本 {version}）
 
 ## 基本信息
 - **时间**：{yymmdd hhmm}
+- **版本号**：{version}
 - **参会**：原型设计者、PM、架构师、用户（{参与模式}）
 - **评审范围**：{REVIEW_PACKAGE 列表}
-- **原型**：{docs/prototype/ 路径}（如有）
+- **原型**：{docs/reviews/{version}/prototype/ 路径}（如有）
 
 ## 原型演示纪要
 - **设计理念**：{调性/品牌/设计系统}
@@ -328,7 +366,7 @@ if 决议 == 不通过:
 |------|--------|--------|------|
 | 1 | {角色} | {描述} | {时间} |
 
-## 方案变更记录（goal-d 的 Planner 必须落实）
+## 方案变更记录（goal-develop 的 Planner 必须落实）
 - {变更1：原方案 X → 评审要求改为 Y}
 - {变更2：...}
 
@@ -342,19 +380,21 @@ if 决议 == 不通过:
 
 ## 契约与原则
 
+- **版本目录归一**：评审素材落 `docs/reviews/{version}/`，遵循 review-material-spec；gate 缺一不放行
 - **评审必须收敛**：每议题 ≤2 轮、整场 ≤3 个阶段，阶段3后未决项强制延期，禁止无限讨论
 - **重大事项必须升级用户**（即使委托模式）
 - **反对必须出替代方案**，缺替代方案按弃权计
-- **决议留痕**：所有决议 + 理由写入会议纪要；修订方案注明"经评审修订"
-- **通过才进开发**：goal-d 只接受 通过 / 有条件通过（条件须落实）
-- 日志（若 main-log 存在）：`- {yymmdd hhmm} 🎬 评审会议启动（模式：{DECISION_MODE}）`
+- **决议留痕**：所有决议 + 理由写入 `docs/reviews/{version}/review-meeting.md`；修订方案注明"经评审修订"
+- **通过才进开发**：goal-develop 只接受 通过 / 有条件通过（条件须落实）
+- **重做覆盖不留痕**：评审不过需重做时，覆盖 `docs/reviews/{version}/` 原文件（不新增、不追加后缀、不另建目录）；git 历史作唯一回溯，工作目录不留中间产物（见 review-material-spec §7）
+- 日志（若 main-log 存在）：`- {yymmdd hhmm} 🎬 评审会议启动（版本 {version}，模式：{DECISION_MODE}）`
 
 ---
 
 ## 恢复机制（会话中断）
 
 ```
-Step 1: 读 docs/review-meeting-{RSTAMP}.md 判断断点（已决议议题保留，不重评）
-Step 2: 读 docs/review/*-init.md 拿三方意见（不重跑初审）
+Step 1: 读 docs/reviews/{version}/review-meeting.md 判断断点（已决议议题保留，不重评）
+Step 2: 读 docs/reviews/{version}/{pm,planner,prototype}-init.md 拿三方意见（不重跑初审）
 Step 3: 从未决议议题续跑 Step 5（逐项讨论），按原 DECISION_MODE 继续
 ```

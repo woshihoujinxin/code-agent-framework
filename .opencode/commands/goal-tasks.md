@@ -33,7 +33,7 @@ description: 任务列表（TaskList）——实时查看 dev-plan 任务状态�
    📊 任务 {X}/{N} 完成（✅{done} ｜ 🔄{dev} ｜ 🔳{test} ｜ ⏳{todo} ｜ ⚠️{escalate}）
    当前阶段：{从 dev-plan 状态分布 / main-log 速览行推断}
    ```
-4. 提示用户：`想看单个任务细节 → /goal-tl TASK03`
+4. 提示用户：`想看单个任务细节 → /goal-tasks TASK03`
 
 ## 模式 2：单个任务执行细节（$ARGUMENTS = 任务 ID）
 

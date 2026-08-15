@@ -1,10 +1,10 @@
 ---
-description: 方案评审会议——在调研后、开发前，组织原型设计者/产品/架构师/你（可选）四方评审 + 投票，防空转机制保证收敛；通过后自动衔接 /goal-d 进入开发（"只评审"可止步）
+description: 方案评审会议——在调研后、开发前，组织原型设计者/产品/架构师/你（可选）四方评审 + 投票，防空转机制保证收敛；进评审前先过三件齐备 gate（缺则拒绝报缺哪个）；通过后自动衔接 /goal-develop 进入开发（"只评审"可止步）
 ---
 
 读取 `./.claude/orchestrators/review-orchestrator.md` 作为系统提示词，按它定义的流程作为**方案评审编排器**组织评审会议。
 
-> 评审对象：调研产出（如有）+ PRD（如有）+ 原型（如有）+ 技术方案（如有）——缺啥补啥、已有则复用。产出 `docs/review-meeting-{RSTAMP}.md` 会议纪要（决议：通过 / 有条件通过 / 不通过）。**评审通过后自动衔接 `/goal-d`** 进入开发；「只评审」可止步。
+> 遵循 `.claude/skills/review-material-spec`：进评审前先读规范查版本目录 `docs/reviews/{version}/` 三件齐备（research 兼任草案/需求/原型），缺则拒绝并报缺哪个。评审纪要落 `docs/reviews/{version}/review-meeting.md`（决议：通过 / 有条件通过 / 不通过）。**评审通过后自动衔接 `/goal-develop`** 进入开发；「只评审」可止步。
 
-评审对象/需求：$ARGUMENTS
+目标版本号 + 评审对象/需求：$ARGUMENTS
 代码仓库：./

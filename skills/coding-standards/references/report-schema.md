@@ -1,6 +1,6 @@
 # 测试报告 JSON Schema（预定义契约）
 
-> **机器可读结构化报告的唯一权威定义**。所有**写 JSON 者**（5 个 tester）、**汇总者**（master 编排器）、**消费方**（`/goal-tr` `/goal-tl` 命令、SUMMARY 生成）都按本 schema 读写。结构**提前定义好**，任何人不得自造字段。
+> **机器可读结构化报告的唯一权威定义**。所有**写 JSON 者**（5 个 tester）、**汇总者**（master 编排器）、**消费方**（`/goal-testresults` `/goal-tasks` 命令、SUMMARY 生成）都按本 schema 读写。结构**提前定义好**，任何人不得自造字段。
 
 ## 1. 单维度判定 `tests/reports/{TASK_ID}-{dimension}.json`（tester 写，覆盖写 = 最新轮次）
 

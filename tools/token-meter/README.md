@@ -87,8 +87,8 @@ python tools/token-meter/trace.py --before <旧session>.jsonl --after <新sessio
 **计费倍率**（可在 `--rate-output` 覆盖）：input×1.0 / output×5.0 / cache_write×1.25 / cache_read×0.1
 
 **怎么造可比的两个 session**（用户操作）：
-1. 项目 A：`.claude` 切旧版（`git -C .claude checkout <旧tag>`），跑 `/goal-d <需求>` 到完成 → session A
-2. 项目 B：`.claude` 用新版，跑 `/goal-d <同一需求>` 到完成 → session B
+1. 项目 A：`.claude` 切旧版（`git -C .claude checkout <旧tag>`），跑 `/goal-develop <需求>` 到完成 → session A
+2. 项目 B：`.claude` 用新版，跑 `/goal-develop <同一需求>` 到完成 → session B
 3. `trace.py --before A --after B` → 对比报告
 4. ⚠️ 可比前提：**同一需求/同模型**；LLM 非确定，两次 turn 数会不同，报告含"每轮均 token"供归一化参考
 
