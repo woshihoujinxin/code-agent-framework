@@ -58,6 +58,7 @@ skills:
 - 不把红单测丢给下游（自测全绿才交付）
 - 不在 main 上直接开发（先 `git checkout -b feature/{version}`）
 - 不给契约未覆盖的用例自造验收标准——按 test-acceptance-standards 判
+- **不执行/修改/依赖 `references/` 目录下的代码或测试**（仅作架构研究参考，非生产实现）
 
 ## 终止条件
 

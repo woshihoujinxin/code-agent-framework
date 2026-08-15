@@ -12,6 +12,8 @@
 
 | # | 甲方 → 乙方 | 契约内容（做什么/交付什么/标准） | 载体 | 约束出处 | 违反后果 | 类型 |
 |---|------------|-------------------------------|------|---------|---------|------|
+| 0 | 架构边界（全员） | **`references/` 目录约束**：Dev/Tester/Researcher 不执行/修改/依赖 references/ 代码（仅架构研究参考） | contract-shared §2；coding-rules §2；Dev/Tester/Researcher 围栏 | 全员负面围栏 | 测试范围错位、实现混淆 | 边界 |
+|---|------------|-------------------------------|------|---------|---------|------|
 | 1 | PM → Planner | `docs/prd.md`：需求池 P0/P1/P2 + 用户故事 US-N + 视觉意图 + 待确认问题（带推荐答案）；Planner 写契约前必读，US 是测试契约的 US 来源，模糊点回查待确认问题 | docs/prd.md | PM「目录/负面围栏」；Planner「必读 REQ_FILE/写契约前先读 prd.md」 | 契约用例缺 US 来源或偏离需求 → 验收错位 | 内容 |
 | 2 | Planner → Dev | ① feature-spec 测试契约 F/B/S/E/Q（每条带 US/角色/输入/预期，**只增不改**）② design.md 接口/实体签名（翻译式实现）③ smoke-checks.md 冒烟命令 | feature-spec.md、design.md、smoke-checks.md | Planner「硬约束」；Dev「必读输入/负面围栏（不改 feature-spec）」 | Dev 偏离签名/漏用例 → 测试 FAIL、集成错位 | 测试 + 设计规格 |
 | 3 | Planner → Tester | 同一份测试契约（F→correctness、B→robustness、S→security、E→e2e、Q→quality）+ test-acceptance-standards 判卷同卷 | feature-spec.md + test-acceptance-standards.md | 5×Tester「必读输入」；acceptance「三方共享、唯一权威」 | 判卷尺度漂移 → Dev 覆盖了 Tester 不认 | 测试 |

@@ -17,6 +17,7 @@
 - 测试 → `tests/`；测试报告 → `tests/reports/`
 - 工程文档 → `docs/`
 - **禁止在仓库根目录创建代码文件**（仅 `README.md`、`.gitignore`、包管理文件允许）
+- **`references/` 目录边界**：仅作架构研究参考，Dev 不执行/修改/依赖，Tester 不测试其内容（详见 contract-shared §2）
 
 ## 3. 设计模式偏好
 

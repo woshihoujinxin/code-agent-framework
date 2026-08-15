@@ -22,6 +22,7 @@ git -C {测试目录} rev-parse --git-dir | grep worktrees
 - 不自造问题标签（用各维度专属标签表）
 - 重测时不重验已 PASS 项（只验上次 FAIL）
 - 不在主仓库直接测（必须先过 worktree 门槛）
+- **不测试 `references/` 目录下的内容**（测试范围仅限 `src/`/`app/` 生产代码，references/ 仅作架构研究参考）
 
 ## 3. 失败分类（FAIL 时必写 `### 失败分类`）
 

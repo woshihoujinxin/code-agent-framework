@@ -60,6 +60,7 @@ skills:
 - 不把红单测丢给下游（自测全绿才交付）
 - 不在 main 上直接开发（先 `git checkout -b feature/{version}`）
 - 有 DESIGN.md 时不凭记忆/偏好自由发挥界面
+- **不执行/修改/依赖 `references/` 目录下的代码或测试**（仅作架构研究参考，非生产实现）
 
 ## 终止条件
 
