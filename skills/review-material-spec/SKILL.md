@@ -43,7 +43,7 @@ docs/reviews/{version}/
 | 产物 | 产出角色 | 产出时机 | 命令 |
 |------|---------|---------|------|
 | `research.md` | code-researcher | 调研期（兼任设计草案） | goal-research |
-| `requirement.md` | code-researcher | 调研期 | goal-research |
+| `requirement.md` | code-researcher（主体）+ goal-introspect（自省预需求段） | 调研期；自省预需求段可先行 | goal-research / goal-introspect |
 | `design-draft.md`（可选） | code-planner | 评审前（仅当 research 草案需细化时） | goal-review 素材准备段 |
 | `prototype/*` | code-prototype-builder + critic | 评审前 | goal-review 素材准备段 |
 | `pm-init.md` | code-product-manager | 评审期（背靠背初审） | goal-review |
@@ -52,6 +52,8 @@ docs/reviews/{version}/
 | `review-meeting.md` | 评审编排器 | 评审后 | goal-review |
 
 > **design 角色定位（重要）**：调研产出的 `research.md`（技术方案：架构图/实体/状态/时序图 + 推荐方案）**即设计草案**，评审直接审它。拍板后才落正式 `design.md`（开发期 Planner 产出，落 `docs/design.md`）。`design-draft.md` 仅当 research 草案需更细方案时由 Planner 单独补，**非 gate 必备**。**不要把正式 design 当评审输入**——那样评审就变成事后追认。
+
+> **自省预需求段**：`requirement.md` 可含「## 自省预需求(来自 v0.0.N)」段——由 goal-introspect 审 N 版后提炼追加，每条带根因（见 §8 自省→预需求闭环）。goal-research 产 requirement.md 时**保留该段不覆盖**，只补调研产出的需求成分。
 
 ## 4. 三件齐备 gate（评审前强制校验）
 
@@ -101,3 +103,16 @@ review_batch: {version}
 - **gate 仍校验**：重做后重跑三件齐备 gate，齐了才进新一轮评审。
 
 > 这条规则保证「一个版本一套材料」的一致性——任何人看 `docs/reviews/{version}/` 拿到的都是当前最新、唯一的评审材料，不存在「多份到底哪份为准」的歧义。`goal-research`（重做调研）/`goal-review`（重做评审）发现 version 目录已存在时，一律按覆盖处理，不新建。
+
+## 8. 自省→预需求闭环（自省不产报告，提炼需求喂下一版）
+
+**核心**：自省不是事后归档，是**下一版的输入**。版本 N 交付后，goal-introspect 审 N 版设计+实现+交付结果，把未解决的缺口/偏差/冗余提炼成**带根因的需求条目**，追加到下一版 `docs/reviews/{N+1}/requirement.md`，让问题在 N+1 开发时被解决。
+
+- **不产自省报告文件**：自省唯一产物 = requirement.md 的需求条目。过程不留，git 历史作回溯（符合 §7）。
+- **带根因**：每条预需求必带「来源:自省 v0.0.N；根因:{1-2句N版具体问题+证据}」，让 N+1 评审看懂"为什么修这个"。
+- **只提炼未解决**：已在 N 版实现的发现不进需求文档（已实现的不是需求）。
+- **落进 requirement.md**：追加到「## 自省预需求(来自 v0.0.N)」段，表格沿用 requirement 现有格式（编号/改进项/现状=根因/目标=需求/借鉴/优先级）。
+- **goal-research 保留该段**：goal-research 产 requirement.md 时，若已有自省预需求段，**保留不覆盖**，只补调研产出的需求成分（见 research-orchestrator Step 5）。
+- **段覆盖规则**：同一 N+1 目录多次自省（针对不同 N，或重做）时，同来源段覆盖更新（不留中间过程）；已实现项标 ✅ 保留、新增未解决项追加。
+
+> 闭环：版本N 交付 → 自省(审N) → 提炼带根因预需求 → 喂 N+1 requirement.md → N+1 调研(保留预需求)+评审(看到每条需求为修N版哪个问题) → 开发解决 → 交付 → 再自省 → 喂 N+2。问题在下一版被解决，不靠记忆、不留档发霉。

@@ -117,9 +117,13 @@ clone 完成后更新 repolist 对应行的状态。
 ### Step 5: 派 code-researcher 分析（唯一分析步骤）
 
 ```
+先读 docs/reviews/{version}/requirement.md 是否已含「## 自省预需求(来自 v0.0.*)」段（由 goal-introspect 先行追加）：
+  - 有 → 记下该段内容，要求 code-researcher 保留该段、只在其余部分补调研产出
+  - 无 → 正常产
+
 Agent(
   subagent_type: "code-researcher",
-  prompt: "调研目标：{调研目标}\n参考仓库（git 链接，逗号分隔）：{URLS}\n代码仓库：{REPO_DIR}\n目标版本号：{version}\n材料规范：.claude/skills/review-material-spec\n\n请分析 references/ 下的代码库，产出两份文档（落进版本目录 docs/reviews/{version}/）：\n1. docs/reviews/{version}/research.md（图为主：必含项目架构图 flowchart + 关键实体关系图 erDiagram + 主要功能状态图 stateDiagram-v2 + 关键流程时序图 sequenceDiagram，禁贴代码/禁大段文字，每图 ≤2 行说明）\n2. docs/reviews/{version}/requirement.md（精简表格）\n两文档头部按规范加 frontmatter（version/artifact/producer）。完成后只返回两份路径 + 参考项目数 + 网络状态。"
+  prompt: "调研目标：{调研目标}\n参考仓库（git 链接，逗号分隔）：{URLS}\n代码仓库：{REPO_DIR}\n目标版本号：{version}\n材料规范：.claude/skills/review-material-spec\n\n请分析 references/ 下的代码库，产出两份文档（落进版本目录 docs/reviews/{version}/）：\n1. docs/reviews/{version}/research.md（图为主：必含项目架构图 flowchart + 关键实体关系图 erDiagram + 主要功能状态图 stateDiagram-v2 + 关键流程时序图 sequenceDiagram，禁贴代码/禁大段文字，每图 ≤2 行说明）\n2. docs/reviews/{version}/requirement.md（精简表格）\n两文档头部按规范加 frontmatter（version/artifact/producer）。\n⚠️ 若 requirement.md 已存在且含「## 自省预需求(来自 v0.0.*)」段（goal-introspect 先行追加的带根因预需求），**必须原样保留该段、不覆盖不删改**，只在文档其余部分补充本批调研产出的需求成分。完成后只返回两份路径 + 参考项目数 + 网络状态。"
 )
 ```
 
