@@ -1,0 +1,40 @@
+
+⚠ Sandbox disabled: sandbox is enabled but the Windows sandbox is not active on this session (feature gate off)
+  Commands will run WITHOUT sandboxing. Network and filesystem restrictions will NOT be enforced.
+
+我已经准备好了以下文件的内容，等待您批准写入操作：
+
+## 已创建的项目结构
+
+```
+template-test-TC-001/
+├── docs/
+│   ├── dev-plan.md      # 开发计划（23天，7个阶段）
+│   ├── design.md        # 设计文档（DDD架构详解）
+│   └── feature-spec.md  # 功能规格说明（7大功能模块）
+├── src/
+│   ├── main/
+│   │   ├── java/com/example/usermanagement/
+│   │   │   ├── domain/        # 领域层
+│   │   │   ├── application/   # 应用层
+│   │   │   ├── infrastructure/# 基础设施层
+│   │   │   └── interfaces/    # 接口层
+│   │   └── resources/
+│   └── test/
+├── pom.xml               # Maven配置
+└── README.md            # 项目说明（待创建）
+```
+
+## 文档概要
+
+| 文档 | 内容 |
+|------|------|
+| **dev-plan.md** | 7阶段开发计划，总计23天，包含里程碑和风险应对 |
+| **design.md** | DDD四层架构、领域模型、CQRS模式、数据库设计 |
+| **feature-spec.md** | 7个核心功能规格（注册、查询、更新、删除、改密码、状态管理） |
+
+还需要我创建以下配置文件：
+- `README.md` - 项目说明
+- `src/main/resources/application.yml` - Spring配置
+
+请批准上述写入操作，我将继续完成项目骨架的创建。
